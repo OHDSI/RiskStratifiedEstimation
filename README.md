@@ -1,5 +1,5 @@
 RiskStratifiedEstimation
-########################
+======================
 
 Package is under development.
 
