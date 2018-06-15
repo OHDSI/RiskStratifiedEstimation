@@ -12,11 +12,11 @@
 #'
 #' @export
 
-createIPW <- function(ps,
-                      weightsType = 'ATE',
-                      useStabilizedWeights = TRUE,
-                      truncatedWeights = TRUE,
-                      truncationQuantiles = c(.01, .99)){
+createIPW <- ffunction(ps,
+                       weightsType = 'ATE',
+                       useStabilizedWeights = TRUE,
+                       truncatedWeights = TRUE,
+                       truncationQuantiles = c(.01, .99)){
 
   if(weightsType == 'ATE')
     ps$weights <- ps$treatment / ps$propensityScore + (1 - ps$treatment) / (1 - ps$propensityScore)
@@ -33,10 +33,9 @@ createIPW <- function(ps,
   }
 
   if(truncatedWeights)
-    ps <-  dplyr::mutate(ps, weights = pmin(pmax(weights, truncationQuantiles[1]),
-                                            truncationQuantiles[2]))
+    ps <-  dplyr::mutate(ps, weights = pmin(pmax(weights, quantile(weights,truncationQuantiles[1])),
+                                            quantile(weights,truncationQuantiles[2])))
 
   return(ps)
-
 
 }
