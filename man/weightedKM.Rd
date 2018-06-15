@@ -12,7 +12,7 @@ weightedKM(ps, calculateWeights = TRUE, weightsType = "ATE", useSW = TRUE,
 \arguments{
 \item{ps}{A data frame including the propensity scores as generated from \code{\link[CohortMethod]{createPs}}}
 
-\item{calculateWeights}{Should the weights be calculated?}
+\item{calculateWeights}{Whether to calculate the weights using \code{\link[RiskStratifiedEstimation]{createIPW}}}
 
 \item{weightsType}{The type of weights to be used. Possible values are 'ATE' or 'ATT'}
 
