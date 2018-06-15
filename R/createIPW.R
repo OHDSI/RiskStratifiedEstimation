@@ -12,7 +12,7 @@
 #'
 #' @export
 
-createIPW <- ffunction(ps,
+createIPW <- function(ps,
                        weightsType = 'ATE',
                        useStabilizedWeights = TRUE,
                        truncatedWeights = TRUE,
