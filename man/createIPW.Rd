@@ -4,15 +4,15 @@
 \alias{createIPW}
 \title{Creates Inverse Probability Weights}
 \usage{
-createIPW(ps, weightsType = "ATE", useSW = TRUE, truncatedWeights = TRUE,
-  truncationQuantiles = c(0.01, 0.99))
+createIPW(ps, weightsType = "ATE", useStabilizedWeights = TRUE,
+  truncatedWeights = TRUE, truncationQuantiles = c(0.01, 0.99))
 }
 \arguments{
 \item{ps}{A propensity score data frame as created from \code{\link[CohortMethod]{createPs}}}
 
 \item{weightsType}{The type of the weights to be used. Allowed options are 'ATE' for average treatment effect and 'ATT' for average treatment effect on the treated weights}
 
-\item{useSW}{Should stabilized weights be used?}
+\item{useStabilizedWeights}{Should stabilized weights be used?}
 
 \item{truncatedWeights}{Should truncated weights be used? If FALSE, then stabilized weights are used instead}
 

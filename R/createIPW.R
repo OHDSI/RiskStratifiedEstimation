@@ -4,7 +4,7 @@
 #'
 #' @param ps A propensity score data frame as created from \code{\link[CohortMethod]{createPs}}
 #' @param weightsType The type of the weights to be used. Allowed options are 'ATE' for average treatment effect and 'ATT' for average treatment effect on the treated weights
-#' @param useSW Should stabilized weights be used?
+#' @param useStabilizedWeights Should stabilized weights be used?
 #' @param truncatedWeights Should truncated weights be used? If FALSE, then stabilized weights are used instead
 #' @param truncationQuantiles THe quantiles to perform weight truncation
 #'
@@ -14,7 +14,7 @@
 
 createIPW <- function(ps,
                       weightsType = 'ATE',
-                      useSW = TRUE,
+                      useStabilizedWeights = TRUE,
                       truncatedWeights = TRUE,
                       truncationQuantiles = c(.01, .99)){
 
@@ -23,7 +23,7 @@ createIPW <- function(ps,
   else
     ps$weights <- ps$treatment + ps$propensityScore*(1 - ps$treatment) / (1 - ps$propensityScore)
 
-  if(useSW){
+  if(useStabilizedWeights){
     ps$stability <- glm(treatment ~ 1,
                         family = binomial,
                         data = ps)$fitted.values
