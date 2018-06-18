@@ -6,7 +6,8 @@
 \usage{
 plotCovariateBalance(ps, cohortMethodData, calculateWeights = TRUE,
   weightsType = "ATE", useStabilizedWeights = TRUE,
-  truncatedWeights = TRUE, truncationQuantiles = c(0.01, 0.99))
+  truncatedWeights = TRUE, truncationQuantiles = c(0.01, 0.99),
+  showNotBalancedCovariateIds = TRUE)
 }
 \arguments{
 \item{ps}{A propensity score data frame as created from \code{\link[CohortMethod]{createPs}}}
@@ -22,6 +23,8 @@ plotCovariateBalance(ps, cohortMethodData, calculateWeights = TRUE,
 \item{truncatedWeights}{Should truncated weights be used? If FALSE, then stabilized weights are used instead}
 
 \item{truncationQuantiles}{The quantiles to perform weight truncation}
+
+\item{showNotBalancedCovariateIds}{Show covariate ids that were not balanced after weighting?}
 }
 \value{
 The covariate balance plot

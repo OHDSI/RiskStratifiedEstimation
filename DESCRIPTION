@@ -11,10 +11,12 @@ LazyData: true
 RoxygenNote: 6.0.1
 Imports: PatientLevelPrediction, 
          CohortMethod, 
+         FeatureExtraction,
          dplyr, 
          ff, 
          caret,
          ffbase, 
          ggplot2,
+         gridExtra,
          survminer
 Depends: survival
