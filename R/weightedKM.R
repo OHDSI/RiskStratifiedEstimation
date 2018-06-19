@@ -8,8 +8,6 @@
 #' @param useStabilizedWeights Whether to use stabilized weights.
 #' @param truncatedWeights Whether to truncate the weights
 #' @param truncationQuantiles The quantiles used to truncate the weights
-#' @param treatmentLabel The label for the treatment cohort
-#' @param comparatorLabel The label for the comparator cohort
 #'
 #' @return A data frame with the Kaplan-Meier estimates
 #'
@@ -20,9 +18,7 @@ weightedKM <- function(ps,
                        weightsType = 'ATE',
                        useStabilizedWeights = TRUE,
                        truncatedWeights = TRUE,
-                       truncationQuantiles = c(.01, .99),
-                       treatmentLabel = NULL,
-                       comparatorLabel = NULL){
+                       truncationQuantiles = c(.01, .99)){
 
   if(calculateWeights)
     ps <- createIPW(ps,
@@ -102,10 +98,6 @@ weightedKM <- function(ps,
                                         comparator = dataComparator),
                                    .id = 'cohort')
 
-  if(!is.null(treatmentLabel) && !is.null(comparatorLabel))
-    dataCombined$cohort <- ifelse(dataCombined$cohort == 'treatment',
-                                  treatmentLabel,
-                                  comparatorLabel)
 
   return(dataCombined)
 
