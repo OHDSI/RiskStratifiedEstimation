@@ -1,6 +1,6 @@
 #' Calculates and plots weighted Kaplan-Meier estimates
 #'
-#' Calculates the weighted Kaplan-Meier estimates based on: Xie J, Liu C. Adjusted Kaplan–Meier estimator and log-rank test with inverse probability of treatment weighting for survival data. Statistics in Medicine 2005; 2:3089–3110.
+#' Calculates the weighted Kaplan-Meier estimates based on: Xie J, Liu C. Adjusted Kaplan-Meier estimator and log-rank test with inverse probability of treatment weighting for survival data. Statistics in Medicine 2005; 2:3089–3110.
 #'
 #' @param ps A data frame including the propensity scores as generated from \code{\link[CohortMethod]{createPs}}
 #' @param calculateWeights Whether to calculate the weights using \code{\link[RiskStratifiedEstimation]{createIPW}}
@@ -15,7 +15,7 @@
 #' @param legend.position The position of the legend
 #' @param ci Whether the confidence intervals should appear in  the plot
 #'
-#' @return A data frame with the Kaplan-Meier estimates and the plot (when requested)
+#' @return A data frame with the Kaplan-Meier estimates
 #'
 #' @export
 
@@ -109,25 +109,6 @@ weightedKM <- function(ps,
   dataCombined <- dplyr::bind_rows(list(treatment=dataTreatment,
                                         comparator = dataComparator),
                                    .id = 'cohort')
-
-  p <- ggplot2::ggplot(dataCombined, ggplot2::aes(x = time, y = S, group = cohort, color = cohort)) +
-    ggplot2::geom_step() +
-    ggplot2::coord_cartesian(xlim = xlim, ylim = ylim) +
-    ggplot2::theme_bw()+
-    ggplot2::xlab('Time') +
-    ggplot2::ylab('Survival') +
-    ggplot2::theme(legend.title = ggplot2::element_blank(),
-                   legend.position = legend.position,
-                   legend.text = element_text(size = 8, face = "bold"))
-  if(ci)
-    p <- p + ggplot2::geom_ribbon(aes(ymin=lower, ymax=upper, fill = cohort),
-                                  alpha = 0.3,
-                                  linetype = 2)
-  if(!is.null(title))
-    p <- p + ggplot2::ggtitle(title)
-
-  return(list(data = dataCombined,
-              plot = p))
-
+  return(dataCombined)
 
 }
