@@ -4,10 +4,9 @@
 \alias{weightedKM}
 \title{Calculates and plots weighted Kaplan-Meier estimates}
 \usage{
-weightedKM(ps, calculateWeights = TRUE, weightsType = "ATE", useSW = TRUE,
-  truncatedWeights = TRUE, truncationQuantiles = c(0.01, 0.99),
-  returnPlot = TRUE, xlim = NULL, ylim = NULL, title = NULL,
-  legend.position = c(0.15, 0.1), ci = FALSE)
+weightedKM(ps, calculateWeights = TRUE, weightsType = "ATE",
+  useStabilizedWeights = TRUE, truncatedWeights = TRUE,
+  truncationQuantiles = c(0.01, 0.99))
 }
 \arguments{
 \item{ps}{A data frame including the propensity scores as generated from \code{\link[CohortMethod]{createPs}}}
@@ -16,23 +15,11 @@ weightedKM(ps, calculateWeights = TRUE, weightsType = "ATE", useSW = TRUE,
 
 \item{weightsType}{The type of weights to be used. Possible values are 'ATE' or 'ATT'}
 
-\item{useSW}{Whether to use stabilized weights.}
+\item{useStabilizedWeights}{Whether to use stabilized weights.}
 
 \item{truncatedWeights}{Whether to truncate the weights}
 
 \item{truncationQuantiles}{The quantiles used to truncate the weights}
-
-\item{returnPlot}{Whether to return Kaplan-Meier plot}
-
-\item{xlim}{Limits on x-axis}
-
-\item{ylim}{Limits on y-axis}
-
-\item{title}{Title appearing in the plot}
-
-\item{legend.position}{The position of the legend}
-
-\item{ci}{Whether the confidence intervals should appear in  the plot}
 }
 \value{
 A data frame with the Kaplan-Meier estimates

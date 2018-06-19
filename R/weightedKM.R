@@ -5,15 +5,9 @@
 #' @param ps A data frame including the propensity scores as generated from \code{\link[CohortMethod]{createPs}}
 #' @param calculateWeights Whether to calculate the weights using \code{\link[RiskStratifiedEstimation]{createIPW}}
 #' @param weightsType The type of weights to be used. Possible values are 'ATE' or 'ATT'
-#' @param useSW Whether to use stabilized weights.
+#' @param useStabilizedWeights Whether to use stabilized weights.
 #' @param truncatedWeights Whether to truncate the weights
 #' @param truncationQuantiles The quantiles used to truncate the weights
-#' @param returnPlot Whether to return Kaplan-Meier plot
-#' @param xlim Limits on x-axis
-#' @param ylim Limits on y-axis
-#' @param title Title appearing in the plot
-#' @param legend.position The position of the legend
-#' @param ci Whether the confidence intervals should appear in  the plot
 #'
 #' @return A data frame with the Kaplan-Meier estimates
 #'
@@ -22,20 +16,14 @@
 weightedKM <- function(ps,
                        calculateWeights = TRUE,
                        weightsType = 'ATE',
-                       useSW = TRUE,
+                       useStabilizedWeights = TRUE,
                        truncatedWeights = TRUE,
-                       truncationQuantiles = c(.01, .99),
-                       returnPlot = TRUE,
-                       xlim = NULL,
-                       ylim = NULL,
-                       title = NULL,
-                       legend.position = c(.15, .1),
-                       ci = FALSE){
+                       truncationQuantiles = c(.01, .99)){
 
   if(calculateWeights)
     ps <- createIPW(ps,
                     weightsType = weightsType,
-                    useSW = useSW,
+                    useStabilizedWeights = useStabilizedWeights,
                     truncatedWeights = truncatedWeights,
                     truncationQuantiles = truncationQuantiles)
 
