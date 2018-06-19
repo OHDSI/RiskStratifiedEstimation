@@ -19,4 +19,5 @@ Imports: PatientLevelPrediction,
          ggplot2,
          gridExtra,
          survminer
-Depends: survival
+Depends: survival,
+         doSNOW

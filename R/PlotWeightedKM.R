@@ -5,7 +5,6 @@
 #' @param ylim Limits on y-axis
 #' @param ci Should confidence intervals be displayed?
 #' @param title The title on the graph
-#' @param legend.position The position of the legend on the graph
 #'
 #' @return A weighted Kaplan-Meier plot
 #' @export
@@ -13,7 +12,6 @@
 plotWeightedKM <- function(dataKM,
                            xlim,
                            ylim,
-                           legend.position = c(.15, .1),
                            ci = TRUE,
                            title = NULL){
 
@@ -21,10 +19,8 @@ plotWeightedKM <- function(dataKM,
     ggplot2::geom_step() +
     ggplot2::coord_cartesian(xlim = xlim, ylim = ylim) +
     ggplot2::xlab('Time') +
-    ggplot2::ylab('Survival') +
-    ggplot2::theme(legend.title = ggplot2::element_blank(),
-                   legend.position = legend.position,
-                   legend.text = element_text(size = 8, face = "bold"))
+    ggplot2::ylab('Survival')
+
   if(ci)
     p <- p + ggplot2::geom_ribbon(aes(ymin=lower, ymax=upper, fill = cohort),
                                   alpha = 0.3,

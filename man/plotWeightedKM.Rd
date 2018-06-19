@@ -4,8 +4,7 @@
 \alias{plotWeightedKM}
 \title{Plots the weighted Kaplan-Meier estimate}
 \usage{
-plotWeightedKM(dataKM, xlim, ylim, legend.position = c(0.15, 0.1),
-  ci = TRUE, title = NULL)
+plotWeightedKM(dataKM, xlim, ylim, ci = TRUE, title = NULL)
 }
 \arguments{
 \item{dataKM}{A dataframe containing the weigthed Kaplan-Meier estimates as computed by \code{\link[RiskStratifiedEstimation]{weightedKM}}}
@@ -13,8 +12,6 @@ plotWeightedKM(dataKM, xlim, ylim, legend.position = c(0.15, 0.1),
 \item{xlim}{Limits on x-axis}
 
 \item{ylim}{Limits on y-axis}
-
-\item{legend.position}{The position of the legend on the graph}
 
 \item{ci}{Should confidence intervals be displayed?}
 

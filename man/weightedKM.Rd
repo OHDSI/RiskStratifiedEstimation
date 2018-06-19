@@ -6,7 +6,8 @@
 \usage{
 weightedKM(ps, calculateWeights = TRUE, weightsType = "ATE",
   useStabilizedWeights = TRUE, truncatedWeights = TRUE,
-  truncationQuantiles = c(0.01, 0.99))
+  truncationQuantiles = c(0.01, 0.99), treatmentLabel = NULL,
+  comparatorLabel = NULL)
 }
 \arguments{
 \item{ps}{A data frame including the propensity scores as generated from \code{\link[CohortMethod]{createPs}}}
@@ -20,6 +21,10 @@ weightedKM(ps, calculateWeights = TRUE, weightsType = "ATE",
 \item{truncatedWeights}{Whether to truncate the weights}
 
 \item{truncationQuantiles}{The quantiles used to truncate the weights}
+
+\item{treatmentLabel}{The label for the treatment cohort}
+
+\item{comparatorLabel}{The label for the comparator cohort}
 }
 \value{
 A data frame with the Kaplan-Meier estimates
