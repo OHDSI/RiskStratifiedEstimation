@@ -1,10 +1,40 @@
+#' Runs a risk stratified analysis
+#'
+#' @param cohortMethodData A cohortMethodData object
+#' @param population The study population to perform the analysis
+#' @param modelSettings The model settings for the prediction step
+#' @param save The save directory
+#' @param testSplit The type of split for the cross validation. Should be either 'person' or 'time'
+#' @param testFraction The size of the test set
+#' @param nfold The number of folds for cross validation
+#' @param riskStrata The number of risk strata on which to perform the analysis
+#' @param weightsType The type of weights for the balancing of covariates. Should be either 'ATE' or 'ATT'
+#' @param truncatedWeights Should truncated weights be used?
+#' @param useStabilizedWeights Should stabilized weights be used?
+#' @param truncationQuantiles Quantiles of the propensity score to truncate in order to avoid excessively large weights
+#' @param timePoint The time point of interest for the calculation of the absolute risk reduction
+#' @param binary Forces the outcomeCount to be 0 or 1 in the prediction step
+#' @param includeAllOutcomes (binary) indicating whether to include people with outcomes who are not observed for the whole at risk period
+#' @param requireTimeAtRisk Should subjects without time at risk be removed at the prediction step?
+#' @param plpPlot (binary) Should plots for the prediction step be generated?
+#' @param psThreads The number of cores to use for the estimation of the propensity score. If 1 then serial approach is implemented
+#'
+#' @return
+#' \item{ps}{The propensity scores within risk strata along with patient weights}
+#' \item{mapMatrix}{The matrix that maps the patients to risk strata}
+#' \item{dataKM}{The weighted Kaplan-Meier estimates within risk strata}
+#' \item{absoluteRiskReduction}{The absolute risk reduction within risk strata}
+#' \item{relativeRiskReduction}{The relative risk reduction within risk strata}
+#'
+#' @export
+#'
+
 runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSettings, save,
                                         testSplit = 'person', testFraction = .3, nfold = 10,
                                         riskStrata = 4, weightsType = 'ATE', truncatedWeights = TRUE,
                                         useStabilizedWeights = FALSE, truncationQuantiles = c(.01, .99),
                                         timePoint, binary = TRUE, includeAllOutcomes = TRUE,
-                                        requireTimeAtRisk = TRUE, plpPlot = TRUE, psThreads = 1,
-                                        treatmentLabel = NULL, comparatorLabel = NULL){
+                                        requireTimeAtRisk = TRUE, plpPlot = TRUE, psThreads = 1){
 
   #########################################
   # PREDICTION
@@ -90,7 +120,14 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
   stopCluster(cl)
   close(pb)
 
-  saveRDS(ps, file.path(save, 'psList.rds', fsep = '\\'))
+  for(i in 1:length(ps))
+    ps[[i]] <- createIPW(ps[[i]],
+                         weightsType = weightsType,
+                         useStabilizedWeights = useStabilizedWeights,
+                         truncatedWeights = truncatedWeights,
+                         truncationQuantiles = truncationQuantiles)
+
+  saveRDS(ps, file.path(save, 'ps.rds'))
 
 
   #########################################
@@ -101,6 +138,7 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
   for(i in 1:riskStrata){
 
     dataKM[[i]] <- weightedKM(ps[[i]],
+                              calculateWeights = FALSE,
                               weightsType = weightsType,
                               truncatedWeights = truncatedWeights,
                               useStabilizedWeights = useStabilizedWeights,
@@ -109,55 +147,26 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
 
   saveRDS(dataKM, file = file.path(save, 'dataKM.rds'))
 
+  #########################################
+  # Absolute/Relative risk reduction
+  #########################################
+  AbsoluteRiskReduction <- absoluteRiskReduction(dataKM,
+                                                 timePoint)
+  saveRDS(AbsoluteRiskReduction, file = file.path(save, 'absoluteRiskReduction.rds'))
+
+  RelativeRiskReduction <- relativeRiskReduction(ps,
+                                                 calculateWeights = FALSE,
+                                                 weightsType = weightsType,
+                                                 useStabilizedWeights = useStabilizedWeights,
+                                                 truncatedWeights = truncatedWeights,
+                                                 truncationQuantiles = truncationQuantiles)
+  saveRDS(RelativeRiskReduction, file = file.path(save, 'relativeRiskReduction.rds'))
+
+
   results <- list(ps = ps,
-                  dataKM = dataKM)
+                  mapMatrix = mapMatrix,
+                  dataKM = dataKM,
+                  absoluteRiskReduction = AbsoluteRiskReduction,
+                  relativeRiskReduction = RelativeRiskReduction)
   return(results)
 }
-
-
-#   nModels <- length(subFolder)
-#   dataARR <- data.frame(ARR = numeric(),
-#                         lower95 = numeric(),
-#                         upper95 = numeric(),
-#                         riskStratum = numeric())
-#   dataHR <- data.frame(HR = numeric(),
-#                        lower95 = numeric(),
-#                        upper95 = numeric(),
-#                        riskStratum = numeric())
-#   for(i in 1:nModels){
-#
-#     directory <- file.path(save, subFolder[[i]], 'psList.rds', fsep = '\\')
-#     psList <- readRDS(directory)
-#     dataARR <- rbind(dataARR, absoluteRiskReductionDataFrame(psList = psList,
-#                                                              timePoint = timePoint,
-#                                                              useSW = F,
-#                                                              truncatedWeights = TRUE,
-#                                                              truncationQuantiles = c(.01, .99)))
-#     dataHR <- rbind(dataHR, hazardRatioDataFrame(psList = psList,
-#                                                  useSW = TRUE,
-#                                                  truncatedWeights = TRUE,
-#                                                  truncationQuantiles = c(.01, .99)))
-#
-#   }
-#   dataARR$riskModel <- factor(rep(1:nModels, each = nStrata))
-#   levels(dataARR$riskModel) <- names(subFolder)
-#   dataHR$riskModel <- factor(rep(1:nModels, each = nStrata))
-#   levels(dataHR$riskModel) <- names(subFolder)
-#
-#   grid::grid.newpage()
-#   comparisonPlotGeneral(dataARR,
-#                         dataHR,
-#                         ylimARR = c(-.1, .1),
-#                         ylimHR = c(0, 1.5),
-#                         legend.position = c(.05, .1))
-#
-#
-#   pdf(file.path(mainFolder, 'comparisonPlotNew.pdf', fsep = '\\'), onefile = FALSE)
-#   print(comparisonPlotGeneral(dataARR,
-#                               dataHR,
-#                               ylimARR = c(-.1, .1),
-#                               ylimHR = c(0, 1.5),
-#                               legend.position = c(.08, .15)))
-#   dev.off()
-#   result <- NUll
-# }
