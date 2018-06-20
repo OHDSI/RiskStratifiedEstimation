@@ -34,19 +34,69 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
                                         riskStrata = 4, weightsType = 'ATE', truncatedWeights = TRUE,
                                         useStabilizedWeights = FALSE, truncationQuantiles = c(.01, .99),
                                         timePoint, binary = TRUE, includeAllOutcomes = TRUE,
-                                        requireTimeAtRisk = TRUE, plpPlot = TRUE, psThreads = 1, priorType = 'laplace'){
+                                        requireTimeAtRisk = TRUE, plpPlot = TRUE, psThreads = 1, priorType = 'laplace',
+                                        verbosity = 'INFO', analysisId = NULL){
+
+  if(missing(verbosity)){
+    verbosity <- "INFO"
+  } else{
+    if(!verbosity%in%c("DEBUG","TRACE","INFO","WARN","FATAL","ERROR")){
+      stop('Incorrect verbosity string')
+    }
+  }
+
+  # log the start time:
+  ExecutionDateTime <- Sys.time()
+
+  # create an analysisid and folder to save the results
+  start.all <- Sys.time()
+  if(is.null(analysisId))
+    analysisId <- gsub(':','',gsub('-','',gsub(' ','',start.all)))
+
+  if(is.null(save)) save <- file.path(getwd(),'rseeAnalyses') #if NULL save to wd
+
+
+  analysisPath = file.path(save,analysisId)
+  if(!dir.exists(analysisPath)){dir.create(analysisPath,recursive=T)}
+  logFileName = paste0(analysisPath,'/plplog.txt')
+
+  logger <- OhdsiRTools::createLogger(name = "RSEE Main Log",
+                                      threshold = verbosity,
+                                      appenders = list(OhdsiRTools::createFileAppender(layout = OhdsiRTools::layoutParallel,
+                                                                                       fileName = logFileName)))
+  OhdsiRTools::registerLogger(logger)
+  logSep <- paste(rep('*', 96), collapse = '')
+  OhdsiRTools::logInfo(logSep)
+
+  OhdsiRTools::logInfo(paste0('Risk Stratified Effect Estimation Package version ', utils::packageVersion("RiskStratifiedEstimation")))
+  OhdsiRTools::logInfo(logSep)
+  # get ids
+  targetId <- attr(population, "metaData")$targetId
+  comparatorId <- attr(population, "metaData")$comparatorId
+  outcomeId <- attr(populationCm, 'metaData')$call$outcomeId
+
+  OhdsiRTools::logInfo(sprintf('%-20s%s', 'AnalysisID: ',analysisId))
+  OhdsiRTools::logInfo(sprintf('%-20s%s', 'targetId: ', targetId))
+  OhdsiRTools::logInfo(sprintf('%-20s%s', 'comparatorId', comparatorId))
+  OhdsiRTools::logInfo(sprintf('%-20s%s', 'OutcomeID: ', outcomeId))
+  OhdsiRTools::logInfo(sprintf('%-20s%s', 'Cohort size: ', nrow(cohortMethodData$cohorts)))
+  OhdsiRTools::logInfo(sprintf('%-20s%s', 'Covariates: ', nrow(cohortMethodData$covariateRef)))
+  OhdsiRTools::logInfo(sprintf('%-20s%s', 'Population size: ', nrow(population)))
+  OhdsiRTools::logInfo(sprintf('%-20s%s', 'Cases: ', sum(population$outcomeCount>0)))
+  OhdsiRTools::logInfo(sprintf('%-20s%s', 'Risk strata: ', riskStrata))
+
 
   #########################################
   # PREDICTION
   #########################################
 
+  OhdsiRTools::logTrace('Converting plpData from coohrtMethodData')
   plpData <- cmToPlpData(cohortMethodData)
 
-  subFolder <- modelSettings$name
-  outputFolder <- file.path(save, subFolder, fsep = '\\')
-  dir.create(outputFolder, recursive = TRUE)
+
   populationCall <- attr(population, 'metaData')$call
 
+  OhdsiRTools::logTrace('Generating prediction study population')
   populationPlp <-
     PatientLevelPrediction::createStudyPopulation(plpData = plpData,
                                                   outcomeId = populationCall$outcomeId,
@@ -62,7 +112,9 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
                                                   binary = binary,
                                                   includeAllOutcomes = includeAllOutcomes,
                                                   requireTimeAtRisk = requireTimeAtRisk)
-
+  OhdsiRTools::logInfo(logSep)
+  OhdsiRTools::logInfo('Generated plpData object and prediction study population')
+  OhdsiRTools::logInfo('Starting prediction step')
   # Run the prediction model ----
   resultsPrediction <- PatientLevelPrediction::runPlp(
     population = populationPlp,
@@ -70,10 +122,13 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
     modelSettings = modelSettings,
     testSplit = testSplit,
     testFraction = testFraction,
-    nfold = nfold
+    nfold = nfold,
+    save = save,
+    saveModel = TRUE
   )
 
-  PatientLevelPrediction::savePlpResult(resultsPrediction, dirPath = outputFolder)
+
+  # PatientLevelPrediction::savePlpResult(resultsPrediction, dirPath = outputFolder)
 
   # add plots and document to output folder
   if(plpPlot)
