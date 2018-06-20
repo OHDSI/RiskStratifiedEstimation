@@ -34,7 +34,7 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
                                         riskStrata = 4, weightsType = 'ATE', truncatedWeights = TRUE,
                                         useStabilizedWeights = FALSE, truncationQuantiles = c(.01, .99),
                                         timePoint, binary = TRUE, includeAllOutcomes = TRUE,
-                                        requireTimeAtRisk = TRUE, plpPlot = TRUE, psThreads = 1){
+                                        requireTimeAtRisk = TRUE, plpPlot = TRUE, psThreads = 1, priorType = 'laplace'){
 
   #########################################
   # PREDICTION
@@ -114,7 +114,10 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
                            control = Cyclops::createControl(threads = -1,
                                                             tolerance = 2e-07,
                                                             cvRepetitions = 10,
-                                                            startingVariance = .01))
+                                                            startingVariance = .01),
+                           prior = Cyclops::createPrior(priorType = priorType,
+                                                        exclude = c(0),
+                                                        useCrossValidation = TRUE))
 
   }
   stopCluster(cl)
