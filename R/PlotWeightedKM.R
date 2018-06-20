@@ -22,7 +22,7 @@ plotWeightedKM <- function(dataKM,
     ggplot2::ylab('Survival')
 
   if(ci)
-    p <- p + ggplot2::geom_ribbon(aes(ymin=lower, ymax=upper, fill = cohort),
+    p <- p + ggplot2::geom_ribbon(ggplot2::aes(ymin=lower, ymax=upper, fill = cohort),
                                   alpha = 0.3,
                                   linetype = 2)
   if(!is.null(title))
