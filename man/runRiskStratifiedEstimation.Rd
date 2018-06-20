@@ -9,7 +9,8 @@ runRiskStratifiedEstimation(cohortMethodData, population, modelSettings, save,
   weightsType = "ATE", truncatedWeights = TRUE,
   useStabilizedWeights = FALSE, truncationQuantiles = c(0.01, 0.99),
   timePoint, binary = TRUE, includeAllOutcomes = TRUE,
-  requireTimeAtRisk = TRUE, plpPlot = TRUE, psThreads = 1)
+  requireTimeAtRisk = TRUE, plpPlot = TRUE, psThreads = 1,
+  priorType = "laplace")
 }
 \arguments{
 \item{cohortMethodData}{A cohortMethodData object}
