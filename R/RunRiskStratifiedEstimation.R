@@ -133,7 +133,7 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
   # add plots and document to output folder
   if(plpPlot)
     PatientLevelPrediction::plotPlp(resultsPrediction,
-      file.path(outputFolder, 'Plots', resultsPrediction$analysisRef$analysisId, fsep = '\\'))
+      file.path(save, 'Plots', resultsPrediction$analysisRef$analysisId, fsep = '\\'))
 
 
   #########################################
