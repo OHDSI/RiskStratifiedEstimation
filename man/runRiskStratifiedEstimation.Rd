@@ -8,9 +8,10 @@ runRiskStratifiedEstimation(cohortMethodData, population, modelSettings, save,
   testSplit = "person", testFraction = 0.3, nfold = 10, riskStrata = 4,
   weightsType = "ATE", truncatedWeights = TRUE,
   useStabilizedWeights = FALSE, truncationQuantiles = c(0.01, 0.99),
-  timePoint, binary = TRUE, includeAllOutcomes = TRUE,
-  requireTimeAtRisk = TRUE, plpPlot = TRUE, psThreads = 1,
-  priorType = "laplace")
+  timePoint, excludeCovariateIds = NULL, binary = TRUE,
+  includeAllOutcomes = TRUE, requireTimeAtRisk = TRUE, plpPlot = TRUE,
+  psThreads = 1, priorType = "laplace", verbosity = "INFO",
+  analysisId = NULL)
 }
 \arguments{
 \item{cohortMethodData}{A cohortMethodData object}
@@ -38,6 +39,8 @@ runRiskStratifiedEstimation(cohortMethodData, population, modelSettings, save,
 \item{truncationQuantiles}{Quantiles of the propensity score to truncate in order to avoid excessively large weights}
 
 \item{timePoint}{The time point of interest for the calculation of the absolute risk reduction}
+
+\item{excludeCovariateIds}{Covariate Ids to be excluded from calculation of propensity scores}
 
 \item{binary}{Forces the outcomeCount to be 0 or 1 in the prediction step}
 

@@ -13,6 +13,7 @@
 #' @param useStabilizedWeights Should stabilized weights be used?
 #' @param truncationQuantiles Quantiles of the propensity score to truncate in order to avoid excessively large weights
 #' @param timePoint The time point of interest for the calculation of the absolute risk reduction
+#' @param excludeCovariateIds Covariate Ids to be excluded from calculation of propensity scores
 #' @param binary Forces the outcomeCount to be 0 or 1 in the prediction step
 #' @param includeAllOutcomes (binary) indicating whether to include people with outcomes who are not observed for the whole at risk period
 #' @param requireTimeAtRisk Should subjects without time at risk be removed at the prediction step?
@@ -33,7 +34,7 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
                                         testSplit = 'person', testFraction = .3, nfold = 10,
                                         riskStrata = 4, weightsType = 'ATE', truncatedWeights = TRUE,
                                         useStabilizedWeights = FALSE, truncationQuantiles = c(.01, .99),
-                                        timePoint, binary = TRUE, includeAllOutcomes = TRUE,
+                                        timePoint, excludeCovariateIds = NULL, binary = TRUE, includeAllOutcomes = TRUE,
                                         requireTimeAtRisk = TRUE, plpPlot = TRUE, psThreads = 1, priorType = 'laplace',
                                         verbosity = 'INFO', analysisId = NULL){
 
@@ -166,6 +167,7 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
     populationRiskStratified <- population[population$subjectId %in% mapMatrix$subjectId[mapMatrix$riskStratum == i], ]
     CohortMethod::createPs(cohortMethodData = cohortMethodData,
                            population = populationRiskStratified,
+                           excludeCovariateIds = excludeCovariateIds,
                            control = Cyclops::createControl(threads = -1,
                                                             tolerance = 2e-07,
                                                             cvRepetitions = 10,
