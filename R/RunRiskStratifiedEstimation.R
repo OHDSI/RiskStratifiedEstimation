@@ -177,7 +177,7 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
                                                         useCrossValidation = TRUE))
 
   }
-  stopCluster(cl)
+  parallel::stopCluster(cl)
   close(pb)
 
   for(i in 1:length(ps))
