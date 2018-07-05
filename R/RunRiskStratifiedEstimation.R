@@ -35,7 +35,7 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
                                         riskStrata = 4, weightsType = 'ATE', truncatedWeights = TRUE,
                                         useStabilizedWeights = FALSE, truncationQuantiles = c(.01, .99),
                                         timePoint, excludeCovariateIds = NULL, binary = TRUE, includeAllOutcomes = TRUE,
-                                        requireTimeAtRisk = TRUE, plpPlot = TRUE, psThreads = 1, priorType = 'laplace',
+                                        requireTimeAtRisk = TRUE, plpPlot = FALSE, psThreads = 1, priorType = 'laplace',
                                         verbosity = 'INFO', analysisId = NULL){
 
   if(missing(verbosity)){
@@ -152,7 +152,7 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
   # RISK STRATIFIED ANALYSIS
   #########################################
 
-  cl <- doSNOW::makeSOCKcluster(psThreads)
+  cl <- parallel::makePSOCKcluster(psThreads)
   doSNOW::registerDoSNOW(cl)
 
   pb <- txtProgressBar(max = riskStrata, style=3)
@@ -162,7 +162,7 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
   ps <- list()
   tt <- Sys.time()
 
-  ps <- doSNOW::foreach(i = 1:4, .options.snow = opts) %dopar%{
+  ps <- foreach::foreach(i = 1:4, .options.snow = opts) %dopar%{
 
     populationRiskStratified <- population[population$subjectId %in% mapMatrix$subjectId[mapMatrix$riskStratum == i], ]
     CohortMethod::createPs(cohortMethodData = cohortMethodData,
