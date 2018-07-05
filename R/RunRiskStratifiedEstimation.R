@@ -52,14 +52,14 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
   # create an analysisid and folder to save the results
   start.all <- Sys.time()
   if(is.null(analysisId))
-    analysisId <- gsub(':','',gsub('-','',gsub(' ','',start.all)))
+    analysisId <- paste(gsub(':','',gsub('-','',gsub(' ','',start.all))), 'RSEE')
 
-  if(is.null(save)) save <- file.path(getwd(),'rseeAnalyses') #if NULL save to wd
+  if(is.null(save)) save <- file.path(getwd(),'RSEE') #if NULL save to wd
 
 
-  analysisPath = file.path(save,analysisId)
-  if(!dir.exists(analysisPath)){dir.create(analysisPath,recursive=T)}
-  logFileName = paste0(analysisPath,'/plplog.txt')
+  analysisPath = file.path(save, analysisId)
+  if(!dir.exists(analysisPath)){dir.create(analysisPath, recursive=T)}
+  logFileName = paste0(analysisPath,'/logRSEE.txt')
 
   logger <- OhdsiRTools::createLogger(name = "RSEE Main Log",
                                       threshold = verbosity,
@@ -145,7 +145,7 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
   mapMatrix <- dplyr::mutate(resultsPrediction$prediction,
                              riskStratum = dplyr::ntile(resultsPrediction$prediction$value, riskStrata))
   mapMatrix <- subset(mapMatrix, select = c('subjectId', 'riskStratum'))
-  saveRDS(mapMatrix, file.path(save, 'mapMatrix.rds', fsep = '\\'))
+  saveRDS(mapMatrix, file.path(analysisPath, 'mapMatrix.rds', fsep = '\\'))
 
 
   #########################################
@@ -187,7 +187,7 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
                          truncatedWeights = truncatedWeights,
                          truncationQuantiles = truncationQuantiles)
 
-  saveRDS(ps, file.path(save, 'ps.rds'))
+  saveRDS(ps, file.path(analysisPath, 'ps.rds'))
 
 
   #########################################
@@ -205,14 +205,14 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
                               truncationQuantiles = truncationQuantiles)
   }
 
-  saveRDS(dataKM, file = file.path(save, 'dataKM.rds'))
+  saveRDS(dataKM, file = file.path(analysisPath, 'dataKM.rds'))
 
   #########################################
   # Absolute/Relative risk reduction
   #########################################
   AbsoluteRiskReduction <- absoluteRiskReduction(dataKM,
                                                  timePoint)
-  saveRDS(AbsoluteRiskReduction, file = file.path(save, 'absoluteRiskReduction.rds'))
+  saveRDS(AbsoluteRiskReduction, file = file.path(analysisPath, 'absoluteRiskReduction.rds'))
 
   RelativeRiskReduction <- relativeRiskReduction(ps,
                                                  calculateWeights = FALSE,
@@ -220,7 +220,7 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
                                                  useStabilizedWeights = useStabilizedWeights,
                                                  truncatedWeights = truncatedWeights,
                                                  truncationQuantiles = truncationQuantiles)
-  saveRDS(RelativeRiskReduction, file = file.path(save, 'relativeRiskReduction.rds'))
+  saveRDS(RelativeRiskReduction, file = file.path(analysisPath, 'relativeRiskReduction.rds'))
 
 
   results <- list(ps = ps,
