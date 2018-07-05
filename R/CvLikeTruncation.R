@@ -16,8 +16,8 @@ cvLikeTruncation <- function(ps,
                              cvLikeRepetitions = 50){
 
   nObservationsPs <- dim(ps)[1]
-  psTemp <- ps
   ps$failures <- ifelse(ps$outcomeCount != 0, 1, 0)
+  psTemp <- ps
   mseEstimate <- rep(0, length(seq(0, truncationLevels, stepTruncationLevels)))
   l <- 1
   seqTruncationLevels <- seq(0, truncationLevels, stepTruncationLevels)
@@ -60,7 +60,7 @@ cvLikeTruncation <- function(ps,
                                  weights = weights)$coefficients
       bias2 <- (betaHat - betaTrue)^2
 
-      s <- s + (bias1 + bias2)/2/folds
+      s <- s + (bias1 + bias2)/2/cvLikeRepetitions
 
     }
     mseEstimate[l] <- varTemp + s
