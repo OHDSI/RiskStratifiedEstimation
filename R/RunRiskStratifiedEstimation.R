@@ -9,9 +9,11 @@
 #' @param nfold The number of folds for cross validation
 #' @param riskStrata The number of risk strata on which to perform the analysis
 #' @param weightsType The type of weights for the balancing of covariates. Should be either 'ATE' or 'ATT'
-#' @param truncatedWeights Should truncated weights be used?
 #' @param useStabilizedWeights Should stabilized weights be used?
-#' @param truncationQuantiles Quantiles of the propensity score to truncate in order to avoid excessively large weights
+#' @param extremeWeights The way to assess extreme weights. Possible options are 'unadjusted, 'cvLikeTruncation', 'crumpTrimming'
+#' @param truncationLevels The level of truncation expressed in percentiles of the propensity score. Only symmetric truncation is available. E.g. truncationLevels =.01 will assess truncation up to the .99th percentile of ps
+#' @param cvLikeRepetitions The number of times to repeat the 2-fold cross-validations
+#' @param stepTruncationLevels The steps for the grid of possible truncation levels
 #' @param timePoint The time point of interest for the calculation of the absolute risk reduction
 #' @param excludeCovariateIds Covariate Ids to be excluded from calculation of propensity scores
 #' @param binary Forces the outcomeCount to be 0 or 1 in the prediction step
@@ -19,7 +21,17 @@
 #' @param requireTimeAtRisk Should subjects without time at risk be removed at the prediction step?
 #' @param plpPlot (binary) Should plots for the prediction step be generated?
 #' @param psThreads The number of cores to use for the estimation of the propensity score. If 1 then serial approach is implemented
-#'
+#' @param analysisId Identifier of the analysis
+#' @param priorType The prior for the propensity score model
+#' @param verbosity Sets the level of the verbosity. If the log level is at or higher in priority than the logger threshold, a message will print. The levels are:
+#'                     \itemize{
+#'                     \item{DEBUG}{Highest verbosity showing all debug statements}
+#'                                         \item{TRACE}{Showing information about start and end of steps}
+#'                                         \item{INFO}{Show informative information (Default)}
+#'                                         \item{WARN}{Show warning messages}
+#'                                         \item{ERROR}{Show error messages}
+#'                                         \item{FATAL}{Be silent except for fatal errors}}
+
 #' @return
 #' \item{ps}{The propensity scores within risk strata along with patient weights}
 #' \item{mapMatrix}{The matrix that maps the patients to risk strata}
@@ -32,8 +44,9 @@
 
 runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSettings, save,
                                         testSplit = 'person', testFraction = .3, nfold = 10,
-                                        riskStrata = 4, weightsType = 'ATE', truncatedWeights = TRUE,
-                                        useStabilizedWeights = FALSE, truncationQuantiles = c(.01, .99),
+                                        riskStrata = 4, weightsType = 'ATE',
+                                        useStabilizedWeights = FALSE, extremeWeights, truncationLevels,
+                                        cvLikeRepetitions  = 50, stepTruncationLevels,
                                         timePoint, excludeCovariateIds = NULL, binary = TRUE, includeAllOutcomes = TRUE,
                                         requireTimeAtRisk = TRUE, plpPlot = FALSE, psThreads = 1, priorType = 'laplace',
                                         verbosity = 'INFO', analysisId = NULL){
@@ -184,8 +197,10 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
     ps[[i]] <- createIPW(ps[[i]],
                          weightsType = weightsType,
                          useStabilizedWeights = useStabilizedWeights,
-                         truncatedWeights = truncatedWeights,
-                         truncationQuantiles = truncationQuantiles)
+                         extremeWeights = extremeWeights,
+                         truncationLevels = truncationLevels,
+                         cvLikeRepetitions = cvLikeRepetitions,
+                         stepTruncationLevels = stepTruncationLevels)
 
   saveRDS(ps, file.path(analysisPath, 'ps.rds'))
 

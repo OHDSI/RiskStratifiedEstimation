@@ -11,6 +11,9 @@ LazyData: true
 RoxygenNote: 6.0.1
 Imports: PatientLevelPrediction, 
          CohortMethod, 
+         Cyclops,
+         OhdsiRTools,
+         foreach,
          FeatureExtraction,
          dplyr, 
          ff, 

@@ -6,12 +6,11 @@
 \usage{
 runRiskStratifiedEstimation(cohortMethodData, population, modelSettings, save,
   testSplit = "person", testFraction = 0.3, nfold = 10, riskStrata = 4,
-  weightsType = "ATE", truncatedWeights = TRUE,
-  useStabilizedWeights = FALSE, truncationQuantiles = c(0.01, 0.99),
-  timePoint, excludeCovariateIds = NULL, binary = TRUE,
-  includeAllOutcomes = TRUE, requireTimeAtRisk = TRUE, plpPlot = FALSE,
-  psThreads = 1, priorType = "laplace", verbosity = "INFO",
-  analysisId = NULL)
+  weightsType = "ATE", useStabilizedWeights = FALSE, extremeWeights,
+  truncationLevels, cvLikeRepetitions = 50, stepTruncationLevels, timePoint,
+  excludeCovariateIds = NULL, binary = TRUE, includeAllOutcomes = TRUE,
+  requireTimeAtRisk = TRUE, plpPlot = FALSE, psThreads = 1,
+  priorType = "laplace", verbosity = "INFO", analysisId = NULL)
 }
 \arguments{
 \item{cohortMethodData}{A cohortMethodData object}
@@ -32,11 +31,15 @@ runRiskStratifiedEstimation(cohortMethodData, population, modelSettings, save,
 
 \item{weightsType}{The type of weights for the balancing of covariates. Should be either 'ATE' or 'ATT'}
 
-\item{truncatedWeights}{Should truncated weights be used?}
-
 \item{useStabilizedWeights}{Should stabilized weights be used?}
 
-\item{truncationQuantiles}{Quantiles of the propensity score to truncate in order to avoid excessively large weights}
+\item{extremeWeights}{The way to assess extreme weights. Possible options are 'unadjusted, 'cvLikeTruncation', 'crumpTrimming'}
+
+\item{truncationLevels}{The level of truncation expressed in percentiles of the propensity score. Only symmetric truncation is available. E.g. truncationLevels =.01 will assess truncation up to the .99th percentile of ps}
+
+\item{cvLikeRepetitions}{The number of times to repeat the 2-fold cross-validations}
+
+\item{stepTruncationLevels}{The steps for the grid of possible truncation levels}
 
 \item{timePoint}{The time point of interest for the calculation of the absolute risk reduction}
 
@@ -51,6 +54,19 @@ runRiskStratifiedEstimation(cohortMethodData, population, modelSettings, save,
 \item{plpPlot}{(binary) Should plots for the prediction step be generated?}
 
 \item{psThreads}{The number of cores to use for the estimation of the propensity score. If 1 then serial approach is implemented}
+
+\item{priorType}{The prior for the propensity score model}
+
+\item{verbosity}{Sets the level of the verbosity. If the log level is at or higher in priority than the logger threshold, a message will print. The levels are:
+\itemize{
+\item{DEBUG}{Highest verbosity showing all debug statements}
+                    \item{TRACE}{Showing information about start and end of steps}
+                    \item{INFO}{Show informative information (Default)}
+                    \item{WARN}{Show warning messages}
+                    \item{ERROR}{Show error messages}
+                    \item{FATAL}{Be silent except for fatal errors}}}
+
+\item{analysisId}{Identifier of the analysis}
 }
 \value{
 \item{ps}{The propensity scores within risk strata along with patient weights}
