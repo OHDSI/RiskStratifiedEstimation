@@ -2,7 +2,7 @@
 #'
 #' Calculates the cv-like truncation level using 2-fold cross-validation for a specified number of repetitions
 #'
-#' @param ps The propensity score dataframe
+#' @param ps A propensity score data frame as created from \code{\link[CohortMethod]{createPs}}
 #' @param truncationLevels The level of truncation expressed in percentiles of the propensity score. Only symmetric truncation is available. E.g. truncationLevels =.01 will assess truncation up to the 99th percentile of ps
 #' @param stepTruncationLevels The steps for the grid of possible truncation levels
 #' @param cvLikeRepetitions The number of times to repeat the 2-fold cross-validations

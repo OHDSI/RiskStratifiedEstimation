@@ -8,7 +8,7 @@ cvLikeTruncation(ps, truncationLevels, stepTruncationLevels,
   cvLikeRepetitions = 50)
 }
 \arguments{
-\item{ps}{The propensity score dataframe}
+\item{ps}{A propensity score data frame as created from \code{\link[CohortMethod]{createPs}}}
 
 \item{truncationLevels}{The level of truncation expressed in percentiles of the propensity score. Only symmetric truncation is available. E.g. truncationLevels =.01 will assess truncation up to the 99th percentile of ps}
 
