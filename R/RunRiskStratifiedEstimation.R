@@ -151,8 +151,8 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
   # RISK STRATIFIED ANALYSIS
   #########################################
 
-  cl <- makeSOCKcluster(psThreads)
-  registerDoSNOW(cl)
+  cl <- doSNOW::makeSOCKcluster(psThreads)
+  doSNOW::registerDoSNOW(cl)
 
   pb <- txtProgressBar(max = riskStrata, style=3)
   progress <- function(n) setTxtProgressBar(pb, n)
@@ -161,7 +161,7 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
   ps <- list()
   tt <- Sys.time()
 
-  ps <- foreach(i = 1:4, .options.snow = opts) %dopar%{
+  ps <- doSNOW::foreach(i = 1:4, .options.snow = opts) %dopar%{
 
     populationRiskStratified <- population[population$subjectId %in% mapMatrix$subjectId[mapMatrix$riskStratum == i], ]
     CohortMethod::createPs(cohortMethodData = cohortMethodData,
