@@ -24,9 +24,7 @@ createIPW <- function(ps,
     ps$weights <- ps$treatment + ps$propensityScore*(1 - ps$treatment) / (1 - ps$propensityScore)
 
   if(useStabilizedWeights){
-    ps$stability <- glm(treatment ~ 1,
-                        family = binomial,
-                        data = ps)$fitted.values
+    ps$stability <- mean(ps$treatment)
     ps$weights <- ps$treatment*ps$weights*ps$stability +
       (1 - ps$treatment)*ps$weights*(1 - ps$stability)
     ps <- dplyr::select(ps, -stability)
