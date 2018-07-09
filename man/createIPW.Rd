@@ -5,8 +5,8 @@
 \title{Creates Inverse Probability Weights}
 \usage{
 createIPW(ps, weightsType = "ATE", useStabilizedWeights = TRUE,
-  extremeWeights = NULL, truncationLevels = 0.1, cvLikeRepetitions,
-  stepTruncationLevels)
+  extremeWeights = NULL, fixedTruncationLevels = c(0.01, 0.99),
+  truncationLevels = 0.1, cvLikeRepetitions, stepTruncationLevels)
 }
 \arguments{
 \item{ps}{A propensity score data frame as created from \code{\link[CohortMethod]{createPs}}}
@@ -15,7 +15,9 @@ createIPW(ps, weightsType = "ATE", useStabilizedWeights = TRUE,
 
 \item{useStabilizedWeights}{Should stabilized weights be used?}
 
-\item{extremeWeights}{The way to assess extreme weights. Possible options are 'unadjusted, 'cvLikeTruncation', 'crumpTrimming'}
+\item{extremeWeights}{The way to assess extreme weights. Possible options are 'unadjusted, 'cvLikeTruncation', 'crumpTrimming', 'fixedTruncaiton'}
+
+\item{fixedTruncationLevels}{The levels for fixed truncation weighting}
 
 \item{truncationLevels}{The level of truncation expressed in percentiles of the propensity score. Only symmetric truncation is available. E.g. truncationLevels =.01 will assess truncation up to the .99th percentile of ps}
 
