@@ -7,7 +7,8 @@
 runRiskStratifiedEstimation(cohortMethodData, population, modelSettings, save,
   testSplit = "person", testFraction = 0.3, nfold = 10, riskStrata = 4,
   weightsType = "ATE", useStabilizedWeights = FALSE, extremeWeights,
-  truncationLevels, cvLikeRepetitions = 50, stepTruncationLevels, timePoint,
+  truncationLevels, cvLikeRepetitions = 50, stepTruncationLevels,
+  fixedTruncationLevels = c(0.01, 0.99), timePoint,
   excludeCovariateIds = NULL, binary = TRUE, includeAllOutcomes = TRUE,
   requireTimeAtRisk = TRUE, plpPlot = FALSE, psThreads = 1,
   priorType = "laplace", verbosity = "INFO", analysisId = NULL)
@@ -40,6 +41,8 @@ runRiskStratifiedEstimation(cohortMethodData, population, modelSettings, save,
 \item{cvLikeRepetitions}{The number of times to repeat the 2-fold cross-validations}
 
 \item{stepTruncationLevels}{The steps for the grid of possible truncation levels}
+
+\item{fixedTruncationLevels}{The levels for fixed truncation weighting}
 
 \item{timePoint}{The time point of interest for the calculation of the absolute risk reduction}
 

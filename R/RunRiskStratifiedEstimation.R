@@ -9,6 +9,7 @@
 #' @param nfold The number of folds for cross validation
 #' @param riskStrata The number of risk strata on which to perform the analysis
 #' @param weightsType The type of weights for the balancing of covariates. Should be either 'ATE' or 'ATT'
+#' @param fixedTruncationLevels The levels for fixed truncation weighting
 #' @param useStabilizedWeights Should stabilized weights be used?
 #' @param extremeWeights The way to assess extreme weights. Possible options are 'unadjusted, 'cvLikeTruncation', 'crumpTrimming'
 #' @param truncationLevels The level of truncation expressed in percentiles of the propensity score. Only symmetric truncation is available. E.g. truncationLevels =.01 will assess truncation up to the .99th percentile of ps
@@ -46,7 +47,7 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
                                         testSplit = 'person', testFraction = .3, nfold = 10,
                                         riskStrata = 4, weightsType = 'ATE',
                                         useStabilizedWeights = FALSE, extremeWeights, truncationLevels,
-                                        cvLikeRepetitions  = 50, stepTruncationLevels,
+                                        cvLikeRepetitions  = 50, stepTruncationLevels, fixedTruncationLevels = c(.01, .99),
                                         timePoint, excludeCovariateIds = NULL, binary = TRUE, includeAllOutcomes = TRUE,
                                         requireTimeAtRisk = TRUE, plpPlot = FALSE, psThreads = 1, priorType = 'laplace',
                                         verbosity = 'INFO', analysisId = NULL){
