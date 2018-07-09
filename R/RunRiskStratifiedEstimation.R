@@ -240,8 +240,12 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
                                                  calculateWeights = FALSE,
                                                  weightsType = weightsType,
                                                  useStabilizedWeights = useStabilizedWeights,
-                                                 truncatedWeights = truncatedWeights,
-                                                 truncationQuantiles = truncationQuantiles)
+                                                 extremeWeights = extremeWeights,
+                                                 fixedTruncationLevels = fixedTruncationLevels,
+                                                 truncationLevels = truncationLevels,
+                                                 cvLikeRepetitions = cvLikeRepetitions,
+                                                 stepTruncationLevels = stepTruncationLevels)
+
   saveRDS(RelativeRiskReduction, file = file.path(analysisPath, 'relativeRiskReduction.rds'))
 
 
