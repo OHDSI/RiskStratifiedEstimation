@@ -219,10 +219,12 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
     dataKM[[i]] <- weightedKM(ps[[i]],
                               calculateWeights = FALSE,
                               weightsType = weightsType,
-                              fixedTruncationLevels = fixedTruncationLevels,
-                              truncatedWeights = truncatedWeights,
                               useStabilizedWeights = useStabilizedWeights,
-                              truncationQuantiles = truncationQuantiles)
+                              extremeWeights = extremeWeights,
+                              fixedTruncationLevels = fixedTruncationLevels,
+                              truncationLevels = truncationLevels,
+                              cvLikeRepetitions = cvLikeRepetitions,
+                              stepTruncationLevels = stepTruncationLevels)
   }
 
   saveRDS(dataKM, file = file.path(analysisPath, 'dataKM.rds'))
