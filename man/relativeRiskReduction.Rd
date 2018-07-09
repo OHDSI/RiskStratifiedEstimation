@@ -5,21 +5,28 @@
 \title{Creates a data frame with hazard ratios within risk strata}
 \usage{
 relativeRiskReduction(ps, calculateWeights = TRUE, weightsType = "ATE",
-  useStabilizedWeights = TRUE, truncatedWeights = TRUE,
-  truncationQuantiles = c(0.01, 0.99))
+  useStabilizedWeights = TRUE, extremeWeights,
+  fixedTruncationLevels = c(0.01, 0.99), truncationLevels = 0.1,
+  cvLikeRepetitions, stepTruncationLevels)
 }
 \arguments{
 \item{ps}{A list with the propensity data frames as generated from \code{\link[CohortMethod]{createPs}}}
 
 \item{calculateWeights}{Whether to calculate the weights using \code{\link[RiskStratifiedEstimation]{createIPW}}}
 
-\item{weightsType}{The type of weights to be used. Possible values are 'ATE' or 'ATT'}
+\item{weightsType}{The type of the weights to be used. Allowed options are 'ATE' for average treatment effect and 'ATT' for average treatment effect on the treated weights}
 
-\item{useStabilizedWeights}{Whether to use stabilized weights.}
+\item{useStabilizedWeights}{Should stabilized weights be used?}
 
-\item{truncatedWeights}{Whether to truncate the weights}
+\item{extremeWeights}{The way to assess extreme weights. Possible options are 'unadjusted, 'cvLikeTruncation', 'crumpTrimming', 'fixedTruncaiton'}
 
-\item{truncationQuantiles}{The quantiles used to truncate the weights}
+\item{fixedTruncationLevels}{The levels for fixed truncation weighting}
+
+\item{truncationLevels}{The level of truncation expressed in percentiles of the propensity score. Only symmetric truncation is available. E.g. truncationLevels =.01 will assess truncation up to the .99th percentile of ps}
+
+\item{cvLikeRepetitions}{The number of times to repeat the 2-fold cross-validations}
+
+\item{stepTruncationLevels}{The steps for the grid of possible truncation levels}
 }
 \value{
 A data frame with hazard ratios along with confidence intervals
