@@ -7,8 +7,11 @@
 #' @param calculateWeights Should the weights be calculated?
 #' @param weightsType The type of the weights to be used. Allowed options are 'ATE' for average treatment effect and 'ATT' for average treatment effect on the treated weights
 #' @param useStabilizedWeights Should stabilized weights be used?
-#' @param truncatedWeights Should truncated weights be used? If FALSE, then stabilized weights are used instead
-#' @param truncationQuantiles The quantiles to perform weight truncation
+#' @param extremeWeights The way to assess extreme weights. Possible options are 'unadjusted, 'cvLikeTruncation', 'crumpTrimming', 'fixedTruncaiton'
+#' @param fixedTruncationLevels The levels for fixed truncation weighting
+#' @param truncationLevels The level of truncation expressed in percentiles of the propensity score. Only symmetric truncation is available. E.g. truncationLevels =.01 will assess truncation up to the .99th percentile of ps
+#' @param cvLikeRepetitions The number of times to repeat the 2-fold cross-validations
+#' @param stepTruncationLevels The steps for the grid of possible truncation levels
 #' @param showNotBalancedCovariateIds Show covariate ids that were not balanced after weighting?
 #'
 #' @return The covariate balance plot
@@ -21,8 +24,11 @@ plotCovariateBalance <- function(ps,
                                  calculateWeights = TRUE,
                                  weightsType = 'ATE',
                                  useStabilizedWeights = TRUE,
-                                 truncatedWeights = TRUE,
-                                 truncationQuantiles = c(.01, .99),
+                                 extremeWeights,
+                                 fixedTruncationLevels = c(.01, .99),
+                                 truncationLevels = .1,
+                                 cvLikeRepetitions,
+                                 stepTruncationLevels,
                                  showNotBalancedCovariateIds = TRUE){
 
   if(calculateWeights)

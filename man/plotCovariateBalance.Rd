@@ -5,9 +5,9 @@
 \title{Plots the covariate balance before and after balancing}
 \usage{
 plotCovariateBalance(ps, cohortMethodData, calculateWeights = TRUE,
-  weightsType = "ATE", useStabilizedWeights = TRUE,
-  truncatedWeights = TRUE, truncationQuantiles = c(0.01, 0.99),
-  showNotBalancedCovariateIds = TRUE)
+  weightsType = "ATE", useStabilizedWeights = TRUE, extremeWeights,
+  fixedTruncationLevels = c(0.01, 0.99), truncationLevels = 0.1,
+  cvLikeRepetitions, stepTruncationLevels, showNotBalancedCovariateIds = TRUE)
 }
 \arguments{
 \item{ps}{A propensity score data frame as created from \code{\link[CohortMethod]{createPs}}}
@@ -20,9 +20,15 @@ plotCovariateBalance(ps, cohortMethodData, calculateWeights = TRUE,
 
 \item{useStabilizedWeights}{Should stabilized weights be used?}
 
-\item{truncatedWeights}{Should truncated weights be used? If FALSE, then stabilized weights are used instead}
+\item{extremeWeights}{The way to assess extreme weights. Possible options are 'unadjusted, 'cvLikeTruncation', 'crumpTrimming', 'fixedTruncaiton'}
 
-\item{truncationQuantiles}{The quantiles to perform weight truncation}
+\item{fixedTruncationLevels}{The levels for fixed truncation weighting}
+
+\item{truncationLevels}{The level of truncation expressed in percentiles of the propensity score. Only symmetric truncation is available. E.g. truncationLevels =.01 will assess truncation up to the .99th percentile of ps}
+
+\item{cvLikeRepetitions}{The number of times to repeat the 2-fold cross-validations}
+
+\item{stepTruncationLevels}{The steps for the grid of possible truncation levels}
 
 \item{showNotBalancedCovariateIds}{Show covariate ids that were not balanced after weighting?}
 }

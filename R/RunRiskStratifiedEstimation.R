@@ -194,16 +194,19 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
   parallel::stopCluster(cl)
   close(pb)
 
+  saveRDS(ps, file.path(analysisPath, 'ps.rds'))
+
   for(i in 1:length(ps))
     ps[[i]] <- createIPW(ps[[i]],
                          weightsType = weightsType,
                          useStabilizedWeights = useStabilizedWeights,
                          extremeWeights = extremeWeights,
+                         fixedTruncationLevels = fixedTruncationLevels,
                          truncationLevels = truncationLevels,
                          cvLikeRepetitions = cvLikeRepetitions,
                          stepTruncationLevels = stepTruncationLevels)
 
-  saveRDS(ps, file.path(analysisPath, 'ps.rds'))
+
 
 
   #########################################
@@ -216,6 +219,7 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
     dataKM[[i]] <- weightedKM(ps[[i]],
                               calculateWeights = FALSE,
                               weightsType = weightsType,
+                              fixedTruncationLevels = fixedTruncationLevels,
                               truncatedWeights = truncatedWeights,
                               useStabilizedWeights = useStabilizedWeights,
                               truncationQuantiles = truncationQuantiles)
