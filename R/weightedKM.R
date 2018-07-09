@@ -4,10 +4,13 @@
 #'
 #' @param ps A data frame including the propensity scores as generated from \code{\link[CohortMethod]{createPs}}
 #' @param calculateWeights Whether to calculate the weights using \code{\link[RiskStratifiedEstimation]{createIPW}}
-#' @param weightsType The type of weights to be used. Possible values are 'ATE' or 'ATT'
-#' @param useStabilizedWeights Whether to use stabilized weights.
-#' @param truncatedWeights Whether to truncate the weights
-#' @param truncationQuantiles The quantiles used to truncate the weights
+#' @param weightsType The type of the weights to be used. Allowed options are 'ATE' for average treatment effect and 'ATT' for average treatment effect on the treated weights
+#' @param useStabilizedWeights Should stabilized weights be used?
+#' @param extremeWeights The way to assess extreme weights. Possible options are 'unadjusted, 'cvLikeTruncation', 'crumpTrimming', 'fixedTruncaiton'
+#' @param fixedTruncationLevels The levels for fixed truncation weighting
+#' @param truncationLevels The level of truncation expressed in percentiles of the propensity score. Only symmetric truncation is available. E.g. truncationLevels =.01 will assess truncation up to the .99th percentile of ps
+#' @param cvLikeRepetitions The number of times to repeat the 2-fold cross-validations
+#' @param stepTruncationLevels The steps for the grid of possible truncation levels
 #'
 #' @return A data frame with the Kaplan-Meier estimates
 #'
@@ -17,8 +20,11 @@ weightedKM <- function(ps,
                        calculateWeights = TRUE,
                        weightsType = 'ATE',
                        useStabilizedWeights = TRUE,
-                       truncatedWeights = TRUE,
-                       truncationQuantiles = c(.01, .99)){
+                       extremeWeights,
+                       fixedTruncationLevels = c(.01, .99),
+                       truncationLevels = .1,
+                       cvLikeRepetitions,
+                       stepTruncationLevels){
 
   if(calculateWeights)
     ps <- createIPW(ps,
