@@ -2,7 +2,7 @@
 
 export(absoluteRiskReduction)
 export(cmToPlpData)
-export(comparisonPlotGeneral)
+export(comparisonPlot)
 export(createIPW)
 export(createStudyPopulation)
 export(cvLikeTruncation)
