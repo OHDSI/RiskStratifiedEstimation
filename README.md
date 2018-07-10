@@ -3,7 +3,7 @@ RiskStratifiedEstimation
 
 Introduction
 ============
-CohortMethod is an R package for performing new-user cohort studies in an observational database in the OMOP Common Data Model.
+RiskStratifiedEstimation is an R package for performing risk stratified analyses as a complementary approach to subgroup analyses in an observational database in the OMOP Common Data Model.
 
 Features
 ========
