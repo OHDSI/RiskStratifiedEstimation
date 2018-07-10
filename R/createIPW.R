@@ -49,7 +49,7 @@ createIPW <- function(ps,
   }
   else if(extremeWeights == 'fixedTruncation')
     ps <-  dplyr::mutate(ps, weights = pmin(pmax(weights, quantile(weights, fixedTruncationLevels[1])),
-                                            quantile(weights, fixedTruncationLevels[1])))
+                                            quantile(weights, fixedTruncationLevels[2])))
 
 
 
