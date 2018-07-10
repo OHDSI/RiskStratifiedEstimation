@@ -6,8 +6,7 @@
 #' @param weightsType The type of the weights to be used. Allowed options are 'ATE' for average treatment effect and 'ATT' for average treatment effect on the treated weights
 #' @param useStabilizedWeights Should stabilized weights be used?
 #' @param extremeWeights The way to assess extreme weights. Possible options are 'unadjusted, 'cvLikeTruncation', 'crumpTrimming', 'fixedTruncation'
-#' @param fixedTruncationLevels The levels for fixed truncation weighting
-#' @param truncationLevels The level of truncation expressed in percentiles of the propensity score. Only symmetric truncation is available. E.g. truncationLevels =.01 will assess truncation up to the .99th percentile of ps
+#' @param truncationLevels The level of truncation expressed in percentiles of the propensity score. If extremeWeights is 'fixedTruncation' then the weights will be truncated at the levels defined here. If extremeWeights is 'cvLikeTruncation' then the data adaptive procedure will only assess truncation up to the levels defined here
 #' @param cvLikeRepetitions The number of times to repeat the 2-fold cross-validations
 #' @param stepTruncationLevels The steps for the grid of possible truncation levels
 #'
@@ -19,8 +18,7 @@ createIPW <- function(ps,
                       weightsType = 'ATE',
                       useStabilizedWeights = TRUE,
                       extremeWeights = NULL,
-                      fixedTruncationLevels = c(.01, .99),
-                      truncationLevels = .1,
+                      truncationLevels = c(.01, .99),
                       cvLikeRepetitions,
                       stepTruncationLevels){
 
@@ -48,8 +46,8 @@ createIPW <- function(ps,
 
   }
   else if(extremeWeights == 'fixedTruncation')
-    ps <-  dplyr::mutate(ps, weights = pmin(pmax(weights, quantile(weights, fixedTruncationLevels[1])),
-                                            quantile(weights, fixedTruncationLevels[2])))
+    ps <-  dplyr::mutate(ps, weights = pmin(pmax(weights, quantile(weights, truncationLevels[1])),
+                                            quantile(weights, truncationLevels[2])))
 
 
 

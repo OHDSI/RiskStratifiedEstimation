@@ -9,10 +9,9 @@
 #' @param nfold The number of folds for cross validation
 #' @param riskStrata The number of risk strata on which to perform the analysis
 #' @param weightsType The type of weights for the balancing of covariates. Should be either 'ATE' or 'ATT'
-#' @param fixedTruncationLevels The levels for fixed truncation weighting
 #' @param useStabilizedWeights Should stabilized weights be used?
-#' @param extremeWeights The way to assess extreme weights. Possible options are 'unadjusted, 'cvLikeTruncation', 'crumpTrimming'
-#' @param truncationLevels The level of truncation expressed in percentiles of the propensity score. Only symmetric truncation is available. E.g. truncationLevels =.01 will assess truncation up to the .99th percentile of ps
+#' @param extremeWeights The way to assess extreme weights. Possible options are 'unadjusted, 'cvLikeTruncation', 'crumpTrimming' and 'fixedTruncation'
+#' @param truncationLevels The level of truncation expressed in percentiles of the propensity score. If extremeWeights is 'fixedTruncation' then the weights will be truncated at the levels defined here. If extremeWeights is 'cvLikeTruncation' then the data adaptive procedure will only assess truncation up to the levels defined here
 #' @param cvLikeRepetitions The number of times to repeat the 2-fold cross-validations
 #' @param stepTruncationLevels The steps for the grid of possible truncation levels
 #' @param timePoint The time point of interest for the calculation of the absolute risk reduction
@@ -46,8 +45,8 @@
 runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSettings, save,
                                         testSplit = 'person', testFraction = .3, nfold = 10,
                                         riskStrata = 4, weightsType = 'ATE',
-                                        useStabilizedWeights = FALSE, extremeWeights, truncationLevels,
-                                        cvLikeRepetitions  = 50, stepTruncationLevels, fixedTruncationLevels = c(.01, .99),
+                                        useStabilizedWeights = FALSE, extremeWeights = 'fixedTruncation', truncationLevels,
+                                        cvLikeRepetitions  = 50, stepTruncationLevels,
                                         timePoint, excludeCovariateIds = NULL, binary = TRUE, includeAllOutcomes = TRUE,
                                         requireTimeAtRisk = TRUE, plpPlot = FALSE, psThreads = 1, priorType = 'laplace',
                                         verbosity = 'INFO', analysisId = NULL){
@@ -201,7 +200,6 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
                          weightsType = weightsType,
                          useStabilizedWeights = useStabilizedWeights,
                          extremeWeights = extremeWeights,
-                         fixedTruncationLevels = fixedTruncationLevels,
                          truncationLevels = truncationLevels,
                          cvLikeRepetitions = cvLikeRepetitions,
                          stepTruncationLevels = stepTruncationLevels)
@@ -221,7 +219,6 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
                               weightsType = weightsType,
                               useStabilizedWeights = useStabilizedWeights,
                               extremeWeights = extremeWeights,
-                              fixedTruncationLevels = fixedTruncationLevels,
                               truncationLevels = truncationLevels,
                               cvLikeRepetitions = cvLikeRepetitions,
                               stepTruncationLevels = stepTruncationLevels)
@@ -241,7 +238,6 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
                                                  weightsType = weightsType,
                                                  useStabilizedWeights = useStabilizedWeights,
                                                  extremeWeights = extremeWeights,
-                                                 fixedTruncationLevels = fixedTruncationLevels,
                                                  truncationLevels = truncationLevels,
                                                  cvLikeRepetitions = cvLikeRepetitions,
                                                  stepTruncationLevels = stepTruncationLevels)

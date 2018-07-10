@@ -19,8 +19,7 @@ relativeRiskReduction <- function(ps,
                                   weightsType = 'ATE',
                                   useStabilizedWeights = TRUE,
                                   extremeWeights,
-                                  fixedTruncationLevels = c(.01, .99),
-                                  truncationLevels = .1,
+                                  truncationLevels,
                                   cvLikeRepetitions,
                                   stepTruncationLevels){
 

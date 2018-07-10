@@ -5,8 +5,7 @@
 \title{Calculates and plots weighted Kaplan-Meier estimates}
 \usage{
 weightedKM(ps, calculateWeights = TRUE, weightsType = "ATE",
-  useStabilizedWeights = TRUE, extremeWeights,
-  fixedTruncationLevels = c(0.01, 0.99), truncationLevels = 0.1,
+  useStabilizedWeights = TRUE, extremeWeights, truncationLevels,
   cvLikeRepetitions, stepTruncationLevels)
 }
 \arguments{
@@ -20,9 +19,7 @@ weightedKM(ps, calculateWeights = TRUE, weightsType = "ATE",
 
 \item{extremeWeights}{The way to assess extreme weights. Possible options are 'unadjusted, 'cvLikeTruncation', 'crumpTrimming', 'fixedTruncaiton'}
 
-\item{fixedTruncationLevels}{The levels for fixed truncation weighting}
-
-\item{truncationLevels}{The level of truncation expressed in percentiles of the propensity score. Only symmetric truncation is available. E.g. truncationLevels =.01 will assess truncation up to the .99th percentile of ps}
+\item{truncationLevels}{The level of truncation expressed in percentiles of the propensity score. If extremeWeights is 'fixedTruncation' then the weights will be truncated at the levels defined here. If extremeWeights is 'cvLikeTruncation' then the data adaptive procedure will only assess truncation up to the levels defined here}
 
 \item{cvLikeRepetitions}{The number of times to repeat the 2-fold cross-validations}
 
