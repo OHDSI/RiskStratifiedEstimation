@@ -29,7 +29,10 @@ comparisonPlot <- function(dataARR,
   dataARRCombined$riskStratum <- factor(paste0('Q', dataARRCombined$riskStratum))
   dataRRRCombined$riskStratum <- factor(paste0('Q', dataRRRCombined$riskStratum))
 
-  HRPlot <- ggplot2::ggplot(dataRRRCombined, ggplot2::aes(x = riskStratum, y = HR, group = outcome, color = outcome)) +
+  HRPlot <- ggplot2::ggplot(dataRRRCombined, ggplot2::aes(x = riskStratum,
+                                                          y = HR,
+                                                          group = outcome,
+                                                          color = outcome)) +
     ggplot2::geom_point(ggplot2::aes(color  = outcome, shape = outcome),
                         size = 3,
                         position = ggplot2::position_dodge(w = position_dodge.w)) +
@@ -41,9 +44,14 @@ comparisonPlot <- function(dataARR,
     ggplot2::ylab('Hazard Ratio') +
     ggplot2::coord_cartesian(ylim = ylimRRR) +
     ggplot2::theme_minimal() +
-    ggplot2::theme(legend.position = legend.position, legend.title = ggplot2::element_blank(), legend.text = ggplot2::element_text(face = 'bold'))
+    ggplot2::theme(legend.position = legend.position,
+                   legend.title = ggplot2::element_blank(),
+                   legend.text = ggplot2::element_text(face = 'bold'))
 
-  ARRPlot <- ggplot2::ggplot(dataARRCombined, ggplot2::aes(x = riskStratum, y = ARR, group = outcome, color = outcome)) +
+  ARRPlot <- ggplot2::ggplot(dataARRCombined, ggplot2::aes(x = riskStratum,
+                                                           y = ARR,
+                                                           group = outcome,
+                                                           color = outcome)) +
     ggplot2::geom_point(ggplot2::aes(color= outcome, shape = outcome),
                         size = 3,
                         position = ggplot2::position_dodge(w = position_dodge.w)) +
