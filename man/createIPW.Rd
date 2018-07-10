@@ -15,7 +15,7 @@ createIPW(ps, weightsType = "ATE", useStabilizedWeights = TRUE,
 
 \item{useStabilizedWeights}{Should stabilized weights be used?}
 
-\item{extremeWeights}{The way to assess extreme weights. Possible options are 'unadjusted, 'cvLikeTruncation', 'crumpTrimming', 'fixedTruncaiton'}
+\item{extremeWeights}{The way to assess extreme weights. Possible options are 'unadjusted, 'cvLikeTruncation', 'crumpTrimming', 'fixedTruncation'}
 
 \item{fixedTruncationLevels}{The levels for fixed truncation weighting}
 
