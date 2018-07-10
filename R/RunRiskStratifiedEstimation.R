@@ -87,7 +87,7 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
   # get ids
   targetId <- attr(population, "metaData")$targetId
   comparatorId <- attr(population, "metaData")$comparatorId
-  outcomeId <- attr(populationCm, 'metaData')$call$outcomeId
+  outcomeId <- attr(population, 'metaData')$call$outcomeId
 
   OhdsiRTools::logInfo(sprintf('%-20s%s', 'AnalysisID: ',analysisId))
   OhdsiRTools::logInfo(sprintf('%-20s%s', 'targetId: ', targetId))
