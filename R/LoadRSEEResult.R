@@ -1,4 +1,4 @@
-#' Loads the result from \code{\link{runRiskStratifiedEstimation}}
+#' Loads the result from runRiskStratifiedEstimation
 #'
 #' @param location The location wher the result of \code{\link{runRiskStratifiedEstimation}} was saved. By default it is the folder called RSEE along with the date and time of the start
 #'

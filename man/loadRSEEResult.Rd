@@ -2,7 +2,7 @@
 % Please edit documentation in R/LoadRSEEResult.R
 \name{loadRSEEResult}
 \alias{loadRSEEResult}
-\title{Loads the result from \code{\link{runRiskStratifiedEstimation}}}
+\title{Loads the result from runRiskStratifiedEstimation}
 \usage{
 loadRSEEResult(location)
 }
@@ -13,5 +13,5 @@ loadRSEEResult(location)
 An object with all the output created from runRiskStratifiedEstimation
 }
 \description{
-Loads the result from \code{\link{runRiskStratifiedEstimation}}
+Loads the result from runRiskStratifiedEstimation
 }
