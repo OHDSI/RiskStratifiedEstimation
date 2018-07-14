@@ -244,17 +244,25 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
 
   saveRDS(RelativeRiskReduction, file = file.path(analysisPath, 'relativeRiskReduction.rds'))
 
-  cases <- data.frame(riskStratum = numeric(),
-                      outcomeTreated = numeric(),
-                      outcomeComparator = numeric())
-
+  treatedCases <- data.frame(riskStratum = numeric(),
+                             outcomeRate = numeric())
+  comparatorCases <- data.frame(riskStratum = numeric(),
+                                outcomeRate = numeric())
   for(i in 1:riskStrata){
 
-    cases[i, 1] <- i
-    cases[i, 2] <- sum(subset(ps[[i]], treatment == 1)$outcomeCount)
-    cases[i, 3] <- sum(subset(ps[[i]], treatment == 0)$outcomeCount)
+    treatedSubset <- subset(ps[[i]], treatment == 1)
+    comparatorSubset <- subset(ps[[i]], treatment == 0)
+    treatedCases[i, 1] <- comparatorCases[i, 1] <- i
+    treatedCases[i, 2] <- sum(treatedSubset$outcomeCount*treatedSubset$weights)/sum(treatedSubset$weights)
+    comparatorCases[i, 2] <- sum(comparatorSubset$outcomeCount*comparatorSubset$weights)/sum(comparatorSubset$weights)
 
   }
+
+
+  cases <- dplyr::bind_rows(data = treatedCases, comparatorCases, .id = 'cohort')
+  cases$cohort <- factor(cases$cohort, levels = 1:2, labels = c('treated', 'comparator'))
+  cases$riskStratum <- paste('Q', cases$riskStratum, sep = '')
+
 
 
 
