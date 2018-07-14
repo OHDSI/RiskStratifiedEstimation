@@ -244,11 +244,26 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
 
   saveRDS(RelativeRiskReduction, file = file.path(analysisPath, 'relativeRiskReduction.rds'))
 
+  cases <- data.frame(riskStratum = numeric(),
+                      outcomeTreated = numeric(),
+                      outcomeComparator = numeric())
+
+  for(i in 1:riskStrata){
+
+    cases[i, 1] <- i
+    cases[i, 2] <- sum(subset(ps[[i]], treatment == 1)$outcomeCount)
+    cases[i, 3] <- sum(subset(ps[[i]], treatment == 0)$outcomeCount)
+
+  }
+
+
+
 
   results <- list(ps = ps,
                   mapMatrix = mapMatrix,
                   dataKM = dataKM,
                   absoluteRiskReduction = AbsoluteRiskReduction,
-                  relativeRiskReduction = RelativeRiskReduction)
+                  relativeRiskReduction = RelativeRiskReduction,
+                  cases = cases)
   return(results)
 }
