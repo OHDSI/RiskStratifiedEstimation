@@ -1,6 +1,6 @@
 #' Loads the result from runRiskStratifiedEstimation
 #'
-#' @param location The location wher the result of \code{\link{runRiskStratifiedEstimation}} was saved. By default it is the folder called RSEE along with the date and time of the start
+#' @param location The location where the result of \code{\link{runRiskStratifiedEstimation}} was saved. By default it is the folder called RSEE along with the date and time of the start
 #'
 #' @return An object with all the output created from runRiskStratifiedEstimation
 #' @export
