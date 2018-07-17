@@ -261,7 +261,7 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
 
 
   cases <- dplyr::bind_rows(data = treatedCases, comparatorCases, .id = 'cohort')
-  cases$cohort <- factor(cases$cohort, levels = 1:2, labels = c('treated', 'comparator'))
+  cases$cohort <- factor(cases$cohort, levels = 1:2, labels = c('treatement', 'comparator'))
   cases$riskStratum <- paste('Q', cases$riskStratum, sep = '')
 
 
