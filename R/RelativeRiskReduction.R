@@ -30,12 +30,14 @@ relativeRiskReduction <- function(ps,
   nStrata <- length(ps)
   for(i in 1:length(ps)){
 
-    if(is.null(ps[[i]]$weights))
+    if(calculateWeights)
       ps[[i]] <- createIPW(ps[[i]],
                            weightsType = weightsType,
                            useStabilizedWeights = useStabilizedWeights,
-                           truncatedWeights = truncatedWeights,
-                           truncationQuantiles = truncationQuantiles)
+                           extremeWeights = extremeWeights,
+                           truncationLevels = truncationLevels,
+                           cvLikeRepetitions = cvLikeRepetitions,
+                           stepTruncationLevels = stepTruncationLevels)
 
 
     ps[[i]]$outcomeCount <- ifelse(ps[[i]]$outcomeCount != 0, 1, 0)
