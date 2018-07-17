@@ -250,8 +250,9 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
                                 outcomeRate = numeric())
   for(i in 1:riskStrata){
 
-    treatedSubset <- subset(ps[[i]], treatment == 1)
-    comparatorSubset <- subset(ps[[i]], treatment == 0)
+    ps[[i]]$outcomeCount <- ifelse(ps[[i]]$outcomeCount > 0, 1, 0)
+    treatedSubset <- subset(ps[[i]], treatment == 1 & survivalTime > timePoint)
+    comparatorSubset <- subset(ps[[i]], treatment == 0 & survivalTime > timePoint)
     treatedCases[i, 1] <- comparatorCases[i, 1] <- i
     treatedCases[i, 2] <- sum(treatedSubset$outcomeCount*treatedSubset$weights)/sum(treatedSubset$weights)
     comparatorCases[i, 2] <- sum(comparatorSubset$outcomeCount*comparatorSubset$weights)/sum(comparatorSubset$weights)
