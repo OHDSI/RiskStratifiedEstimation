@@ -38,12 +38,12 @@ relativeRiskReduction <- function(ps,
                            truncationQuantiles = truncationQuantiles)
 
 
-    ps[[i]]$failures <- ifelse(ps[[i]]$outcomeCount != 0, 1, 0)
-    fit <- survival::coxph(survival::Surv(survivalTime, failures) ~ treatment +cluster(subjectId),
-                           data = ps[[i]],
-                           weights = ps$weights)
-    confintFit <- exp(confint(fit))
-    HRDataFrame[i, ] <-  c(exp(fit$coefficients), confintFit, i)
+    ps[[i]]$outcomeCount <- ifelse(ps[[i]]$outcomeCount != 0, 1, 0)
+    summaryFit <- summary(survival::coxph(survival::Surv(survivalTime, outcomeCount) ~ treatment,
+                                          data = ps[[i]],
+                                          weights = ps[[i]]$weights, robust = TRUE))
+
+    HRDataFrame[i, ] <- c(summaryFit$conf.int[c(1, 3:4)], i)
 
   }
   return(HRDataFrame)
