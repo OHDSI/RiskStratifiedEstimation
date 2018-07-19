@@ -248,24 +248,37 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
                              outcomeRate = numeric())
   comparatorCases <- data.frame(riskStratum = numeric(),
                                 outcomeRate = numeric())
+
   for(i in 1:riskStrata){
 
-    ps[[i]]$outcomeCount <- ifelse(ps[[i]]$outcomeCount > 0, 1, 0)
-    treatedSubset <- subset(ps[[i]], treatment == 1 & survivalTime <= timePoint)
-    comparatorSubset <- subset(ps[[i]], treatment == 0 & survivalTime <= timePoint)
-    treatedCases[i, 1] <- comparatorCases[i, 1] <- i
-    treatedCases[i, 2] <- sum(treatedSubset$outcomeCount*treatedSubset$weights)/sum(treatedSubset$weights)
-    comparatorCases[i, 2] <- sum(comparatorSubset$outcomeCount*comparatorSubset$weights)/sum(comparatorSubset$weights)
+    treatmentEvents <- subset(dataKM[[i]], eventTime == 1 & cohort == 'treatment')
+    sortTimes <- sort(c(timePoint, treatmentEvents$time))
+    if(sum(sortTimes == timePoint) == 1){
+      positionTreatment <- which(sortTimes == timePoint)
+      survivalTreatment <- 1 - treatmentEvents$S[positionTreatment - 1]
+    }else{
+      positionTreatment <- which(treatmentEvents$time == timePoint)
+      survivalTreatment <- 1 - treatmentEvents$S[positionTreatment]
+    }
+
+    comparatorEvents <- subset(dataKM[[i]], eventTime == 1 & cohort == 'comparator')
+    sortTimes <- sort(c(timePoint, comparatorEvents$time))
+    if(sum(sortTimes == timePoint) == 1){
+      positionComparator <- which(sortTimes == timePoint)
+      survivalComparator <- 1 - comparatorEvents$S[positionComparator - 1]
+    }else{
+      positionComparator <- which(comparatorEvents$time == timePoint)
+      survivalComparator <- 1 - comparatorEvents$S[positionComparator]
+    }
+
+    treatedCases[i, ] <- c(i, survivalTreatment)
+    comparatorCases[i, ] <- c(i, survivalComparator)
 
   }
-
 
   cases <- dplyr::bind_rows(data = treatedCases, comparatorCases, .id = 'cohort')
   cases$cohort <- factor(cases$cohort, levels = 1:2, labels = c('treatement', 'comparator'))
   cases$riskStratum <- paste('Q', cases$riskStratum, sep = '')
-
-
-
 
 
   results <- list(ps = ps,
