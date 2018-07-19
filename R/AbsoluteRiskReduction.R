@@ -17,7 +17,7 @@ absoluteRiskReduction <- function(dataKM,
 
   for(i in 1:length(dataKM)){
 
-    treatmentEvents <- subset(res$dataKM[[i]], eventTime == 1 & cohort == 'treatment')
+    treatmentEvents <- subset(dataKM[[i]], eventTime == 1 & cohort == 'treatment')
     sortTimes <- sort(c(timePoint, treatmentEvents$time))
     if(sum(sortTimes == timePoint) == 1){
       positionTreatment <- which(sortTimes == timePoint)
@@ -27,7 +27,7 @@ absoluteRiskReduction <- function(dataKM,
       survivalTreatment <- treatmentEvents$S[positionTreatment]
     }
 
-    comparatorEvents <- subset(res$dataKM[[i]], eventTime == 1 & cohort == 'comparator')
+    comparatorEvents <- subset(dataKM[[i]], eventTime == 1 & cohort == 'comparator')
     sortTimes <- sort(c(timePoint, comparatorEvents$time))
     if(sum(sortTimes == timePoint) == 1){
       positionComparator <- which(sortTimes == timePoint)
