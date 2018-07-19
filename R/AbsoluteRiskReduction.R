@@ -17,33 +17,29 @@ absoluteRiskReduction <- function(dataKM,
 
   for(i in 1:length(dataKM)){
 
-    treatmentKM <- subset(dataKM[[i]], cohort == 'treatment')
-    comparatorKM <- subset(dataKM[[i]], cohort == 'comparator')
-
-    p <- which(treatmentKM$time >= timePoint)[1]
-
-    if(timePoint < treatmentKM$time[p] & timePoint >= treatmentKM$time[p - 1]){
-      survivalProbabilityTreatment <- treatmentKM$S[p - 1]
-      p0Treatment <- p - 1
+    treatmentEvents <- subset(res$dataKM[[i]], eventTime == 1 & cohort == 'treatment')
+    sortTimes <- sort(c(timePoint, treatmentEvents$time))
+    if(sum(sortTimes == timePoint) == 1){
+      positionTreatment <- which(sortTimes == timePoint)
+      survivalTreatment <- treatmentEvents$S[positionTreatment - 1]
     }else{
-      survivalProbabilityTreatment <- treatmentKM$S[p]
-      p0Treatment <- p
+      positionTreatment <- which(treatmentEvents$time == timePoint)
+      survivalTreatment <- treatmentEvents$S[positionTreatment]
     }
 
-
-    p <- which(comparatorKM$time >= timePoint)[1]
-
-    if(timePoint < comparatorKM$time[p] & timePoint >= comparatorKM$time[p - 1]){
-      survivalProbabilityComparator <- comparatorKM$S[p - 1]
-      p0Comparator <- p - 1
+    comparatorEvents <- subset(res$dataKM[[i]], eventTime == 1 & cohort == 'comparator')
+    sortTimes <- sort(c(timePoint, comparatorEvents$time))
+    if(sum(sortTimes == timePoint) == 1){
+      positionComparator <- which(sortTimes == timePoint)
+      survivalComparator <- comparatorEvents$S[positionComparator - 1]
     }else{
-      survivalProbabilityComparator <- comparatorKM$S[p]
-      p0Comparator <- p
+      positionComparator <- which(comparatorEvents$time == timePoint)
+      survivalComparator <- comparatorEvents$S[positionTreatment]
     }
 
-    ARRvalue <- survivalProbabilityTreatment - survivalProbabilityComparator
-    seARR <- sqrt(comparatorKM$varS[p0Comparator] + treatmentKM$varS[p0Treatment])
-    ARRDataFrame[i, ] <- c(ARRvalue, ARRvalue - 1.96*seARR, ARRvalue + 1.96*seARR, i)
+    ARRValue <- survivalTreatment - survivalComparator
+    seARR <- sqrt(treatmentEvents$varS[positionTreatment] + comparatorEvents$varS[positionComparator])
+    ARRDataFrame[i, ] <- c(ARRValue, ARRValue - 1.96*seARR, ARRValue + 1.96*seARR, i)
 
   }
   ARRDataFrame
