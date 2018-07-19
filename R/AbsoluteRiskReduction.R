@@ -34,7 +34,7 @@ absoluteRiskReduction <- function(dataKM,
       survivalComparator <- comparatorEvents$S[positionComparator - 1]
     }else{
       positionComparator <- which(comparatorEvents$time == timePoint)
-      survivalComparator <- comparatorEvents$S[positionTreatment]
+      survivalComparator <- comparatorEvents$S[positionComparator]
     }
 
     ARRValue <- survivalTreatment - survivalComparator
