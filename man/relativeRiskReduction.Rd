@@ -24,8 +24,6 @@ relativeRiskReduction(ps, calculateWeights = TRUE, weightsType = "ATE",
 \item{cvLikeRepetitions}{The number of times to repeat the 2-fold cross-validations}
 
 \item{stepTruncationLevels}{The steps for the grid of possible truncation levels}
-
-\item{fixedTruncationLevels}{The levels for fixed truncation weighting}
 }
 \value{
 A data frame with hazard ratios along with confidence intervals
