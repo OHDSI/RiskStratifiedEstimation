@@ -68,7 +68,7 @@ comparisonPlot <- function(dataARR,
                            position = ggplot2::position_dodge(w = position_dodge.w)) +
     ggplot2::geom_hline(yintercept = 1, linetype = 'dashed', size = .8) +
     ggplot2::xlab('Risk Stratum') +
-    ggplot2::ylab('Relative \n Risk Reduction') +
+    ggplot2::ylab('Hazard Ratio') +
     ggplot2::coord_cartesian(ylim = ylimRRR) +
     ggplot2::theme_minimal() +
     ggplot2::theme(legend.title = ggplot2::element_blank(),
