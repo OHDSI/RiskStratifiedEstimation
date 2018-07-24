@@ -21,6 +21,7 @@ Imports: PatientLevelPrediction,
          ffbase, 
          ggplot2,
          gridExtra,
+         tidyr,
          doSNOW,
          survminer
 Depends: survival,

@@ -10,7 +10,6 @@
 #' @param ylimRRR The limits on the y-axis of the hazard ratio plot
 #' @param ylimARR The limits on the y-axis of the sbsolute risk reduction plot
 #' @param ylimCases The limits on the y-axis of the outcome rates bar plot
-#' @param legend.position The position of the legend in the plot
 #' @param position_dodge.w The amount of space between bullets in the ploit in the case of multiple outcomes
 #'
 #' @return A plot with hazard ratios and absolute risk reductions across risk strata
@@ -25,8 +24,6 @@ comparisonPlot <- function(dataARR,
                            ylimARR,
                            ylimRRR,
                            ylimCases = c(0, 1),
-                           legendPositionRisk = c(.15, .15),
-                           legendPositionRates =c(.15, .15),
                            position_dodge.w = .2){
 
 
@@ -63,6 +60,8 @@ comparisonPlot <- function(dataARR,
 
   if(is.data.frame(dataARR)){
     legendPositionRisk <- 'none'
+  } else{
+    legendPositionRisk <- 'bottom'
   }
 
 
