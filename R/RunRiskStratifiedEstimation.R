@@ -19,7 +19,7 @@
 #' @param binary Forces the outcomeCount to be 0 or 1 in the prediction step
 #' @param includeAllOutcomes (binary) indicating whether to include people with outcomes who are not observed for the whole at risk period
 #' @param requireTimeAtRisk Should subjects without time at risk be removed at the prediction step?
-#' @param plpPlot (binary) Should plots for the prediction step be generated?
+#' @param savePlpPlots (binary) Should plots for the prediction step be generated?
 #' @param psThreads The number of cores to use for the estimation of the propensity score. If 1 then serial approach is implemented
 #' @param analysisId Identifier of the analysis
 #' @param priorType The prior for the propensity score model
@@ -48,7 +48,7 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
                                         useStabilizedWeights = FALSE, extremeWeights = 'fixedTruncation', truncationLevels,
                                         cvLikeRepetitions  = 50, stepTruncationLevels,
                                         timePoint, excludeCovariateIds = NULL, binary = TRUE, includeAllOutcomes = TRUE,
-                                        requireTimeAtRisk = TRUE, plpPlot = FALSE, psThreads = 1, priorType = 'laplace',
+                                        requireTimeAtRisk = TRUE, savePlpPlots = FALSE, psThreads = 1, priorType = 'laplace',
                                         verbosity = 'INFO', analysisId = NULL){
 
   if(missing(verbosity)){
@@ -137,18 +137,10 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
     testSplit = testSplit,
     testFraction = testFraction,
     nfold = nfold,
-    save = save,
-    saveModel = TRUE
+    savePlpPlots = savePlpPlots,
+    saveDirectory = save,
+    savePlpResult = TRUE
   )
-
-
-  # PatientLevelPrediction::savePlpResult(resultsPrediction, dirPath = outputFolder)
-
-  # add plots and document to output folder
-  if(plpPlot)
-    PatientLevelPrediction::plotPlp(resultsPrediction,
-      file.path(save, 'Plots', resultsPrediction$analysisRef$analysisId, fsep = '\\'))
-
 
   #########################################
   # RISK STRATIFICATION
@@ -164,6 +156,8 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
   #########################################
   # RISK STRATIFIED ANALYSIS
   #########################################
+  OhdsiRTools::logInfo(logSep)
+  OhdsiRTools::logInfo('Estimating propensity scores')
 
   cl <- parallel::makePSOCKcluster(psThreads)
   doSNOW::registerDoSNOW(cl)
@@ -192,8 +186,10 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
   }
   parallel::stopCluster(cl)
   close(pb)
+  OhdsiRTools::logInfo(paste('Propensity score estimation took', round(Sys.time() - tt, 2), 'sec'))
 
   saveRDS(ps, file.path(analysisPath, 'ps.rds'))
+  OhdsiRTools::logInfo(paste('Saved propensity score estimates in', save))
 
   for(i in 1:length(ps))
     ps[[i]] <- createIPW(ps[[i]],
@@ -203,6 +199,7 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
                          truncationLevels = truncationLevels,
                          cvLikeRepetitions = cvLikeRepetitions,
                          stepTruncationLevels = stepTruncationLevels)
+  OhdsiRTools::logInfo(paste('Generated', weightsType, 'weights within risk strata'))
 
 
 
@@ -224,6 +221,8 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
                               stepTruncationLevels = stepTruncationLevels)
   }
 
+  OhdsiRTools::logInfo('Generated weighted Kaplan-Meier estimates within risk strata')
+
   saveRDS(dataKM, file = file.path(analysisPath, 'dataKM.rds'))
 
   #########################################
@@ -232,6 +231,8 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
   AbsoluteRiskReduction <- absoluteRiskReduction(dataKM,
                                                  timePoint)
   saveRDS(AbsoluteRiskReduction, file = file.path(analysisPath, 'absoluteRiskReduction.rds'))
+
+  OhdsiRTools::logInfo('Estimated absolute risk reduction within risk strata')
 
   RelativeRiskReduction <- relativeRiskReduction(ps,
                                                  calculateWeights = FALSE,
@@ -248,6 +249,8 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
                              outcomeRate = numeric())
   comparatorCases <- data.frame(riskStratum = numeric(),
                                 outcomeRate = numeric())
+  OhdsiRTools::logInfo('Estimated hazard ratios within risk strata')
+
 
   for(i in 1:riskStrata){
 
@@ -279,6 +282,7 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
   cases <- dplyr::bind_rows(data = treatedCases, comparatorCases, .id = 'cohort')
   cases$cohort <- factor(cases$cohort, levels = 1:2, labels = c('treatment', 'comparator'))
   cases$riskStratum <- paste('Q', cases$riskStratum, sep = '')
+  OhdsiRTools::logInfo('Calculated outcome rates within risk strata')
 
 
   results <- list(ps = ps,
@@ -286,6 +290,16 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
                   dataKM = dataKM,
                   absoluteRiskReduction = AbsoluteRiskReduction,
                   relativeRiskReduction = RelativeRiskReduction,
-                  cases = cases)
+                  cases = cases,
+                  predictionResult = resultsPrediction)
+  OhdsiRTools::logInfo('Run finished successfully')
+
+  # stop logger
+  OhdsiRTools::clearLoggers()
+  logger <- OhdsiRTools::createLogger(name = "SIMPLE",
+                                      threshold = "INFO",
+                                      appenders = list(OhdsiRTools::createConsoleAppender(layout = OhdsiRTools::layoutTimestamp)))
+  OhdsiRTools::registerLogger(logger)
+
   return(results)
 }

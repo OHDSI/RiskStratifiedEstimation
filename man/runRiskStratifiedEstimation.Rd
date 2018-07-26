@@ -10,7 +10,7 @@ runRiskStratifiedEstimation(cohortMethodData, population, modelSettings, save,
   extremeWeights = "fixedTruncation", truncationLevels,
   cvLikeRepetitions = 50, stepTruncationLevels, timePoint,
   excludeCovariateIds = NULL, binary = TRUE, includeAllOutcomes = TRUE,
-  requireTimeAtRisk = TRUE, plpPlot = FALSE, psThreads = 1,
+  requireTimeAtRisk = TRUE, savePlpPlots = FALSE, psThreads = 1,
   priorType = "laplace", verbosity = "INFO", analysisId = NULL)
 }
 \arguments{
@@ -52,7 +52,7 @@ runRiskStratifiedEstimation(cohortMethodData, population, modelSettings, save,
 
 \item{requireTimeAtRisk}{Should subjects without time at risk be removed at the prediction step?}
 
-\item{plpPlot}{(binary) Should plots for the prediction step be generated?}
+\item{savePlpPlots}{(binary) Should plots for the prediction step be generated?}
 
 \item{psThreads}{The number of cores to use for the estimation of the propensity score. If 1 then serial approach is implemented}
 
