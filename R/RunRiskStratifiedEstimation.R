@@ -158,34 +158,31 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
   #########################################
   OhdsiRTools::logInfo(logSep)
   OhdsiRTools::logInfo('Estimating propensity scores')
-
-  cl <- parallel::makePSOCKcluster(psThreads)
-  doSNOW::registerDoSNOW(cl)
-
-  pb <- txtProgressBar(max = riskStrata, style=3)
-  progress <- function(n) setTxtProgressBar(pb, n)
-  opts <- list(progress = progress)
-
-  ps <- list()
   tt <- Sys.time()
 
-  ps <- foreach::foreach(i = 1:4, .options.snow = opts) %dopar%{
+  ps <- list()
+  psEstimationParallel <- function(k){
 
-    populationRiskStratified <- population[population$subjectId %in% mapMatrix$subjectId[mapMatrix$riskStratum == i], ]
-    CohortMethod::createPs(cohortMethodData = cohortMethodData,
-                           population = populationRiskStratified,
-                           excludeCovariateIds = excludeCovariateIds,
-                           control = Cyclops::createControl(threads = -1,
-                                                            tolerance = 2e-07,
-                                                            cvRepetitions = 10,
-                                                            startingVariance = .01),
-                           prior = Cyclops::createPrior(priorType = priorType,
-                                                        exclude = c(0),
-                                                        useCrossValidation = TRUE))
-
+    populationRiskStratified <- population[population$subjectId %in% mapMatrix$subjectId[mapMatrix$riskStratum == k], ]
+    ps[[k]] <- CohortMethod::createPs(cohortMethodData = cohortMethodData,
+                                      population = populationRiskStratified,
+                                      excludeCovariateIds = excludeCovariateIds,
+                                      control = Cyclops::createControl(threads = -1,
+                                                                       tolerance = 2e-07,
+                                                                       cvRepetitions = 10,
+                                                                       startingVariance = .01),
+                                      prior = Cyclops::createPrior(priorType = priorType,
+                                                                   exclude = c(0),
+                                                                   useCrossValidation = TRUE))
   }
-  parallel::stopCluster(cl)
-  close(pb)
+
+  cl <- OhdsiRTools::makeCluster(psThreads)
+
+
+  ps <- OhdsiRTools::clusterApply(cl, 1:psThreads, psEstimationParallel)
+
+  OhdsiRTools::stopCluster(cl)
+
   OhdsiRTools::logInfo(paste('Propensity score estimation took', round(Sys.time() - tt, 2), 'sec'))
 
   saveRDS(ps, file.path(analysisPath, 'ps.rds'))
