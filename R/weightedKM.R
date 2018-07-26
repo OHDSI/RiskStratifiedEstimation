@@ -28,8 +28,10 @@ weightedKM <- function(ps,
     ps <- createIPW(ps,
                     weightsType = weightsType,
                     useStabilizedWeights = useStabilizedWeights,
-                    truncatedWeights = truncatedWeights,
-                    truncationQuantiles = truncationQuantiles)
+                    extremeWeights = extremeWeights,
+                    truncationLevels = truncationLevels,
+                    cvLikeRepetitions = cvLikeRepetitions,
+                    stepTruncationLevels = stepTruncationLevels)
 
   ps <- subset(ps, select = c('subjectId', 'treatment', 'outcomeCount', 'daysToEvent', 'survivalTime', 'weights'))
   ps$failure <- ifelse(is.na(ps$daysToEvent), 0, 1)

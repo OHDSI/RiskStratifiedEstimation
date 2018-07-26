@@ -33,8 +33,10 @@ plotCovariateBalance <- function(ps,
     ps <- createIPW(ps,
                     weightsType = weightsType,
                     useStabilizedWeights = useStabilizedWeights,
-                    truncatedWeights = truncatedWeights,
-                    truncationQuantiles = truncationQuantiles)
+                    extremeWeights = extremeWeights,
+                    truncationLevels = truncationLevels,
+                    cvLikeRepetitions = cvLikeRepetitions,
+                    stepTruncationLevels = stepTruncationLevels)
 
   nTreatment <- sum(ps$treatment)
   nComparator <- sum(!ps$treatment)
