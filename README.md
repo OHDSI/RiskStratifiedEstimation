@@ -13,7 +13,7 @@ Features
 - Large scale regularized regression to fit the propensity and outcome models.
 - Only inverse probability of treatmetn weighting (IPTW) is now available for balancing covariates.
 - Allows for different methods of weight truncation for the handling of extreme weights.
-- Includes diagnostic functions, including propensity score distribution plots and plots showing covariate balance before and after matching and/or trimming.
+- Includes diagnostic functions, including propensity score distribution plots and plots showing covariate balance before and after weighting.
 - Right now only (conditional) cox regression outcome models are available.
 
 Screenshots
