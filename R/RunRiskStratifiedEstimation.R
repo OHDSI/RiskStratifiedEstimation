@@ -104,7 +104,7 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
   # PREDICTION
   #########################################
 
-  OhdsiRTools::logTrace('Converting plpData from coohrtMethodData')
+  OhdsiRTools::logTrace('Converting plpData from cohortMethodData')
   plpData <- cmToPlpData(cohortMethodData)
 
 
