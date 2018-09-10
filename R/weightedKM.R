@@ -6,10 +6,7 @@
 #' @param calculateWeights Whether to calculate the weights using \code{\link[RiskStratifiedEstimation]{createIPW}}
 #' @param weightsType The type of the weights to be used. Allowed options are 'ATE' for average treatment effect and 'ATT' for average treatment effect on the treated weights
 #' @param useStabilizedWeights Should stabilized weights be used?
-#' @param extremeWeights The way to assess extreme weights. Possible options are 'unadjusted, 'cvLikeTruncation', 'crumpTrimming', 'fixedTruncaiton'
-#' @param truncationLevels The level of truncation expressed in percentiles of the propensity score. If extremeWeights is 'fixedTruncation' then the weights will be truncated at the levels defined here. If extremeWeights is 'cvLikeTruncation' then the data adaptive procedure will only assess truncation up to the levels defined here
-#' @param cvLikeRepetitions The number of times to repeat the 2-fold cross-validations
-#' @param stepTruncationLevels The steps for the grid of possible truncation levels
+#' @param truncationLevels The level of truncation expressed in percentiles of the propensity score.
 #'
 #' @return A data frame with the Kaplan-Meier estimates
 #'
@@ -19,19 +16,13 @@ weightedKM <- function(ps,
                        calculateWeights = TRUE,
                        weightsType = 'ATE',
                        useStabilizedWeights = TRUE,
-                       extremeWeights,
-                       truncationLevels,
-                       cvLikeRepetitions,
-                       stepTruncationLevels){
+                       truncationLevels){
 
   if(calculateWeights)
     ps <- createIPW(ps,
                     weightsType = weightsType,
                     useStabilizedWeights = useStabilizedWeights,
-                    extremeWeights = extremeWeights,
-                    truncationLevels = truncationLevels,
-                    cvLikeRepetitions = cvLikeRepetitions,
-                    stepTruncationLevels = stepTruncationLevels)
+                    truncationLevels = truncationLevels)
 
   ps <- subset(ps, select = c('subjectId', 'treatment', 'outcomeCount', 'daysToEvent', 'survivalTime', 'weights'))
   ps$failure <- ifelse(is.na(ps$daysToEvent), 0, 1)

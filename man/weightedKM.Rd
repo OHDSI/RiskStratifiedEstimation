@@ -5,8 +5,7 @@
 \title{Calculates and plots weighted Kaplan-Meier estimates}
 \usage{
 weightedKM(ps, calculateWeights = TRUE, weightsType = "ATE",
-  useStabilizedWeights = TRUE, extremeWeights, truncationLevels,
-  cvLikeRepetitions, stepTruncationLevels)
+  useStabilizedWeights = TRUE, truncationLevels)
 }
 \arguments{
 \item{ps}{A data frame including the propensity scores as generated from \code{\link[CohortMethod]{createPs}}}
@@ -17,13 +16,7 @@ weightedKM(ps, calculateWeights = TRUE, weightsType = "ATE",
 
 \item{useStabilizedWeights}{Should stabilized weights be used?}
 
-\item{extremeWeights}{The way to assess extreme weights. Possible options are 'unadjusted, 'cvLikeTruncation', 'crumpTrimming', 'fixedTruncaiton'}
-
-\item{truncationLevels}{The level of truncation expressed in percentiles of the propensity score. If extremeWeights is 'fixedTruncation' then the weights will be truncated at the levels defined here. If extremeWeights is 'cvLikeTruncation' then the data adaptive procedure will only assess truncation up to the levels defined here}
-
-\item{cvLikeRepetitions}{The number of times to repeat the 2-fold cross-validations}
-
-\item{stepTruncationLevels}{The steps for the grid of possible truncation levels}
+\item{truncationLevels}{The level of truncation expressed in percentiles of the propensity score.}
 }
 \value{
 A data frame with the Kaplan-Meier estimates

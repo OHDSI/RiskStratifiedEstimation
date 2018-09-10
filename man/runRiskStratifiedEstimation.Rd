@@ -6,12 +6,11 @@
 \usage{
 runRiskStratifiedEstimation(cohortMethodData, population, modelSettings, save,
   testSplit = "person", testFraction = 0.3, nfold = 10, riskStrata = 4,
-  weightsType = "ATE", useStabilizedWeights = FALSE,
-  extremeWeights = "fixedTruncation", truncationLevels,
-  cvLikeRepetitions = 50, stepTruncationLevels, timePoint,
-  excludeCovariateIds = NULL, binary = TRUE, includeAllOutcomes = TRUE,
-  requireTimeAtRisk = TRUE, savePlpPlots = FALSE, psThreads = 1,
-  priorType = "laplace", verbosity = "INFO", analysisId = NULL)
+  weightsType = "ATE", useStabilizedWeights = TRUE, truncationLevels,
+  timePoint, excludeCovariateIds = NULL, binary = TRUE,
+  includeAllOutcomes = TRUE, requireTimeAtRisk = TRUE,
+  savePlpPlots = FALSE, psThreads = 1, priorType = "laplace",
+  verbosity = "INFO", analysisId = NULL)
 }
 \arguments{
 \item{cohortMethodData}{A cohortMethodData object}
@@ -34,13 +33,7 @@ runRiskStratifiedEstimation(cohortMethodData, population, modelSettings, save,
 
 \item{useStabilizedWeights}{Should stabilized weights be used?}
 
-\item{extremeWeights}{The way to assess extreme weights. Possible options are 'unadjusted, 'cvLikeTruncation', 'crumpTrimming' and 'fixedTruncation'}
-
-\item{truncationLevels}{The level of truncation expressed in percentiles of the propensity score. If extremeWeights is 'fixedTruncation' then the weights will be truncated at the levels defined here. If extremeWeights is 'cvLikeTruncation' then the data adaptive procedure will only assess truncation up to the levels defined here}
-
-\item{cvLikeRepetitions}{The number of times to repeat the 2-fold cross-validations}
-
-\item{stepTruncationLevels}{The steps for the grid of possible truncation levels}
+\item{truncationLevels}{The level of truncation expressed in percentiles of the propensity score.}
 
 \item{timePoint}{The time point of interest for the calculation of the absolute risk reduction}
 

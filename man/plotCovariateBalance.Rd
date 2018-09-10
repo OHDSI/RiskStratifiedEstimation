@@ -5,8 +5,7 @@
 \title{Plots the covariate balance before and after balancing}
 \usage{
 plotCovariateBalance(ps, cohortMethodData, calculateWeights = TRUE,
-  weightsType = "ATE", useStabilizedWeights = TRUE, extremeWeights,
-  truncationLevels, cvLikeRepetitions, stepTruncationLevels,
+  weightsType = "ATE", useStabilizedWeights = TRUE, truncationLevels,
   showNotBalancedCovariateIds = TRUE)
 }
 \arguments{
@@ -20,13 +19,7 @@ plotCovariateBalance(ps, cohortMethodData, calculateWeights = TRUE,
 
 \item{useStabilizedWeights}{Should stabilized weights be used?}
 
-\item{extremeWeights}{The way to assess extreme weights. Possible options are 'unadjusted, 'cvLikeTruncation', 'crumpTrimming', 'fixedTruncaiton'}
-
-\item{truncationLevels}{The level of truncation expressed in percentiles of the propensity score. If extremeWeights is 'fixedTruncation' then the weights will be truncated at the levels defined here. If extremeWeights is 'cvLikeTruncation' then the data adaptive procedure will only assess truncation up to the levels defined here}
-
-\item{cvLikeRepetitions}{The number of times to repeat the 2-fold cross-validations}
-
-\item{stepTruncationLevels}{The steps for the grid of possible truncation levels}
+\item{truncationLevels}{The level of truncation expressed in percentiles of the propensity score.}
 
 \item{showNotBalancedCovariateIds}{Show covariate ids that were not balanced after weighting?}
 }

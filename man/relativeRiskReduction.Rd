@@ -5,8 +5,7 @@
 \title{Creates a data frame with hazard ratios within risk strata}
 \usage{
 relativeRiskReduction(ps, calculateWeights = TRUE, weightsType = "ATE",
-  useStabilizedWeights = TRUE, extremeWeights, truncationLevels,
-  cvLikeRepetitions, stepTruncationLevels)
+  useStabilizedWeights = TRUE, truncationLevels)
 }
 \arguments{
 \item{ps}{A list with the propensity data frames as generated from \code{\link[CohortMethod]{createPs}}}
@@ -17,13 +16,7 @@ relativeRiskReduction(ps, calculateWeights = TRUE, weightsType = "ATE",
 
 \item{useStabilizedWeights}{Should stabilized weights be used?}
 
-\item{extremeWeights}{The way to assess extreme weights. Possible options are 'unadjusted, 'cvLikeTruncation', 'crumpTrimming', 'fixedTruncaiton'}
-
-\item{truncationLevels}{The level of truncation expressed in percentiles of the propensity score. Only symmetric truncation is available. E.g. truncationLevels =.01 will assess truncation up to the .99th percentile of ps}
-
-\item{cvLikeRepetitions}{The number of times to repeat the 2-fold cross-validations}
-
-\item{stepTruncationLevels}{The steps for the grid of possible truncation levels}
+\item{truncationLevels}{The level of truncation expressed in percentiles of the propensity score.}
 }
 \value{
 A data frame with hazard ratios along with confidence intervals
