@@ -10,7 +10,7 @@ output:
     number_sections: yes
     toc: yes
 vignette: >
-  %\VignetteIndexEntry{Single studies using CohortMethod}
+  %\VignetteIndexEntry{RiskStratifiedEstimation manual}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -100,13 +100,13 @@ populationCSGIE <- createStudyPopulation(cohortMethodData = cohortMethodData,
                                          firstExposureOnly = TRUE, 
                                          restrictToCommonPeriod = FALSE,
                                          washoutPeriod = 0, 
-                                         removeDuplicateSubjects = 'keep all',
+                                         removeDuplicateSubjects = 'remove all',
                                          removeSubjectsWithPriorOutcome = FALSE, 
                                          riskWindowEnd = 30,
                                          addExposureDaysToEnd = TRUE, 
                                          minDaysAtRisk = 1)
 ```
-Note that we’ve set `firstExposureOnly` to TRUE to get only the first of the recorded exposures. We set `removeDuplicateSubjects` to 'keep all', and `washoutPeriod` to zero because we already filtered on these arguments when using the `getDbCohortMethodData` function.
+Note that we’ve set `firstExposureOnly` to TRUE to get only the first of the recorded exposures. We set `removeDuplicateSubjects` to 'remove all', and `washoutPeriod` to zero because we already filtered on these arguments when using the `getDbCohortMethodData` function.
 During loading we set `restrictToCommonPeriod` to FALSE, and we do the same here because we do not want to force the comparison to restrict only to time when both drugs are recorded. We specify the outcome ID we
 will use, and that people with outcomes prior to the risk window start date will not be removed. The risk window
 is defined as starting at the index date (`riskWindowStart` = 0 and `addExposureDaysToStart` = FALSE),
@@ -115,7 +115,7 @@ and the risk windows ends 30 days after exposure ends (`riskWindowEnd` = 30 and 
 remove subjects who have no time at risk. 
 
 # Running an RSEE analysis
-To run an RSEE analysis to steps need to be performed. First, a prediction step where the individual patient risks are estimated. These estimates are used to stratify patients into strata with similar risk. In the second step, treament effect estimates are calculated within the risk strata. In our case, these steps are performed by calling the following function:
+To run an RSEE analysis two steps need to be performed. First, a prediction step where the individual patient risks are estimated. These estimates are used to stratify patients into strata with similar risk. In the second step, treament effect estimates are calculated within the risk strata. In our case, these steps are performed by calling the following function:
 
 ```{r eval = FALSE}
 modelSettings <-
@@ -143,9 +143,9 @@ result <- runRiskStratifiedEstimation(cohortMethodData = cohortMethodData,
 In this section we demonstrate how to tune the `runRiskStratifiedEstimation` function to the desired prediction settings. First, we need to decide which prediction method we are going to use. In this specific case, we have selected a LASSO logistic regression approach. However, one can select any of the several other approaches described in the `PatientLevelPrediction` package vignettes. Next, we need to define the number of folds for tuning the hyperparameters of the prediction algorithm. In our case we have set this number to 10. Here, we also split the data in a 70%-30% split, where 70% of the data are used for training the LASSO regression model and 30% is used for evaluating its performance. This split is based on a random selection of patient IDs (`testSplit` = "person"). Finally, one can choose to generate the default plots provided by the  `PatientLevelPrediction` package. Note that the result of the RSEE analysis provides the prediction result, allowing for further processing, after the run is finished. For more information, consult the `PatientLevelPrediction` [manual and vignettes](https://github.com/OHDSI/PatientLevelPrediction).
 
 ## Estimation step
-In this section we demonstrate the tuning of the estimation step of our process. Using the risk estimates of the prediction step described earlier, we can stratify patients into groups based on the quantiles of the prediction distribution. Here we divide patients into quartiles of predicted risk (`riskStrata` = 4). Since treatment assignment is not random within risk strata, we need to estimate propensity scores and apply one of the several available methods in the literature to balance the covariates. To date, only the inverse probability of treatment weighting approach can be considered. This means that patients are weighted using the inverse of the probability to receive the treamtent they actually received. Two weighting schemes are allowed, i.e. "ATE" that allow the estimation of the average treatment effect and "ATT" that allow the estiamtion of the average treatment effect on the treated. In order to deal with the presence of very large weights, we allow for stabilization (`useStabilizedWeights` = TRUE). Finally, fixed truncation of the weights can be also considered in order to set an upper and a lower bound to the permitted size of the weights. We define these bounds using quantiles of the weight distribution. here, these bouds are the 2.5% and the 97.5% quantiles.
+In this section we demonstrate the tuning of the estimation step of our process. Using the risk estimates of the prediction step described earlier, we can stratify patients into groups based on the quantiles of the prediction distribution. Here we divide patients into quartiles of predicted risk (`riskStrata` = 4). Since treatment assignment is not random within risk strata, we need to estimate propensity scores and apply one of the several available methods in the literature to balance the covariates. To date, only the inverse probability of treatment weighting approach can be considered in the package. This means that patients are weighted by the inverse of the probability to receive the treamtent they actually received. Two weighting schemes are allowed, i.e. "ATE" that allows the estimation of the average treatment effect and "ATT" that allows the estiamtion of the average treatment effect on the treated. In order to deal with the presence of very large weights, we allow for stabilization (`useStabilizedWeights` = TRUE). Finally, fixed truncation of the weights can be also considered in order to set an upper and a lower bound to the permitted size of the weights. We define these bounds using quantiles of the weight distribution. here, these bouds are the 2.5% and the 97.5% quantiles.
 
-As was mentioned earlier, only time to event response data can be analyzed with the package. For that reason, we need to define a period of follow-up for our study. In this case, this period is one year (`timePoint` = 365). The `runRiskStratifiedEstimation` function fits a weighted Cox proportional hazards model to estimate unbiased hazard ratios within risk strata. It also generates weighted Kaplan-Meier estimates within risk strata. 
+As was mentioned earlier, only time to event response data can be analyzed with the package. We need to define a period of follow-up for our study, which in this case, this period is one year (`timePoint` = 365). The `runRiskStratifiedEstimation` function fits a weighted Cox proportional hazards model to generate unbiased estimates of the hazard ratios within risk strata. It also generates weighted Kaplan-Meier estimates within risk strata. 
 
 We can allow for parallelization of the propensity score estimation, which tends to be rather slow when the size of the data is large. In this case we set the threads to 4, one thread for each risk stratum.
 
@@ -157,15 +157,26 @@ The `RiskStratifiedEstimation` package allows for the construction of several pl
 ## Balance diagnostics
 
 ```{r eval = FALSE}
-plotCovariateBalance()
+plotCovariateBalance(ps = result$ps[[4]],
+                     cohortMethodData = cohortMethodData,
+                     calculateWeights = FALSE,
+                     showNotBalancedCovariateIds = TRUE)
 ```
 
 ## Weighted Kaplan-Meier
 
 ```{r eval = FALSE}
-plotWeightedKM()
+plotWeightedKM(dataKM = result$dataKM[[4]], 
+               xlim = c(0, 365), 
+               ylim = c(.7, 1),
+               ci = FALSE)
 ```
 ## Analysis result
 ```{r eval = FALSE}
-comparisonPlot()
+comparisonPlot(dataARR = result$absoluteRiskReduction, 
+               dataRRR = result$relativeRiskReduction,
+               cases = result$cases,
+               ylimRRR = c(.4, 1.1), 
+               ylimARR = c(-.01, .05),
+               ylimCases = c(0, .125))
 ```
