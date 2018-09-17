@@ -68,6 +68,7 @@ runRiskStratifiedEstimation(cohortMethodData, population, modelSettings, save,
 \item{dataKM}{The weighted Kaplan-Meier estimates within risk strata}
 \item{absoluteRiskReduction}{The absolute risk reduction within risk strata}
 \item{relativeRiskReduction}{The relative risk reduction within risk strata}
+\item{predictionResult}{The result of the prediction step}
 }
 \description{
 Runs a risk stratified analysis
