@@ -25,3 +25,6 @@ Imports: PatientLevelPrediction,
          doSNOW,
          survminer
 Depends: survival,
+Suggests: knitr,
+    rmarkdown
+VignetteBuilder: knitr
