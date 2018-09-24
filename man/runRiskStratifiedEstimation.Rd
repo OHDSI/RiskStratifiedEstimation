@@ -10,7 +10,9 @@ runRiskStratifiedEstimation(cohortMethodData, population, modelSettings, save,
   timePoint, excludeCovariateIds = NULL, binary = TRUE,
   includeAllOutcomes = TRUE, requireTimeAtRisk = TRUE,
   savePlpPlots = FALSE, psThreads = 1, priorType = "laplace",
-  verbosity = "INFO", analysisId = NULL)
+  verbosity = "INFO", analysisId = NULL, savePlpResult = TRUE,
+  saveMapMatrix = TRUE, savePs = TRUE, saveDataKM = TRUE,
+  saveAbsoluteRiskRreduction = TRUE, saveRelativeRiskReduction = TRUE)
 }
 \arguments{
 \item{cohortMethodData}{A cohortMethodData object}
@@ -61,6 +63,18 @@ runRiskStratifiedEstimation(cohortMethodData, population, modelSettings, save,
                     \item{FATAL}{Be silent except for fatal errors}}}
 
 \item{analysisId}{Identifier of the analysis}
+
+\item{savePlpResult}{Should the prediction result be saved?}
+
+\item{saveMapMatrix}{Should the map matrix with the risk sratum allocations be saved?}
+
+\item{savePs}{Should the propensity scores be saved?}
+
+\item{saveDataKM}{Should the weighted Kaplan-Meier estimates be saved?}
+
+\item{saveAbsoluteRiskRreduction}{Should the absolute risk reduction estimates be saved?}
+
+\item{saveRelativeRiskReduction}{Should the hazard ratios be saved?}
 }
 \value{
 \item{ps}{The propensity scores within risk strata along with patient weights}

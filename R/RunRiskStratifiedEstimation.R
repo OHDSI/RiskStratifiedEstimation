@@ -17,7 +17,13 @@
 #' @param includeAllOutcomes (binary) indicating whether to include people with outcomes who are not observed for the whole at risk period
 #' @param requireTimeAtRisk Should subjects without time at risk be removed at the prediction step?
 #' @param savePlpPlots (binary) Should plots for the prediction step be generated?
+#' @param saveMapMatrix Should the map matrix with the risk sratum allocations be saved?
+#' @param savePs Should the propensity scores be saved?
+#' @param saveDataKM Should the weighted Kaplan-Meier estimates be saved?
+#' @param saveAbsoluteRiskRreduction Should the absolute risk reduction estimates be saved?
+#' @param saveRelativeRiskReduction Should the hazard ratios be saved?
 #' @param psThreads The number of cores to use for the estimation of the propensity score. If 1 then serial approach is implemented
+#' @param savePlpResult Should the prediction result be saved?
 #' @param analysisId Identifier of the analysis
 #' @param priorType The prior for the propensity score model
 #' @param verbosity Sets the level of the verbosity. If the log level is at or higher in priority than the logger threshold, a message will print. The levels are:
@@ -46,7 +52,8 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
                                         useStabilizedWeights = TRUE, truncationLevels,
                                         timePoint, excludeCovariateIds = NULL, binary = TRUE, includeAllOutcomes = TRUE,
                                         requireTimeAtRisk = TRUE, savePlpPlots = FALSE, psThreads = 1, priorType = 'laplace',
-                                        verbosity = 'INFO', analysisId = NULL){
+                                        verbosity = 'INFO', analysisId = NULL, savePlpResult = TRUE, saveMapMatrix = TRUE,
+                                        savePs = TRUE, saveDataKM = TRUE, saveAbsoluteRiskRreduction = TRUE, saveRelativeRiskReduction = TRUE){
 
   if(missing(verbosity)){
     verbosity <- "INFO"
@@ -136,7 +143,7 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
     nfold = nfold,
     savePlpPlots = savePlpPlots,
     saveDirectory = save,
-    savePlpResult = TRUE
+    savePlpResult = savePlpResult
   )
 
   #########################################
@@ -147,7 +154,9 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
   mapMatrix <- dplyr::mutate(resultsPrediction$prediction,
                              riskStratum = dplyr::ntile(resultsPrediction$prediction$value, riskStrata))
   mapMatrix <- subset(mapMatrix, select = c('subjectId', 'riskStratum'))
-  saveRDS(mapMatrix, file.path(analysisPath, 'mapMatrix.rds', fsep = '\\'))
+  if(saveMapMatrix)
+    saveRDS(mapMatrix, file.path(analysisPath, 'mapMatrix.rds', fsep = '\\'))
+
 
 
   #########################################
@@ -180,9 +189,11 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
   OhdsiRTools::stopCluster(cl)
 
   OhdsiRTools::logInfo(paste('Propensity score estimation took', round(Sys.time() - tt, 2), 'sec'))
+  if(savePs){
+    saveRDS(ps, file.path(analysisPath, 'ps.rds'))
+    OhdsiRTools::logInfo(paste('Saved propensity score estimates in', save))
+  }
 
-  saveRDS(ps, file.path(analysisPath, 'ps.rds'))
-  OhdsiRTools::logInfo(paste('Saved propensity score estimates in', save))
 
   for(i in 1:length(ps))
     ps[[i]] <- createIPW(ps[[i]],
@@ -210,16 +221,24 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
 
   OhdsiRTools::logInfo('Generated weighted Kaplan-Meier estimates within risk strata')
 
-  saveRDS(dataKM, file = file.path(analysisPath, 'dataKM.rds'))
+  if(saveDataKM)
+    saveRDS(dataKM, file = file.path(analysisPath, 'dataKM.rds'))
+
+
 
   #########################################
   # Absolute/Relative risk reduction
   #########################################
   AbsoluteRiskReduction <- absoluteRiskReduction(dataKM,
                                                  timePoint)
-  saveRDS(AbsoluteRiskReduction, file = file.path(analysisPath, 'absoluteRiskReduction.rds'))
+
 
   OhdsiRTools::logInfo('Estimated absolute risk reduction within risk strata')
+  if(saveAbsoluteRiskRreduction){
+    saveRDS(AbsoluteRiskReduction, file = file.path(analysisPath, 'absoluteRiskReduction.rds'))
+    OhdsiRTools::logInfo('Saved absolute risk reduction result')
+  }
+
 
   RelativeRiskReduction <- relativeRiskReduction(ps,
                                                  calculateWeights = FALSE,
@@ -227,13 +246,18 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
                                                  useStabilizedWeights = useStabilizedWeights,
                                                  truncationLevels = truncationLevels)
 
-  saveRDS(RelativeRiskReduction, file = file.path(analysisPath, 'relativeRiskReduction.rds'))
+
 
   treatedCases <- data.frame(riskStratum = numeric(),
                              outcomeRate = numeric())
   comparatorCases <- data.frame(riskStratum = numeric(),
                                 outcomeRate = numeric())
   OhdsiRTools::logInfo('Estimated hazard ratios within risk strata')
+  if(saveRelativeRiskReduction){
+    saveRDS(RelativeRiskReduction, file = file.path(analysisPath, 'relativeRiskReduction.rds'))
+    OhdsiRTools::logInfo('Saved hazard ratios')
+  }
+
 
 
   for(i in 1:riskStrata){
