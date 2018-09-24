@@ -21,10 +21,10 @@ Screenshots
 <table border = "">
 <tr valign="top">
 <td width = 50%>
-  <img src="https://github.com/OHDSI/CohortMethod/blob/master/extras/ps.png" alt="CohortMethod propensity score plot" title="CohortMethod propensity score plot" />
+  <img src="https://github.com/mi-erasmusmc/RiskStratifiedEstimation/blob/master/extras/comparisonPlot.jpeg" alt="CohortMethod propensity score plot" title="CohortMethod propensity score plot" />
 </td>
 <td width = 50%>
- <img src="https://github.com/OHDSI/CohortMethod/blob/master/extras/balanceScatterplot.png" alt="CohortMethod covariate balance plot" title="CohortMethod covariate balance plot" />
+ <img src="https://github.com/mi-erasmusmc/RiskStratifiedEstimation/blob/master/extras/KMPlot.jpeg" alt="CohortMethod covariate balance plot" title="CohortMethod covariate balance plot" />
 </td>
 </tr><tr>
 <td>Propensity (preference score) distribution</td><td>Covariate balance plot</td>
