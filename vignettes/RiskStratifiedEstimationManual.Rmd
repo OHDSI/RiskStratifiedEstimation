@@ -85,7 +85,7 @@ cohortMethodData <-
                         outcomeDatabaseSchema = cdmDatabaseSchema,
                         outcomeTable = 'cohort',
                         cdmVersion = '5',
-                        excludeDrugsFromCovariates = TRUE,
+                        excludeDrugsFromCovariates = FALSE,
                         firstExposureOnly = FALSE,
                         removeDuplicateSubjects = TRUE,
                         restrictToCommonPeriod = FALSE,
@@ -156,20 +156,32 @@ The `RiskStratifiedEstimation` package allows for the construction of several pl
 
 ## Balance diagnostics
 
+Using the code presented below we can plot the covariate balance in the weighted population of the 4th (highest) risk stratum.
+
 ```{r eval = FALSE}
 plotCovariateBalance(ps = result$ps[[4]],
                      cohortMethodData = cohortMethodData,
                      calculateWeights = FALSE,
                      showNotBalancedCovariateIds = TRUE)
 ```
+We can produce the covariate balance plots within all risk strata and combine them in a single plot using the code below.
+```{r eval = FALSE}
 
+
+```
 ## Weighted Kaplan-Meier
+Using the code presented below we can produce plots of the weighted Kaplan-Meier estimates within risk strata. The time interval of interest id one year (365 days). Again, we consider the case of the 4th risk stratum. 
 
 ```{r eval = FALSE}
 plotWeightedKM(dataKM = result$dataKM[[4]], 
                xlim = c(0, 365), 
                ylim = c(.7, 1),
                ci = FALSE)
+```
+One can produce plots for all risk strata and combine them in the same way as before.
+```{r eval = FALSE}
+
+
 ```
 ## Analysis result
 ```{r eval = FALSE}
