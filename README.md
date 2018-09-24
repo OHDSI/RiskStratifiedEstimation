@@ -33,7 +33,7 @@ Screenshots
 
 Technology
 ============
-CohortMethod is an R package, with some functions implemented in C++.
+CohortMethod is an R package, combinig functionality from the CohortMethod and the PatientLevelPrediction packages.
 
 System Requirements
 ============
@@ -46,6 +46,7 @@ Dependencies
  * SqlRender
  * OhdsiRTools
  * FeatureExtraction
+ * survival
 
 Getting Started
 ===============
@@ -57,7 +58,7 @@ Getting Started
   ```r
   install.packages("drat")
   drat::addRepo("OHDSI")
-  install.packages("CohortMethod")
+  install.packages("RiskStratifiedEstimation")
   ```
   
 4. Optionally, run this to check if CohortMethod was correctly installed:
