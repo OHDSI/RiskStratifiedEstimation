@@ -27,7 +27,7 @@ Screenshots
  <img src="https://github.com/mi-erasmusmc/RiskStratifiedEstimation/blob/master/extras/KMPlot.jpeg" alt="CohortMethod covariate balance plot" title="RiskStratifiedEstimation weighted Kaplan-Meier estimate" />
 </td>
 </tr><tr>
-<td>Comparison plot across risk strata</td><td>Weighted Kaplan-Meier esstimate within the highest risk stratum</td>
+<td>Comparison plot across risk strata</td><td>Weighted Kaplan-Meier estimate within a risk stratum</td>
 </tr>
 </table>
 
