@@ -46,6 +46,8 @@ Dependencies
  * SqlRender
  * OhdsiRTools
  * FeatureExtraction
+ * CohortMethod
+ * PatientLevelPrediction
  * survival
 
 Getting Started
