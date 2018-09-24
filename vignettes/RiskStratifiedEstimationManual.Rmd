@@ -178,6 +178,16 @@ plotWeightedKM(dataKM = result$dataKM[[4]],
                ylim = c(.7, 1),
                ci = FALSE)
 ```
+```{r echo = FALSE, message = FALSE, eval = TRUE}
+if(file.exists('S:\\arekkas\\celecoxib-naproxen-vignette\\20180924053516 RSEE\\dataKM.rds')){
+  dataKM <- readRDS('S:\\arekkas\\celecoxib-naproxen-vignette\\20180924053516 RSEE\\dataKM.rds')
+  plotWeightedKM(dataKM = result$dataKM[[4]], 
+               xlim = c(0, 365), 
+               ylim = c(.7, 1),
+               ci = FALSE)
+}
+
+```
 One can produce plots for all risk strata and combine them in the same way as before.
 ```{r eval = FALSE}
 
@@ -191,4 +201,23 @@ comparisonPlot(dataARR = result$absoluteRiskReduction,
                ylimRRR = c(.4, 1.1), 
                ylimARR = c(-.01, .05),
                ylimCases = c(0, .125))
+```
+```{r eval = TRUE, message = FALSE, echo = FALSE}
+if(file.exists('S:\\arekkas\\celecoxib-naproxen-vignette\\20180924053516 RSEE\\absoluteRiskReduction.rds')&
+   file.exists('S:\\arekkas\\celecoxib-naproxen-vignette\\20180924053516 RSEE\\relativeRiskReduction.rds')&
+   file.exists('S:\\arekkas\\celecoxib-naproxen-vignette\\20180924053516 RSEE\\cases.rds')){
+  
+  
+  dataKM <- readRDS('S:\\arekkas\\celecoxib-naproxen-vignette\\20180924053516 RSEE\\dataKM.rds')
+  relativeRiskReduction <- readRDS('S:\\arekkas\\celecoxib-naproxen-vignette\\20180924053516 RSEE\\relativeRiskReduction.rds')
+  absoluteRiskReduction <- readRDS('S:\\arekkas\\celecoxib-naproxen-vignette\\20180924053516 RSEE\\relativeRiskReduction.rds')
+  cases <- readRDS('S:\\arekkas\\celecoxib-naproxen-vignette\\20180924053516 RSEE\\cases.rds')
+  comparisonPlot(dataARR = absoluteRiskReduction, 
+                 dataRRR = relativeRiskReduction,
+                 cases = cases,
+                 ylimRRR = c(.4, 1.1), 
+                 ylimARR = c(-.01, .05),
+                 ylimCases = c(0, .125))
+}
+
 ```
