@@ -36,7 +36,7 @@ Screenshots
 
 Technology
 ============
-CohortMethod is an R package, combinig functionality from the CohortMethod and the PatientLevelPrediction packages.
+RiskStratifiedEstimation is an R package, combinig functionality from the CohortMethod and the PatientLevelPrediction packages.
 
 System Requirements
 ============
