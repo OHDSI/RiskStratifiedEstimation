@@ -166,7 +166,7 @@ plotCovariateBalance(ps = result$ps[[4]],
 ```
 
 ## Weighted Kaplan-Meier
-Using the code presented below we can produce plots of the weighted Kaplan-Meier estimates within risk strata. The time interval of interest id one year (365 days). Again, we consider the case of the 4th risk stratum. 
+Using the code presented below we can produce plots of the weighted Kaplan-Meier estimates within risk strata. The time interval of interest is one year (365 days). Again, we consider the case of the 4th risk stratum. 
 
 ```{r eval = FALSE}
 plotWeightedKM(dataKM = result$dataKM[[4]], 
