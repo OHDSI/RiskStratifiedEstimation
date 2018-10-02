@@ -164,11 +164,7 @@ plotCovariateBalance(ps = result$ps[[4]],
                      calculateWeights = FALSE,
                      showNotBalancedCovariateIds = TRUE)
 ```
-We can produce the covariate balance plots within all risk strata and combine them in a single plot using the code below.
-```{r eval = FALSE}
 
-
-```
 ## Weighted Kaplan-Meier
 Using the code presented below we can produce plots of the weighted Kaplan-Meier estimates within risk strata. The time interval of interest id one year (365 days). Again, we consider the case of the 4th risk stratum. 
 
@@ -194,6 +190,8 @@ One can produce plots for all risk strata and combine them in the same way as be
 
 ```
 ## Analysis result
+
+Finally, we can produce an analysis summary plot using the code below. This plot contains the outcome rates in the propensity weighted populations along with the absolute and relative (hazard ratios) risk differences.
 ```{r eval = FALSE}
 comparisonPlot(dataARR = result$absoluteRiskReduction, 
                dataRRR = result$relativeRiskReduction,
@@ -221,3 +219,4 @@ if(file.exists('S:\\arekkas\\celecoxib-naproxen-vignette\\20180924053516 RSEE\\a
 }
 
 ```
+We can use such a plot to provide insight to the presence of HTE and draw useful conclusions on treatment assignment.
