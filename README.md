@@ -94,7 +94,7 @@ Getting Involved
 
 License
 =======
-CohortMethod is licensed under Apache License 2.0
+RiskStratifiedEstimation is licensed under Apache License 2.0
 
 Development
 ===========
