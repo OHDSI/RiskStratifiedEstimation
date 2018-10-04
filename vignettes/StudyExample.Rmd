@@ -155,7 +155,7 @@ Finally, we can save the result of the analysis to a selected folder. This folde
 The `RiskStratifiedEstimation` package allows for the construction of several plots. We have already mentioned that we can obtain the default plots provided from the `PatientLevelPrediction` package for model evaulation. Additionally, we can derive the propensity score diagnostics described in the `CohortMethod` package vignette.
 
 ## Balance diagnostics
-
+![Covariate Balance plot](balancePlot.jpeg)
 Using the code presented below we can plot the covariate balance in the weighted population of the 4th (highest) risk stratum.
 
 ```{r eval = FALSE}
@@ -166,6 +166,7 @@ plotCovariateBalance(ps = result$ps[[4]],
 ```
 
 ## Weighted Kaplan-Meier
+![Weighted Kaplan Meier plot](KMPlot.jpeg)
 Using the code presented below we can produce plots of the weighted Kaplan-Meier estimates within risk strata. The time interval of interest is one year (365 days). Again, we consider the case of the 4th risk stratum. 
 
 ```{r eval = FALSE}
@@ -183,6 +184,7 @@ if(file.exists('S:\\arekkas\\celecoxib-naproxen-vignette\\20180924053516 RSEE\\d
                ci = FALSE)
 }
 
+
 ```
 One can produce plots for all risk strata and combine them in the same way as before.
 ```{r eval = FALSE}
@@ -190,7 +192,7 @@ One can produce plots for all risk strata and combine them in the same way as be
 
 ```
 ## Analysis result
-
+![Analysis result plot](comparisonPlot.jpeg)
 Finally, we can produce an analysis summary plot using the code below. This plot contains the outcome rates in the propensity weighted populations along with the absolute and relative (hazard ratios) risk differences.
 ```{r eval = FALSE}
 comparisonPlot(dataARR = result$absoluteRiskReduction, 
