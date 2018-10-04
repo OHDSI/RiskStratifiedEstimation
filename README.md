@@ -68,7 +68,7 @@ Getting Started
 
 Getting Involved
 =============
-* Vignette: [Study example](https://github.com/mi-erasmusmc/RiskStratifiedEstimation/blob/master/extras/StudyExample.pdf)
+* Vignette: [Study example](https://github.com/mi-erasmusmc/RiskStratifiedEstimation/tree/master/inst/doc/StudyExample.pdf)
 * Package manual: [RiskStratifiedEstimation.pdf](https://github.com/mi-erasmusmc/RiskStratifiedEstimation/blob/master/extras/RiskStratifiedEstimation-manual.pdf)
 * Developer questions/comments/feedback: <a href="http://forums.ohdsi.org/c/developers">OHDSI Forum</a>
 * We use the <a href="../../issues">GitHub issue tracker</a> for all bugs/issues/enhancements
