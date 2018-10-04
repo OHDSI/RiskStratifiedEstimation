@@ -65,25 +65,6 @@ Getting Started
   drat::addRepo("OHDSI")
   install.packages("RiskStratifiedEstimation")
   ```
-  
-4. Optionally, run this to check if CohortMethod was correctly installed:
-
-  ```r
-  connectionDetails <- createConnectionDetails(dbms="postgresql",
-                                               server="my_server.org",
-                                               user = "joe",
-                                               password = "super_secret")
-
-  checkCmInstallation(connectionDetails)
-  ```
-  
-  Where dbms, server, user, and password need to be changed to the settings for your database environment. Type
-  
-  ```r
-  ?createConnectionDetails
-  ``` 
-  
-  for more details on how to configure your database connection.
 
 Getting Involved
 =============
@@ -100,5 +81,5 @@ Development
 ===========
 RiskStratifiedEstimation is being developed in R Studio.
 
-RiskStratifiedEstimation is actively being used in several studies and is ready for use.
+RiskStratifiedEstimation is still under development and should not be used yet to run risk stratified analyses.
 
