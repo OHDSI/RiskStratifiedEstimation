@@ -186,11 +186,7 @@ if(file.exists('S:\\arekkas\\celecoxib-naproxen-vignette\\20180924053516 RSEE\\d
 
 
 ```
-One can produce plots for all risk strata and combine them in the same way as before.
-```{r eval = FALSE}
 
-
-```
 ## Analysis result
 ![Analysis result plot](comparisonPlot.jpeg)
 Finally, we can produce an analysis summary plot using the code below. This plot contains the outcome rates in the propensity weighted populations along with the absolute and relative (hazard ratios) risk differences.

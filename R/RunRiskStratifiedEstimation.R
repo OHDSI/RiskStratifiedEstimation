@@ -53,7 +53,8 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
                                         timePoint, excludeCovariateIds = NULL, binary = TRUE, includeAllOutcomes = TRUE,
                                         requireTimeAtRisk = TRUE, savePlpPlots = FALSE, psThreads = 1, priorType = 'laplace',
                                         verbosity = 'INFO', analysisId = NULL, savePlpResult = TRUE, saveMapMatrix = TRUE,
-                                        savePs = TRUE, saveDataKM = TRUE, saveAbsoluteRiskRreduction = TRUE, saveRelativeRiskReduction = TRUE){
+                                        savePs = TRUE, saveDataKM = TRUE, saveAbsoluteRiskRreduction = TRUE,
+                                        saveRelativeRiskReduction = TRUE){
 
   if(missing(verbosity)){
     verbosity <- "INFO"
