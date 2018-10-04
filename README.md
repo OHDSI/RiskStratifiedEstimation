@@ -3,7 +3,7 @@ RiskStratifiedEstimation
 
 Introduction
 ============
-RiskStratifiedEstimation is an R package for performing risk stratified analyses as a complementary approach to subgroup analyses in an observational database in the OMOP Common Data Model.
+RiskStratifiedEstimation is an R package for implementing risk stratified analyses for the assessment of treatment effect heterogeneity in an observational database in the OMOP Common Data Model. The package combines functionality of PatientLevelPrediction and CohortMethod R packages.
 
 Features
 ========
