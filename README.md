@@ -40,7 +40,7 @@ RiskStratifiedEstimation is an R package, combining functionality from the Cohor
 
 System Requirements
 ============
-Requires R (version 3.1.0 or higher). Installation on Windows requires [RTools](http://cran.r-project.org/bin/windows/Rtools/). Libraries used in CohortMethod require Java.
+Requires R (version 3.1.0 or higher). Installation on Windows requires [RTools](http://cran.r-project.org/bin/windows/Rtools/). Libraries used in RiskStratifiedEstimation require Java.
 
 Dependencies
 ============
