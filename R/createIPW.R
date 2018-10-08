@@ -1,0 +1,37 @@
+#' Creates Inverse Probability Weights
+#'
+#' Calcuates inverse probability weights based on the propensity score
+#'
+#' @param ps A propensity score data frame as created from \code{\link[CohortMethod]{createPs}}
+#' @param weightsType The type of the weights to be used. Allowed options are 'ATE' for average treatment effect and 'ATT' for average treatment effect on the treated weights
+#' @param useStabilizedWeights Should stabilized weights be used?
+#' @param truncationLevels The level of truncation expressed in percentiles of the propensity score.
+#'
+#' @return The ps data frame provided as input along with a weights column
+#'
+#' @export
+
+createIPW <- function(ps,
+                      weightsType = 'ATE',
+                      useStabilizedWeights = TRUE,
+                      truncationLevels = c(.01, .99)){
+
+  if(weightsType == 'ATE')
+    ps$weights <- ps$treatment / ps$propensityScore + (1 - ps$treatment) / (1 - ps$propensityScore)
+  else
+    ps$weights <- ps$treatment + ps$propensityScore*(1 - ps$treatment) / (1 - ps$propensityScore)
+
+  if(useStabilizedWeights){
+    ps$stability <- mean(ps$treatment)
+    ps$weights <- ps$treatment*ps$weights*ps$stability +
+      (1 - ps$treatment)*ps$weights*(1 - ps$stability)
+    ps <- dplyr::select(ps, -stability)
+  }
+
+  ps <-  dplyr::mutate(ps, weights = pmin(pmax(weights, quantile(weights, truncationLevels[1])),
+                                          quantile(weights, truncationLevels[2])))
+
+
+  return(ps)
+
+}
