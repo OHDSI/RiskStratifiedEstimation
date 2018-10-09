@@ -2,7 +2,7 @@
 % Please edit documentation in R/weightedKM.R
 \name{weightedKM}
 \alias{weightedKM}
-\title{Calculates and plots weighted Kaplan-Meier estimates}
+\title{Calculates the weighted Kaplan-Meier estimates}
 \usage{
 weightedKM(ps, calculateWeights = TRUE, weightsType = "ATE",
   useStabilizedWeights = TRUE, truncationLevels)
@@ -22,5 +22,8 @@ weightedKM(ps, calculateWeights = TRUE, weightsType = "ATE",
 A data frame with the Kaplan-Meier estimates
 }
 \description{
-Calculates the weighted Kaplan-Meier estimates based on: Xie J, Liu C. Adjusted Kaplan-Meier estimator and log-rank test with inverse probability of treatment weighting for survival data. Statistics in Medicine 2005; 2:3089–3110.
+Calculates the weighted Kaplan-Meier estimates.
+}
+\references{
+Xie J, Liu C. Adjusted Kaplan-Meier estimator and log-rank test with inverse probability of treatment weighting for survival data. Statistics in Medicine 2005; 2:3089–3110.
 }

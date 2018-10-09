@@ -1,6 +1,6 @@
-#' Calculates and plots weighted Kaplan-Meier estimates
+#' Calculates the weighted Kaplan-Meier estimates
 #'
-#' Calculates the weighted Kaplan-Meier estimates based on: Xie J, Liu C. Adjusted Kaplan-Meier estimator and log-rank test with inverse probability of treatment weighting for survival data. Statistics in Medicine 2005; 2:3089–3110.
+#' Calculates the weighted Kaplan-Meier estimates.
 #'
 #' @param ps A data frame including the propensity scores as generated from \code{\link[CohortMethod]{createPs}}
 #' @param calculateWeights Whether to calculate the weights using \code{\link[RiskStratifiedEstimation]{createIPW}}
@@ -9,6 +9,8 @@
 #' @param truncationLevels The level of truncation expressed in percentiles of the propensity score.
 #'
 #' @return A data frame with the Kaplan-Meier estimates
+#'
+#' @references Xie J, Liu C. Adjusted Kaplan-Meier estimator and log-rank test with inverse probability of treatment weighting for survival data. Statistics in Medicine 2005; 2:3089–3110.
 #'
 #' @export
 
