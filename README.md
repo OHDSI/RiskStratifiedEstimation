@@ -36,11 +36,11 @@ Screenshots
 
 Technology
 ============
-RiskStratifiedEstimation is an R package, combinig functionality from the CohortMethod and the PatientLevelPrediction packages.
+RiskStratifiedEstimation is an R package, combining functionality from the CohortMethod and the PatientLevelPrediction packages.
 
 System Requirements
 ============
-Requires R (version 3.1.0 or higher). Installation on Windows requires [RTools](http://cran.r-project.org/bin/windows/Rtools/). Libraries used in CohortMethod require Java.
+Requires R (version 3.1.0 or higher). Installation on Windows requires [RTools](http://cran.r-project.org/bin/windows/Rtools/). Libraries used in RiskStratifiedEstimation require Java.
 
 Dependencies
 ============
@@ -58,7 +58,7 @@ Getting Started
 1. On Windows, make sure [RTools](http://cran.r-project.org/bin/windows/Rtools/) is installed.
 2. The DatabaseConnector and SqlRender packages require Java. Java can be downloaded from
 <a href="http://www.java.com" target="_blank">http://www.java.com</a>. Once Java is installed, ensure that Java is being pathed correctly. Under environment variables in the control panel, ensure that the jvm.dll file is added correctly to the path.
-3. In R, use the following commands to download and install CohortMethod:
+3. In R, use the following commands to download and install RiskStratifiedEstimation:
 
   ```r
   install.packages("drat")
@@ -80,6 +80,6 @@ RiskStratifiedEstimation is licensed under Apache License 2.0
 Development
 ===========
 RiskStratifiedEstimation is being developed in R Studio.
-
 RiskStratifiedEstimation is still under development and should not be used yet to run risk stratified analyses.
+
 
