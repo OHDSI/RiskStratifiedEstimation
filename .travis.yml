@@ -11,7 +11,13 @@ r_packages:
   - drat
 
 r_github_packages:
+  - OHDSI/ParallelLogger
+  - OHDSI/SqlRender
+  - OHDSI/DatabaseConnector
+  - OHDSI/Cyclops
+  - OHDSI/FeatureExtraction
   - OHDSI/CohortMethod
+  - OHDSI/PatientLevelPrediction
 
 before_script:
   - export PKG_NAME=$(Rscript -e 'cat(paste0(devtools::as.package(".")$package))')
