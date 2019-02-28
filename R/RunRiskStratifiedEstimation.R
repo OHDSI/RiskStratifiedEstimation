@@ -189,7 +189,7 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
 
   OhdsiRTools::stopCluster(cl)
 
-  OhdsiRTools::logInfo(paste('Propensity score estimation took', round(Sys.time() - tt, 2), 'sec'))
+  OhdsiRTools::logInfo(paste('Propensity score estimation took', round(Sys.time() - tt, 2), 'mins'))
   if(savePs){
     saveRDS(ps, file.path(analysisPath, 'ps.rds'))
     OhdsiRTools::logInfo(paste('Saved propensity score estimates in', save))
