@@ -94,7 +94,7 @@ createStudyPopulation <- function(cohortMethodData,
     OhdsiRTools::logTrace("Creating study population without outcome ID")
   else
     OhdsiRTools::logTrace("Creating study population for outcome ID ", outcomeId)
-  
+
   if (is.null(population)) {
     population <- cohortMethodData$cohorts
   }
@@ -130,7 +130,7 @@ createStudyPopulation <- function(cohortMethodData,
     metaData$attrition <- rbind(metaData$attrition,
                                 getCounts(population, paste("Restricting duplicate subjects to first cohort")))
   }
-  
+
   if (washoutPeriod) {
     OhdsiRTools::logInfo(paste("Requiring", washoutPeriod, "days of observation prior index date"))
     population <- population[population$daysFromObsStart >= washoutPeriod, ]
@@ -184,7 +184,7 @@ createStudyPopulation <- function(cohortMethodData,
         population <- population[!idx, ]
         metaData$attrition <- rbind(metaData$attrition,
                                     getCounts(population, paste("Censoring at start of new time-at-risk")))
-        
+
       }
     }
     population$startDate <- NULL
@@ -204,7 +204,7 @@ createStudyPopulation <- function(cohortMethodData,
     outcomes <- cohortMethodData$outcomes[cohortMethodData$outcomes$outcomeId == outcomeId, ]
     outcomes <- merge(outcomes, population[, c("rowId", "riskStart", "riskEnd")])
     outcomes <- outcomes[outcomes$daysToEvent >= outcomes$riskStart & outcomes$daysToEvent <= outcomes$riskEnd, ]
-    
+
     # Create outcome count column
     if (nrow(outcomes) == 0) {
       population$outcomeCount <- rep(0, nrow(population))
@@ -214,10 +214,10 @@ createStudyPopulation <- function(cohortMethodData,
       population$outcomeCount <- 0
       population$outcomeCount[match(outcomeCount$rowId, population$rowId)] <- outcomeCount$outcomeCount
     }
-    
+
     # Create time at risk column
     population$timeAtRisk <- population$riskEnd - population$riskStart + 1
-    
+
     # Create survival time column
     firstOutcomes <- outcomes[order(outcomes$rowId, outcomes$daysToEvent), ]
     firstOutcomes <- firstOutcomes[!duplicated(firstOutcomes$rowId), ]
@@ -237,14 +237,26 @@ createStudyPopulation <- function(cohortMethodData,
 }
 
 getCounts <- function(population, description = "") {
-  treatedPersons <- length(unique(population$subjectId[population$treatment == 1]))
+  targetPersons <- length(unique(population$subjectId[population$treatment == 1]))
   comparatorPersons <- length(unique(population$subjectId[population$treatment == 0]))
-  treatedExposures <- length(population$subjectId[population$treatment == 1])
+  targetExposures <- length(population$subjectId[population$treatment == 1])
   comparatorExposures <- length(population$subjectId[population$treatment == 0])
   counts <- data.frame(description = description,
-                       treatedPersons = treatedPersons,
+                       targetPersons = targetPersons,
                        comparatorPersons = comparatorPersons,
-                       treatedExposures = treatedExposures,
+                       targetExposures = targetExposures,
                        comparatorExposures = comparatorExposures)
+  return(counts)
+}
+
+
+getCountsPrediction <- function(population,outCount, description = "") {
+  persons <- length(unique(population$subjectId))
+  targets <- nrow(population)
+
+  counts <- data.frame(description = description,
+                       targetCount= targets,
+                       uniquePeople = persons,
+                       outcomes = outCount)
   return(counts)
 }
