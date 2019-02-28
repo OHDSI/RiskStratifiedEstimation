@@ -25,7 +25,7 @@ cmToPlpData <- function(cohortMethodData){
                                                                             targetCount =
                                                                               dplyr::mutate(attr(cohortMethodData$cohorts, 'metaData')$attrition,
                                                                                             targetCount = attr(cohortMethodData$cohorts,
-                                                                                                               'metaData')$attrition$treatedPersons +
+                                                                                                               'metaData')$attrition$targetPersons +
                                                                                               comparatorPersons)$targetCount,
                                                                             outcomes = dim(cohortMethodData$outcomes)[1],
                                                                             uniquePeople = length(unique(cohortMethodData$cohorts$subjectId))))
