@@ -43,7 +43,7 @@ prepareForPlpData <- function(treatmentCohortId,
   DatabaseConnector::executeSql(connection, renderedSql)
 
 
-  renderedSql <- SqlRender::loadRenderTranslateSql("treatnmentCovariateSettings.sql",
+  renderedSql <- SqlRender::loadRenderTranslateSql("treatmentCovariateSettings.sql",
                                                    packageName = "RiskStratifiedEstimation",
                                                    result_database_schema = resultsDatabaseSchema,
                                                    cohort_database_schema = cohortDatabaseSchema,
