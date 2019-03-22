@@ -4,32 +4,86 @@
 \alias{runRiskStratifiedEstimation}
 \title{Runs a risk stratified analysis}
 \usage{
-runRiskStratifiedEstimation(cohortMethodData, population, modelSettings, save,
-  testSplit = "person", testFraction = 0.3, nfold = 10, riskStrata = 4,
-  weightsType = "ATE", useStabilizedWeights = TRUE, truncationLevels,
-  timePoint, excludeCovariateIds = NULL, binary = TRUE,
-  includeAllOutcomes = TRUE, requireTimeAtRisk = TRUE,
-  savePlpPlots = FALSE, psThreads = 1, priorType = "laplace",
-  verbosity = "INFO", analysisId = NULL, savePlpResult = TRUE,
-  saveMapMatrix = TRUE, savePs = TRUE, saveDataKM = TRUE,
-  saveAbsoluteRiskRreduction = TRUE, saveRelativeRiskReduction = TRUE)
+runRiskStratifiedEstimation(cdmDatabaseSchema, cohortDatabaseSchema,
+  outcomeDatabaseSchema, resultsDatabaseSchema, cohortTable, outcomeTable,
+  mergedCohortTable, attributeDefinitionTable, cohortAttributeTable,
+  treatmentCohortId, comparatorCohortId, outcomeIds, targetCohortId,
+  connectionDetails, cdmVersion = "5", getDbCohortMethodDataArgs,
+  covariateSettingsCm, exposureTable, psCOntrol = NULL, psPrior = NULL,
+  exposureDatabaseSchema, getPlpDataArgs, covariateSettingsPlp,
+  modelSettings, populationPlpSettings, runPlpArgs, riskStrata = 4,
+  weightsType = "ATE", useStabilizedWeights = TRUE,
+  truncationLevels = c(0.01, 0.99), timePoint,
+  compareAllOutcomes = TRUE, psThreads = 1, predictionThreads = 1,
+  saveResults, saveDirectory = NULL, fftempdir, saveMapMatrix = TRUE,
+  savePs = TRUE, verbosity = "INFO", analysisId = NULL)
 }
 \arguments{
-\item{cohortMethodData}{A cohortMethodData object}
+\item{cdmDatabaseSchema}{The name of the database schema that contains the vocabulary files.
+Requires read permissions to this database. On SQL Server, this should specifiy both the database and the schema,
+so for example 'cdm_instance.dbo'.}
 
-\item{population}{The study population to perform the analysis}
+\item{cohortDatabaseSchema}{The name of the database schema that contains the treatment and comaparator cohorts. Requires read permissions
+to this database.}
 
-\item{modelSettings}{The model settings for the prediction step}
+\item{outcomeDatabaseSchema}{The name of the database schema that contains the outcome cohorts. Requires read permissions to this database.}
 
-\item{save}{The save directory}
+\item{resultsDatabaseSchema}{The name of the database schema with write permissions.}
 
-\item{testSplit}{The type of split for the cross validation. Should be either 'person' or 'time'}
+\item{cohortTable}{The name of the table holding the treatment and comparator cohorts.}
 
-\item{testFraction}{The size of the test set}
+\item{outcomeTable}{The name of the table hodling the outcome cohorts.}
 
-\item{nfold}{The number of folds for cross validation}
+\item{mergedCohortTable}{The name of the table where the merged treatment and comparator cohorts will be stored.}
 
-\item{riskStrata}{The number of risk strata on which to perform the analysis}
+\item{attributeDefinitionTable}{The table where the definition of the treatment covariate will be stored.}
+
+\item{cohortAttributeTable}{The table where the covariate values with regard to treatment will be stored.}
+
+\item{treatmentCohortId}{The cohort definition id of the treatment cohort in the cohortTable.}
+
+\item{comparatorCohortId}{The cohort definition id of the comparator cohort in the cohortTable.}
+
+\item{outcomeIds}{A list of cohort definition ids used to define the outcomes in the outcome table.}
+
+\item{targetCohortId}{The cohrt definition id of of the merged cohort in the mergedCohortTable.}
+
+\item{connectionDetails}{An R object of type \code{connectionDetails} created using function
+\code{\link[DatabaseConnector]{createConnectionDetails}} in the \code{DatabaseConnector} package.
+Either the \code{connection} or the \code{connectionDetails} argument should be specified.}
+
+\item{cdmVersion}{Define the OMOP CDM version used: currently supported is "5".}
+
+\item{getDbCohortMethodDataArgs}{A parameter object for the function \code{\link[CohortMethod]{getDbCohortMethodData}}. Can be generated from function
+\code{\link[CohortMethod]{createGetDbCohortMethodDataArgs}}.}
+
+\item{covariateSettingsCm}{An object of type \code{covariateSettings} as created using the
+\code{\link[FeatureExtraction]{createCovariateSettings}} to be used for the definition of the
+\code{cohortMethodData} object.}
+
+\item{exposureTable}{Input of function \code{\link[CohortMethod]{getDbCohortMethodData}}: The tablename that contains the exposure cohorts.}
+
+\item{psPrior}{An object of the type \code{cyclopsPrior} generated from \code{\link[Cyclops]{createPrior}}.}
+
+\item{exposureDatabaseSchema}{Input of function \code{\link[CohortMethod]{getDbCohortMethodData}}: The name of the database schema that is the
+location where the exposure data used to define the exposure cohorts is available.}
+
+\item{getPlpDataArgs}{A parameter object for the function \code{\link[PatientLevelPrediction]{getPlpData}}. It can be generated from function
+\code{\link[RiskStratifiedEstimation]{createGetPlpDataArgs}}.}
+
+\item{covariateSettingsPlp}{An object of type \code{covariateSettings} as created using the
+\code{\link[FeatureExtraction]{createCovariateSettings}} to be used for the definition of the
+\code{plpData} object. note that a covariate indicating treatment will be added.}
+
+\item{modelSettings}{An object of the class \code{modelSettings} to be used as input for \code{\link[PatientLevelPrediction]{runPlp}}.}
+
+\item{populationPlpSettings}{A parameter object for the function \code{\link[PatientLevelPrediction]{createStudyPopulation}}. Can be generated from
+function \code{\link[PatientLevelPrediction]{createStudyPopulationSettings}}.}
+
+\item{runPlpArgs}{A parameter object for the function \code{\link[PatientLevelPrediction]{runPlp}}. Can be generated from function
+\code{\link[RiskStratifiedEstimation]{createRunPlpDataArgs}}.}
+
+\item{riskStrata}{The number of risk strata to divide the study population.}
 
 \item{weightsType}{The type of weights for the balancing of covariates. Should be either 'ATE' or 'ATT'}
 
@@ -37,53 +91,52 @@ runRiskStratifiedEstimation(cohortMethodData, population, modelSettings, save,
 
 \item{truncationLevels}{The level of truncation expressed in percentiles of the propensity score.}
 
-\item{timePoint}{The time point of interest for the calculation of the absolute risk reduction}
+\item{timePoint}{The time point of interest for the calculation of the absolute risk reduction.}
 
-\item{excludeCovariateIds}{Covariate Ids to be excluded from calculation of propensity scores}
+\item{compareAllOutcomes}{Should all the outcomes be analyzed within all stratifications?}
 
-\item{binary}{Forces the outcomeCount to be 0 or 1 in the prediction step}
+\item{psThreads}{The number of threads to be used for the estimation of the propensity scores.}
 
-\item{includeAllOutcomes}{(binary) indicating whether to include people with outcomes who are not observed for the whole at risk period}
+\item{predictionThreads}{The number of threads to be used to run the predictions.}
 
-\item{requireTimeAtRisk}{Should subjects without time at risk be removed at the prediction step?}
+\item{saveResults}{Should the results of the entire analysis be saved?}
 
-\item{savePlpPlots}{(binary) Should plots for the prediction step be generated?}
+\item{saveDirectory}{The file path to the directory where the results of the analysis will be saved.}
 
-\item{psThreads}{The number of cores to use for the estimation of the propensity score. If 1 then serial approach is implemented}
-
-\item{priorType}{The prior for the propensity score model}
-
-\item{verbosity}{Sets the level of the verbosity. If the log level is at or higher in priority than the logger threshold, a message will print. The levels are:
-\itemize{
-\item{DEBUG}{Highest verbosity showing all debug statements}
-                    \item{TRACE}{Showing information about start and end of steps}
-                    \item{INFO}{Show informative information (Default)}
-                    \item{WARN}{Show warning messages}
-                    \item{ERROR}{Show error messages}
-                    \item{FATAL}{Be silent except for fatal errors}}}
-
-\item{analysisId}{Identifier of the analysis}
-
-\item{savePlpResult}{Should the prediction result be saved?}
+\item{fftempdir}{The directory where the temporary \code{ff} files will be saved.}
 
 \item{saveMapMatrix}{Should the map matrix with the risk sratum allocations be saved?}
 
 \item{savePs}{Should the propensity scores be saved?}
 
-\item{saveDataKM}{Should the weighted Kaplan-Meier estimates be saved?}
+\item{verbosity}{Sets the level of the verbosity. If the log level is at or higher in priority than the logger threshold,
+a message will print. The levels are:
+\itemize{
+    \item{DEBUG}{Highest verbosity showing all debug statements}
+    \item{TRACE}{Showing information about start and end of steps}
+    \item{INFO}{Show informative information (Default)}
+    \item{WARN}{Show warning messages}
+    \item{ERROR}{Show error messages}
+    \item{FATAL}{Be silent except for fatal errors}}.}
 
-\item{saveAbsoluteRiskRreduction}{Should the absolute risk reduction estimates be saved?}
+\item{analysisId}{The identifier of the analysis.}
 
-\item{saveRelativeRiskReduction}{Should the hazard ratios be saved?}
+\item{psControl}{An object of the type \code{cyclopsControl} generated from \code{\link[Cyclops]{createControl}}.}
 }
 \value{
-\item{ps}{The propensity scores within risk strata along with patient weights}
-\item{mapMatrix}{The matrix that maps the patients to risk strata}
-\item{dataKM}{The weighted Kaplan-Meier estimates within risk strata}
-\item{absoluteRiskReduction}{The absolute risk reduction within risk strata}
-\item{relativeRiskReduction}{The relative risk reduction within risk strata}
-\item{predictionResult}{The result of the prediction step}
+An object containing two large lists:
+                                          \itemize{
+                                              \item The propensity scores within risk strata for each outcome in \code{outcomeIds}
+                                              \item The results of the risk stratified analyis within risk strata for all outcomes in \code{outcomeIds}:
+                                                  \itemize{
+                                                       \item Weighted Kaplan-Meier estimates.
+                                                       \item Relative risk reduction.
+                                                       \item Absolute risk reduction.
+                                                       \item Number of cases.
+                                                  }
+                                           }
 }
 \description{
-Runs a risk stratified analysis
+Runs a risk stratified analysis in two stages. It first runs a prediction algorithm using \code{PatientLevelPrediction} to derive baseline
+patient risks and then derives estimates within risk strata using \code{CohortMethod} package.
 }

@@ -1,60 +1,95 @@
 #' Runs a risk stratified analysis
 #'
-#' @param cohortMethodData A cohortMethodData object
-#' @param population The study population to perform the analysis
-#' @param modelSettings The model settings for the prediction step
-#' @param save The save directory
-#' @param testSplit The type of split for the cross validation. Should be either 'person' or 'time'
-#' @param testFraction The size of the test set
-#' @param nfold The number of folds for cross validation
-#' @param riskStrata The number of risk strata on which to perform the analysis
-#' @param weightsType The type of weights for the balancing of covariates. Should be either 'ATE' or 'ATT'
-#' @param useStabilizedWeights Should stabilized weights be used?
-#' @param truncationLevels The level of truncation expressed in percentiles of the propensity score.
-#' @param timePoint The time point of interest for the calculation of the absolute risk reduction
-#' @param excludeCovariateIds Covariate Ids to be excluded from calculation of propensity scores
-#' @param binary Forces the outcomeCount to be 0 or 1 in the prediction step
-#' @param includeAllOutcomes (binary) indicating whether to include people with outcomes who are not observed for the whole at risk period
-#' @param requireTimeAtRisk Should subjects without time at risk be removed at the prediction step?
-#' @param savePlpPlots (binary) Should plots for the prediction step be generated?
-#' @param saveMapMatrix Should the map matrix with the risk sratum allocations be saved?
-#' @param savePs Should the propensity scores be saved?
-#' @param saveDataKM Should the weighted Kaplan-Meier estimates be saved?
-#' @param saveAbsoluteRiskRreduction Should the absolute risk reduction estimates be saved?
-#' @param saveRelativeRiskReduction Should the hazard ratios be saved?
-#' @param psThreads The number of cores to use for the estimation of the propensity score. If 1 then serial approach is implemented
-#' @param savePlpResult Should the prediction result be saved?
-#' @param analysisId Identifier of the analysis
-#' @param priorType The prior for the propensity score model
-#' @param verbosity Sets the level of the verbosity. If the log level is at or higher in priority than the logger threshold, a message will print. The levels are:
-#'                     \itemize{
-#'                     \item{DEBUG}{Highest verbosity showing all debug statements}
-#'                                         \item{TRACE}{Showing information about start and end of steps}
-#'                                         \item{INFO}{Show informative information (Default)}
-#'                                         \item{WARN}{Show warning messages}
-#'                                         \item{ERROR}{Show error messages}
-#'                                         \item{FATAL}{Be silent except for fatal errors}}
-
-#' @return
-#' \item{ps}{The propensity scores within risk strata along with patient weights}
-#' \item{mapMatrix}{The matrix that maps the patients to risk strata}
-#' \item{dataKM}{The weighted Kaplan-Meier estimates within risk strata}
-#' \item{absoluteRiskReduction}{The absolute risk reduction within risk strata}
-#' \item{relativeRiskReduction}{The relative risk reduction within risk strata}
-#' \item{predictionResult}{The result of the prediction step}
+#' Runs a risk stratified analysis in two stages. It first runs a prediction algorithm using \code{PatientLevelPrediction} to derive baseline
+#' patient risks and then derives estimates within risk strata using \code{CohortMethod} package.
 #'
-#' @export
+#' @param cdmDatabaseSchema                  The name of the database schema that contains the vocabulary files.
+#'                                           Requires read permissions to this database. On SQL Server, this should specifiy both the database and the schema,
+#'                                           so for example 'cdm_instance.dbo'.
+#' @param cohortDatabaseSchema               The name of the database schema that contains the treatment and comaparator cohorts. Requires read permissions
+#'                                           to this database.
+#' @param outcomeDatabaseSchema              The name of the database schema that contains the outcome cohorts. Requires read permissions to this database.
+#' @param resultsDatabaseSchema              The name of the database schema with write permissions.
+#' @param cohortTable                        The name of the table holding the treatment and comparator cohorts.
+#' @param outcomeTable                       The name of the table hodling the outcome cohorts.
+#' @param mergedCohortTable                  The name of the table where the merged treatment and comparator cohorts will be stored.
+#' @param attributeDefinitionTable           The table where the definition of the treatment covariate will be stored.
+#' @param cohortAttributeTable               The table where the covariate values with regard to treatment will be stored.
+#' @param treatmentCohortId                  The cohort definition id of the treatment cohort in the cohortTable.
+#' @param comparatorCohortId                 The cohort definition id of the comparator cohort in the cohortTable.
+#' @param outcomeIds                         A list of cohort definition ids used to define the outcomes in the outcome table.
+#' @param targetCohortId                     The cohrt definition id of of the merged cohort in the mergedCohortTable.
+#' @param connectionDetails                  An R object of type \code{connectionDetails} created using function
+#'                                           \code{\link[DatabaseConnector]{createConnectionDetails}} in the \code{DatabaseConnector} package.
+#'                                           Either the \code{connection} or the \code{connectionDetails} argument should be specified.
+#' @param cdmVersion                         Define the OMOP CDM version used: currently supported is "5".
+#' @param getDbCohortMethodDataArgs          A parameter object for the function \code{\link[CohortMethod]{getDbCohortMethodData}}. Can be generated from function
+#'                                           \code{\link[CohortMethod]{createGetDbCohortMethodDataArgs}}.
+#' @param covariateSettingsCm                An object of type \code{covariateSettings} as created using the
+#'                                           \code{\link[FeatureExtraction]{createCovariateSettings}} to be used for the definition of the
+#'                                           \code{cohortMethodData} object.
+#' @param exposureDatabaseSchema             Input of function \code{\link[CohortMethod]{getDbCohortMethodData}}: The name of the database schema that is the
+#'                                           location where the exposure data used to define the exposure cohorts is available.
+#' @param exposureTable                      Input of function \code{\link[CohortMethod]{getDbCohortMethodData}}: The tablename that contains the exposure cohorts.
+#' @param psControl                          An object of the type \code{cyclopsControl} generated from \code{\link[Cyclops]{createControl}}.
+#' @param psPrior                            An object of the type \code{cyclopsPrior} generated from \code{\link[Cyclops]{createPrior}}.
+#' @param modelSettings                      An object of the class \code{modelSettings} to be used as input for \code{\link[PatientLevelPrediction]{runPlp}}.
+#' @param getPlpDataArgs                     A parameter object for the function \code{\link[PatientLevelPrediction]{getPlpData}}. It can be generated from function
+#'                                           \code{\link[RiskStratifiedEstimation]{createGetPlpDataArgs}}.
+#' @param covariateSettingsPlp               An object of type \code{covariateSettings} as created using the
+#'                                           \code{\link[FeatureExtraction]{createCovariateSettings}} to be used for the definition of the
+#'                                           \code{plpData} object. note that a covariate indicating treatment will be added.
+#' @param populationPlpSettings              A parameter object for the function \code{\link[PatientLevelPrediction]{createStudyPopulation}}. Can be generated from
+#'                                           function \code{\link[PatientLevelPrediction]{createStudyPopulationSettings}}.
+#' @param runPlpArgs                         A parameter object for the function \code{\link[PatientLevelPrediction]{runPlp}}. Can be generated from function
+#'                                           \code{\link[RiskStratifiedEstimation]{createRunPlpDataArgs}}.
+#' @param riskStrata                         The number of risk strata to divide the study population.
+#' @param weightsType                        The type of weights for the balancing of covariates. Should be either 'ATE' or 'ATT'
+#' @param useStabilizedWeights               Should stabilized weights be used?
+#' @param truncationLevels                   The level of truncation expressed in percentiles of the propensity score.
+#' @param timePoint                          The time point of interest for the calculation of the absolute risk reduction.
+#' @param compareAllOutcomes                 Should all the outcomes be analyzed within all stratifications?
+#' @param psThreads                          The number of threads to be used for the estimation of the propensity scores.
+#' @param predictionThreads                  The number of threads to be used to run the predictions.
+#' @param saveResults                        Should the results of the entire analysis be saved?
+#' @param saveDirectory                      The file path to the directory where the results of the analysis will be saved.
+#' @param fftempdir                          The directory where the temporary \code{ff} files will be saved.
+#' @param saveMapMatrix                      Should the map matrix with the risk sratum allocations be saved?
+#' @param savePs                             Should the propensity scores be saved?
+#' @param verbosity                          Sets the level of the verbosity. If the log level is at or higher in priority than the logger threshold,
+#'                                           a message will print. The levels are:
+#'                                           \itemize{
+#'                                               \item{DEBUG}{Highest verbosity showing all debug statements}
+#'                                               \item{TRACE}{Showing information about start and end of steps}
+#'                                               \item{INFO}{Show informative information (Default)}
+#'                                               \item{WARN}{Show warning messages}
+#'                                               \item{ERROR}{Show error messages}
+#'                                               \item{FATAL}{Be silent except for fatal errors}}.
+#' @param analysisId                         The identifier of the analysis.
+#'
+#' @return                                   An object containing two large lists:
+#'                                           \itemize{
+#'                                               \item The propensity scores within risk strata for each outcome in \code{outcomeIds}
+#'                                               \item The results of the risk stratified analyis within risk strata for all outcomes in \code{outcomeIds}:
+#'                                                   \itemize{
+#'                                                        \item Weighted Kaplan-Meier estimates.
+#'                                                        \item Relative risk reduction.
+#'                                                        \item Absolute risk reduction.
+#'                                                        \item Number of cases.
+#'                                                   }
+#'                                            }
 #'
 
-runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSettings, save,
-                                        testSplit = 'person', testFraction = .3, nfold = 10,
-                                        riskStrata = 4, weightsType = 'ATE',
-                                        useStabilizedWeights = TRUE, truncationLevels,
-                                        timePoint, excludeCovariateIds = NULL, binary = TRUE, includeAllOutcomes = TRUE,
-                                        requireTimeAtRisk = TRUE, savePlpPlots = FALSE, psThreads = 1, priorType = 'laplace',
-                                        verbosity = 'INFO', analysisId = NULL, savePlpResult = TRUE, saveMapMatrix = TRUE,
-                                        savePs = TRUE, saveDataKM = TRUE, saveAbsoluteRiskRreduction = TRUE,
-                                        saveRelativeRiskReduction = TRUE){
+
+runRiskStratifiedEstimation <- function(cdmDatabaseSchema, cohortDatabaseSchema, outcomeDatabaseSchema, resultsDatabaseSchema,
+                                        cohortTable, outcomeTable, mergedCohortTable, attributeDefinitionTable, cohortAttributeTable,
+                                        treatmentCohortId, comparatorCohortId, outcomeIds, targetCohortId, connectionDetails, cdmVersion = "5",
+                                        getDbCohortMethodDataArgs, covariateSettingsCm, exposureTable, psCOntrol = NULL, psPrior = NULL,
+                                        exposureDatabaseSchema, getPlpDataArgs, covariateSettingsPlp, modelSettings, populationPlpSettings,
+                                        runPlpArgs, riskStrata = 4, weightsType = "ATE", useStabilizedWeights = TRUE,
+                                        truncationLevels = c(.01, .99), timePoint, compareAllOutcomes = TRUE,
+                                        psThreads = 1, predictionThreads = 1, saveResults, saveDirectory = NULL, fftempdir,
+                                        saveMapMatrix = TRUE, savePs = TRUE, verbosity = "INFO", analysisId = NULL){
 
   if(missing(verbosity)){
     verbosity <- "INFO"
@@ -72,243 +107,369 @@ runRiskStratifiedEstimation <- function(cohortMethodData, population, modelSetti
   if(is.null(analysisId))
     analysisId <- paste(gsub(':','',gsub('-','',gsub(' ','',start.all))), 'RSEE')
 
-  if(is.null(save)) save <- file.path(getwd(),'RSEE') #if NULL save to wd
+  if(is.null(saveDirectory)) saveDirectory <- file.path(getwd(),'RSEE') # if NULL save to wd
 
 
-  analysisPath = file.path(save, analysisId)
+  analysisPath = file.path(saveDirectory, analysisId)
   if(!dir.exists(analysisPath)){dir.create(analysisPath, recursive=T)}
   logFileName = paste0(analysisPath,'/logRSEE.txt')
 
-  logger <- OhdsiRTools::createLogger(name = "RSEE Main Log",
-                                      threshold = verbosity,
-                                      appenders = list(OhdsiRTools::createFileAppender(layout = OhdsiRTools::layoutParallel,
-                                                                                       fileName = logFileName)))
-  OhdsiRTools::registerLogger(logger)
+  logger <- ParallelLogger::createLogger(name = "RSEE Main Log",
+                                         threshold = verbosity,
+                                         appenders = list(ParallelLogger::createFileAppender(layout = ParallelLogger::layoutParallel,
+                                                                                             fileName = logFileName)))
+  ParallelLogger::registerLogger(logger)
   logSep <- paste(rep('*', 96), collapse = '')
-  OhdsiRTools::logInfo(logSep)
 
-  OhdsiRTools::logInfo(paste0('Risk Stratified Effect Estimation Package version ', utils::packageVersion("RiskStratifiedEstimation")))
-  OhdsiRTools::logInfo(logSep)
-  # get ids
-  targetId <- attr(population, "metaData")$targetId
-  comparatorId <- attr(population, "metaData")$comparatorId
-  outcomeId <- attr(population, 'metaData')$call$outcomeId
+  ParallelLogger::logInfo(paste0('Risk Stratified Effect Estimation Package version ', utils::packageVersion("RiskStratifiedEstimation")))
+  ParallelLogger::logInfo(logSep)
 
-  OhdsiRTools::logInfo(sprintf('%-20s%s', 'AnalysisID: ',analysisId))
-  OhdsiRTools::logInfo(sprintf('%-20s%s', 'targetId: ', targetId))
-  OhdsiRTools::logInfo(sprintf('%-20s%s', 'comparatorId', comparatorId))
-  OhdsiRTools::logInfo(sprintf('%-20s%s', 'OutcomeID: ', outcomeId))
-  OhdsiRTools::logInfo(sprintf('%-20s%s', 'Cohort size: ', nrow(cohortMethodData$cohorts)))
-  OhdsiRTools::logInfo(sprintf('%-20s%s', 'Covariates: ', nrow(cohortMethodData$covariateRef)))
-  OhdsiRTools::logInfo(sprintf('%-20s%s', 'Population size: ', nrow(population)))
-  OhdsiRTools::logInfo(sprintf('%-20s%s', 'Cases: ', sum(population$outcomeCount>0)))
-  OhdsiRTools::logInfo(sprintf('%-20s%s', 'Risk strata: ', riskStrata))
+  ParallelLogger::logInfo(sprintf('%-20s%s', 'AnalysisID: ',analysisId))
+  ParallelLogger::logInfo(sprintf('%-20s%s', 'treatmentId: ', treatmentCohortId))
+  ParallelLogger::logInfo(sprintf('%-20s%s', 'comparatorId', comparatorCohortId))
+  ParallelLogger::logInfo(sprintf('%-20s%s', 'OutcomeID: ', outcomeIds))
 
+  #######################
+  # Prediction step
+  #######################
+  ParallelLogger::logInfo(logSep)
+  ParallelLogger::logInfo("****Starting prediction step****")
+  ParallelLogger::logInfo("Merging the treatment and comparator cohorts")
 
-  #########################################
-  # PREDICTION
-  #########################################
+  prepareForPlpData(treatmentCohortId = treatmentCohortId,
+                    comparatorCohortId = comparatorCohortId,
+                    targetCohortId = targetCohortId,
+                    cohortDatabaseSchema = cohortDatabaseSchema,
+                    cohortTable = cohortTable,
+                    resultsDatabaseSchema = resultsDatabaseSchema,
+                    mergedCohortTable = mergedCohortTable,
+                    attributeDefinitionTable = attributeDefinitionTable,
+                    cohortAttributeTable = cohortAttributeTable,
+                    connectionDetails = connectionDetails)
+  ParallelLogger::logInfo("Done")
+  ParallelLogger::logInfo("Creating covariate settings")
+  covariateSettingsTreatment <-
+    FeatureExtraction::createCohortAttrCovariateSettings(attrDatabaseSchema = resultsDatabaseSchema,
+                                                         attrDefinitionTable = attributeDefinitionTable,
+                                                         cohortAttrTable = cohortAttributeTable)
+  covariateSettingsList <- list(covariateSettingsPlp,
+                                covariateSettingsTreatment)
+  plpData <- PatientLevelPrediction::getPlpData(connectionDetails = connectionDetails,
+                                                cdmDatabaseSchema = cdmDatabaseSchema,
+                                                cohortId = targetCohortId,
+                                                outcomeIds = outcomeIds,
+                                                cohortDatabaseSchema = resultsDatabaseSchema,
+                                                cohortTable = mergedCohortTable,
+                                                outcomeDatabaseSchema = outcomeDatabaseSchema,
+                                                outcomeTable = outcomeTable,
+                                                studyStartDate = getPlpDataArgs$studyStartDate,
+                                                studyEndDate = getPlpDataArgs$studyEndDate,
+                                                cdmVersion = cdmVersion,
+                                                firstExposureOnly = getPlpDataArgs$firstExposureOnly,
+                                                washoutPeriod = getPlpDataArgs$washoutPeriod,
+                                                excludeDrugsFromCovariates = getPlpDataArgs$excludeDrugsFromCovariates,
+                                                covariateSettings = covariateSettingsList)
 
-  OhdsiRTools::logTrace('Converting plpData from cohortMethodData')
-  plpData <- cmToPlpData(cohortMethodData)
+  ParallelLogger::logInfo("Constructing the plpData object")
 
+  runPrediction <- function(x,
+                            populationPlpSettings,
+                            modelSettings,
+                            plpData,
+                            outcomeIds,
+                            testSplit,
+                            testFraction,
+                            nfold,
+                            savePlpPlots,
+                            saveDirectory,
+                            savePlpResult,
+                            savePlpData){
 
-  populationCall <- attr(population, 'metaData')$call
-
-  OhdsiRTools::logTrace('Generating prediction study population')
-  populationPlp <-
-    PatientLevelPrediction::createStudyPopulation(plpData = plpData,
-                                                  outcomeId = populationCall$outcomeId,
-                                                  firstExposureOnly = populationCall$firstExposureOnly,
-                                                  washoutPeriod = populationCall$washoutPeriod,
-                                                  removeSubjectsWithPriorOutcome = populationCall$removeSubjectsWithPriorOutcome,
-                                                  priorOutcomeLookback = populationCall$priorOutcomeLookback,
-                                                  minTimeAtRisk = populationCall$minDaysAtRisk,
-                                                  riskWindowStart = populationCall$riskWindowStart,
-                                                  addExposureDaysToStart = populationCall$addExposureDaysToStart,
-                                                  riskWindowEnd = populationCall$riskWindowEnd,
-                                                  addExposureDaysToEnd = populationCall$addExposureDaysToEnd,
-                                                  binary = binary,
-                                                  includeAllOutcomes = includeAllOutcomes,
-                                                  requireTimeAtRisk = requireTimeAtRisk)
-  OhdsiRTools::logInfo(logSep)
-  OhdsiRTools::logInfo('Generated plpData object and prediction study population')
-  OhdsiRTools::logInfo('Starting prediction step')
-  # Run the prediction model ----
-  resultsPrediction <- PatientLevelPrediction::runPlp(
-    population = populationPlp,
-    plpData = plpData,
-    modelSettings = modelSettings,
-    testSplit = testSplit,
-    testFraction = testFraction,
-    nfold = nfold,
-    savePlpPlots = savePlpPlots,
-    saveDirectory = save,
-    savePlpResult = savePlpResult
-  )
-
-  #########################################
-  # RISK STRATIFICATION
-  #########################################
-
-  # creates new column with stratum numbers -> stores the stratum number and the subjectId to mapMatrix
-  mapMatrix <- dplyr::mutate(resultsPrediction$prediction,
-                             riskStratum = dplyr::ntile(resultsPrediction$prediction$value, riskStrata))
-  mapMatrix <- subset(mapMatrix, select = c('subjectId', 'riskStratum'))
-  if(saveMapMatrix)
-    saveRDS(mapMatrix, file.path(analysisPath, 'mapMatrix.rds', fsep = '\\'))
-
-
-
-  #########################################
-  # RISK STRATIFIED ANALYSIS
-  #########################################
-  OhdsiRTools::logInfo(logSep)
-  OhdsiRTools::logInfo('Estimating propensity scores')
-  tt <- Sys.time()
-
-  ps <- list()
-  psEstimationParallel <- function(k){
-
-    populationRiskStratified <- population[population$subjectId %in% mapMatrix$subjectId[mapMatrix$riskStratum == k], ]
-    ps[[k]] <- CohortMethod::createPs(cohortMethodData = cohortMethodData,
-                                      population = populationRiskStratified,
-                                      excludeCovariateIds = excludeCovariateIds,
-                                      control = Cyclops::createControl(tolerance = 2e-07,
-                                                                       cvRepetitions = 10,
-                                                                       startingVariance = .01),
-                                      prior = Cyclops::createPrior(priorType = priorType,
-                                                                   exclude = c(0),
-                                                                   useCrossValidation = TRUE))
-  }
-
-  cl <- OhdsiRTools::makeCluster(psThreads)
+    populationPlp <-
+      PatientLevelPrediction::createStudyPopulation(plpData = plpData,
+                                                    outcomeId = outcomeIds[x],
+                                                    binary = populationPlpSettings$binary,
+                                                    includeAllOutcomes = populationPlpSettings$includeAllOutcomes,
+                                                    firstExposureOnly = populationPlpSettings$firstExposureOnly,
+                                                    washoutPeriod = populationPlpSettings$washoutPeriod,
+                                                    removeSubjectsWithPriorOutcome = populationPlpSettings$removeSubjectsWithPriorOutcome,
+                                                    priorOutcomeLookback = populationPlpSettings$priorOutcomeLookback,
+                                                    requireTimeAtRisk = populationPlpSettings$requireTimeAtRisk,
+                                                    minTimeAtRisk = populationPlpSettings$minTimeAtRisk,
+                                                    riskWindowStart = populationPlpSettings$riskWindowStart,
+                                                    addExposureDaysToStart = populationPlpSettings$addExposureDaysToStart,
+                                                    riskWindowEnd = populationPlpSettings$riskWindowEnd,
+                                                    addExposureDaysToEnd = populationPlpSettings$addExposureDaysToEnd,
+                                                    verbosity = populationPlpSettings$verbosity)
 
 
-  ps <- OhdsiRTools::clusterApply(cl, 1:psThreads, psEstimationParallel)
+    predictionResult <-
+      PatientLevelPrediction::runPlp(population = populationPlp,
+                                     plpData = plpData,
+                                     modelSettings = modelSettings,
+                                     saveDirectory = paste(saveDirectory, "Prediction", outcomeIds[x], sep = "/"),
+                                     minCovariateFraction = runPlpArgs$minCovariateFraction,
+                                     normalizeData = runPlpArgs$normalizeData ,
+                                     testSplit = runPlpArgs$testSplit ,
+                                     testFraction = runPlpArgs$testFraction ,
+                                     trainFraction = runPlpArgs$trainFraction ,
+                                     nfold = runPlpArgs$nfold ,
+                                     indexes = runPlpArgs$indexes ,
+                                     savePlpData = runPlpArgs$savePlpData ,
+                                     savePlpResult = runPlpArgs$savePlpResult ,
+                                     savePlpPlots = runPlpArgs$savePlpPlots ,
+                                     saveEvaluation = runPlpArgs$saveEvaluation ,
+                                     verbosity = runPlpArgs$verbosity ,
+                                     timeStamp = runPlpArgs$timeStamp ,
+                                     analysisId = runPlpArgs$analysisId)
 
-  OhdsiRTools::stopCluster(cl)
-
-  OhdsiRTools::logInfo(paste('Propensity score estimation took', round(Sys.time() - tt, 2), 'mins'))
-  if(savePs){
-    saveRDS(ps, file.path(analysisPath, 'ps.rds'))
-    OhdsiRTools::logInfo(paste('Saved propensity score estimates in', save))
-  }
-
-
-  for(i in 1:length(ps))
-    ps[[i]] <- createIPW(ps[[i]],
-                         weightsType = weightsType,
-                         useStabilizedWeights = useStabilizedWeights,
-                         truncationLevels = truncationLevels)
-  OhdsiRTools::logInfo(paste('Generated', weightsType, 'weights within risk strata'))
-
-
-
-
-  #########################################
-  # Weighted K-M estimates
-  #########################################
-
-  dataKM <- list()
-  for(i in 1:riskStrata){
-
-    dataKM[[i]] <- weightedKM(ps[[i]],
-                              calculateWeights = FALSE,
-                              weightsType = weightsType,
-                              useStabilizedWeights = useStabilizedWeights,
-                              truncationLevels = truncationLevels)
-  }
-
-  OhdsiRTools::logInfo('Generated weighted Kaplan-Meier estimates within risk strata')
-
-  if(saveDataKM)
-    saveRDS(dataKM, file = file.path(analysisPath, 'dataKM.rds'))
-
-
-
-  #########################################
-  # Absolute/Relative risk reduction
-  #########################################
-  AbsoluteRiskReduction <- absoluteRiskReduction(dataKM,
-                                                 timePoint)
-
-
-  OhdsiRTools::logInfo('Estimated absolute risk reduction within risk strata')
-  if(saveAbsoluteRiskRreduction){
-    saveRDS(AbsoluteRiskReduction, file = file.path(analysisPath, 'absoluteRiskReduction.rds'))
-    OhdsiRTools::logInfo('Saved absolute risk reduction result')
-  }
-
-
-  RelativeRiskReduction <- relativeRiskReduction(ps,
-                                                 calculateWeights = FALSE,
-                                                 weightsType = weightsType,
-                                                 useStabilizedWeights = useStabilizedWeights,
-                                                 truncationLevels = truncationLevels)
-
-
-
-  treatedCases <- data.frame(riskStratum = numeric(),
-                             outcomeRate = numeric())
-  comparatorCases <- data.frame(riskStratum = numeric(),
-                                outcomeRate = numeric())
-  OhdsiRTools::logInfo('Estimated hazard ratios within risk strata')
-  if(saveRelativeRiskReduction){
-    saveRDS(RelativeRiskReduction, file = file.path(analysisPath, 'relativeRiskReduction.rds'))
-    OhdsiRTools::logInfo('Saved hazard ratios')
-  }
-
-
-
-  for(i in 1:riskStrata){
-
-    treatmentEvents <- subset(dataKM[[i]], eventTime == 1 & cohort == 'treatment')
-    sortTimes <- sort(c(timePoint, treatmentEvents$time))
-    if(sum(sortTimes == timePoint) == 1){
-      positionTreatment <- which(sortTimes == timePoint)
-      survivalTreatment <- 1 - treatmentEvents$S[positionTreatment - 1]
-    }else{
-      positionTreatment <- which(treatmentEvents$time == timePoint)
-      survivalTreatment <- 1 - treatmentEvents$S[positionTreatment]
-    }
-
-    comparatorEvents <- subset(dataKM[[i]], eventTime == 1 & cohort == 'comparator')
-    sortTimes <- sort(c(timePoint, comparatorEvents$time))
-    if(sum(sortTimes == timePoint) == 1){
-      positionComparator <- which(sortTimes == timePoint)
-      survivalComparator <- 1 - comparatorEvents$S[positionComparator - 1]
-    }else{
-      positionComparator <- which(comparatorEvents$time == timePoint)
-      survivalComparator <- 1 - comparatorEvents$S[positionComparator]
-    }
-
-    treatedCases[i, ] <- c(i, survivalTreatment)
-    comparatorCases[i, ] <- c(i, survivalComparator)
+    res <- list(populationPlp = populationPlp,
+                predict = predictionResult$model$predict)
+    return(res)
 
   }
 
-  cases <- dplyr::bind_rows(data = treatedCases, comparatorCases, .id = 'cohort')
-  cases$cohort <- factor(cases$cohort, levels = 1:2, labels = c('treatment', 'comparator'))
-  cases$riskStratum <- paste('Q', cases$riskStratum, sep = '')
-  OhdsiRTools::logInfo('Calculated outcome rates within risk strata')
 
 
-  results <- list(ps = ps,
-                  mapMatrix = mapMatrix,
-                  dataKM = dataKM,
-                  absoluteRiskReduction = AbsoluteRiskReduction,
-                  relativeRiskReduction = RelativeRiskReduction,
-                  cases = cases,
-                  predictionResult = resultsPrediction)
-  OhdsiRTools::logInfo('Run finished successfully')
+  predictionList <- list()
+  lengthOutcomes <- length(outcomeIds)
+  cl <- ParallelLogger::makeCluster(numberOfThreads = predictionThreads)
+  predictionList <-  ParallelLogger::clusterApply(cluster = cl,
+                                                  fun = runPrediction,
+                                                  x = 1:lengthOutcomes,
+                                                  plpData = plpData,
+                                                  populationPlpSettings = populationPlpSettings,
+                                                  modelSettings = modelSettings,
+                                                  testSplit = testSplit,
+                                                  outcomeIds = outcomeIds,
+                                                  testFraction = testFraction,
+                                                  nfold = nfold,
+                                                  savePlpPlots = savePlpPlots,
+                                                  saveDirectory = saveDirectory,
+                                                  savePlpResult = savePlpResult,
+                                                  savePlpData = savePlpData)
+  ParallelLogger::stopCluster(cl)
+
+  predictionOutcomes <- numeric()
+  ParallelLogger::logInfo("Estimated prediction models for all outcomes")
+
+
+  #######################
+  # Estimation step
+  #######################
+  ParallelLogger::logInfo("****Starting estimation step****")
+  ParallelLogger::logInfo("Constructing plpData object excluding treatment")
+  plpData <- removeTreatment(plpData = plpData,
+                             treatmentCovariateId = 1)
+
+  cohortMethodData <-
+    CohortMethod::getDbCohortMethodData(connectionDetails = connectionDetails,
+                                        cdmDatabaseSchema = cdmDatabaseSchema,
+                                        targetId = treatmentCohortId,
+                                        comparatorId = comparatorCohortId,
+                                        outcomeIds = outcomeIds,
+                                        studyStartDate = getDbCohortMethodDataArgs$studyStartDate,
+                                        studyEndDate = getDbCohortMethodDataArgs$studyEndDate,
+                                        exposureDatabaseSchema = exposureDatabaseSchema,
+                                        exposureTable = exposureTable,
+                                        outcomeDatabaseSchema = outcomeDatabaseSchema,
+                                        outcomeTable = outcomeTable,
+                                        cdmVersion = cdmVersion,
+                                        excludeDrugsFromCovariates = getDbCohortMethodDataArgs$excludeDrugsFromCovariates,
+                                        firstExposureOnly = getDbCohortMethodDataArgs$firstExposureOnly,
+                                        removeDuplicateSubjects = getDbCohortMethodDataArgs$removeDuplicateSubjects,
+                                        restrictToCommonPeriod = getDbCohortMethodDataArgs$restrictToCommonPeriod,
+                                        washoutPeriod = getDbCohortMethodDataArgs$washoutPeriod,
+                                        maxCohortSize = getDbCohortMethodDataArgs$maxCohortSize,
+                                        covariateSettings = getDbCohortMethodDataArgs$covariateSettingsCm)
+  ParallelLogger::logInfo("Done")
+
+  if(is.null(psControl)){
+    psControl <-  Cyclops::createControl(threads = -1)}
+  if(is.null(psPrior)){
+    psPrior <- Cyclops::createPrior(priorType = "laplace",
+                                    exclude = c(0),
+                                    useCrossValidation = TRUE)}
+  numberOfOutcomes <- length(outcomeIds)
+
+  ParallelLogger::logInfo("Starting propensity score estimation")
+  psOverAllOutcomes <- list()
+
+  cl <- parallel::makeCluster(psThreads)
+  doParallel::registerDoParallel(cl)
+  psOverAllOutcomes <-
+    foreach::foreach(x = 1:numberOfOutcomes,
+                     .combine = "list",
+                     .multicombine = TRUE,
+                     .packages = "foreach") %dopar%{
+
+                       options(fftempdir = fftempdir)
+                       populationCm <-
+                         CohortMethod::createStudyPopulation(cohortMethodData = cohortMethodData,
+                                                             outcomeId = outcomeIds[x],
+                                                             firstExposureOnly = populationCmSettings$firstExposureOnly,
+                                                             restrictToCommonPeriod = populationCmSettings$restrictToCommonPeriod,
+                                                             washoutPeriod = populationCmSettings$washoutPeriod,
+                                                             removeDuplicateSubjects = populationCmSettings$removeDuplicateSubjects,
+                                                             removeSubjectsWithPriorOutcome = populationCmSettings$removeSubjectsWithPriorOutcome,
+                                                             priorOutcomeLookback = populationCmSettings$priorOutcomeLookback,
+                                                             minDaysAtRisk = populationCmSettings$minDaysAtRisk,
+                                                             riskWindowStart = populationCmSettings$riskWindowStart,
+                                                             addExposureDaysToStart = populationCmSettings$addExposureDaysToStart,
+                                                             riskWindowEnd = populationCmSettings$riskWindowEnd,
+                                                             addExposureDaysToEnd = populationCmSettings$addExposureDaysToEnd,
+                                                             censorAtNewRiskWindow = populationCmSettings$censorAtNewRiskWindow)
+
+                       populationCmMetaData <- attr(populationCm, "metaData")
+                       attr(populationCm, "metaData") <- attr(predictionList[[x]]$populationPlp, "metaData")
+                       riskPredictions <- predictionList[[x]]$predict(plpData = plpData,
+                                                                      population = populationCm)
+                       riskPredictions <- subset(riskPredictions,
+                                                 select = c(rowId, subjectId, value))
+
+                       attr(populationCm, "metaData") <- populationCmMetaData
+                       ParallelLogger::logInfo("Stratifying estimation population")
+                       mapMatrix <- riskPredictions
+                       mapMatrix <- dplyr::mutate(mapMatrix, riskStratum = dplyr::ntile(riskPredictions$value,
+                                                                                        riskStrata))
+                       ps <- list()
+                       for(i in 1:riskStrata){
+                         population <- populationCm[populationCm$subjectId %in% mapMatrix[mapMatrix$riskStratum == i,]$subjectId, ]
+                         ps[[i]] <- ff::as.ffdf(CohortMethod::createPs(cohortMethodData = cohortMethodData,
+                                                                       population = population,
+                                                                       control = psControl,
+                                                                       prior = psPrior))
+                       }
+
+
+                       if(savePs){
+
+                         saveDir <- paste(analysisPath, "Estimation", outcomeIds[x], sep = "/")
+                         dir.create(saveDir, recursive = TRUE)
+                         saveRDS(lapply(ps, as.data.frame),
+                                 paste(saveDir, "ps.rds", sep = "/"))
+
+                       }
+
+                       if(saveMapMatrix){
+                         saveRDS(mapMatrix, paste(analysisPath, "Estimation", outcomeIds[x], 'mapMatrix.rds', sep = "/"))
+                         ParallelLogger::logInfo("Saved the map matrix")
+                       }
+
+                       return(ps)
+
+                     }
+
+
+  parallel::stopCluster(cl)
+
+  ParallelLogger::logInfo("Done estimating propensity scores")
+  ParallelLogger::logInfo("Starting calculation of results")
+
+  resultsOverAllOutcomes <-
+    foreach::foreach(i = 1:length(outcomeIds),
+                     .combine = list,
+                     .multicombine = TRUE,
+                     .packages = "RiskStratifiedEstimation")%do%{
+
+                       ParallelLogger::logInfo(paste("Calculating main results for outcome:", outcomeIds[i]))
+                       ps <- list()
+                       ps <- lapply(psOverAllOutcomes[[i]],
+                                    createIPW,
+                                    weightsType = weightsType,
+                                    useStabilizedWeights = useStabilizedWeights,
+                                    truncationLevels = truncationLevels)
+                       # for(j in 1:length(psOverAllOutcomes[[i]])){
+                       #   ps[[j]] <- createIPW(psOverAllOutcomes[[i]][[j]],
+                       #                                    weightsType = weightsType,
+                       #                                    useStabilizedWeights = useStabilizedWeights,
+                       #                                    truncationLevels = truncationLevels)
+                       #
+                       # }
+
+                       res <- generateResults(ps = ps,
+                                              timePoint = timePoint)
+
+                       ParallelLogger::logInfo('Done estimating results')
+
+                       if(saveResults){
+                         saveDir <- paste(analysisPath, "Estimation", outcomeIds[i], sep = "/")
+                         saveRDS(res$relativeRiskReduction, file = file.path(saveDir, 'relativeRiskReduction.rds'))
+                         saveRDS(res$absoluteRiskReduction, file = file.path(saveDir, 'absoluteRiskReduction.rds'))
+                         saveRDS(res$dataKM, file = file.path(saveDir, 'dataKM.rds'))
+                         saveRDS(res$cases, file = file.path(saveDir, 'cases.rds'))
+
+                         ParallelLogger::logInfo('Saved main the results')
+                       }
+                       ##################
+                       ParallelLogger::logInfo('Generating results for the other outcomes')
+
+                       if(compareAllOutcomes){
+
+                         numberOfComparisons <- length(outcomeIds) - 1
+                         comparisonOutcomes <- outcomeIds[outcomeIds!=outcomeIds[i]]
+                         resSwitched <- list()
+
+                         for(j in 1:numberOfComparisons){
+
+                           ParallelLogger::logInfo(paste("Stratification outcome", outcomeIds[i], "results outcome:",comparisonOutcomes[j]))
+                           ParallelLogger::logInfo("Generating population with switched outcome")
+
+                           populationCm <-
+                             CohortMethod::createStudyPopulation(cohortMethodData = cohortMethodData,
+                                                                 outcomeId = comparisonOutcomes[j],
+                                                                 firstExposureOnly = populationCmSettings$firstExposureOnly,
+                                                                 restrictToCommonPeriod = populationCmSettings$restrictToCommonPeriod,
+                                                                 washoutPeriod = populationCmSettings$washoutPeriod,
+                                                                 removeDuplicateSubjects = populationCmSettings$removeDuplicateSubjects,
+                                                                 removeSubjectsWithPriorOutcome = populationCmSettings$removeSubjectsWithPriorOutcome,
+                                                                 priorOutcomeLookback = populationCmSettings$priorOutcomeLookback,
+                                                                 minDaysAtRisk = populationCmSettings$minDaysAtRisk,
+                                                                 riskWindowStart = populationCmSettings$riskWindowStart,
+                                                                 addExposureDaysToStart = populationCmSettings$addExposureDaysToStart,
+                                                                 riskWindowEnd = populationCmSettings$riskWindowEnd,
+                                                                 addExposureDaysToEnd = populationCmSettings$addExposureDaysToEnd,
+                                                                 censorAtNewRiskWindow = populationCmSettings$censorAtNewRiskWindow)
+
+                           psSwitchedOutcome <- lapply(ps, switchOutcome, populationCm = populationCm)
+                           resSwitched[[j]] <- generateResults(ps = psSwitchedOutcome,
+                                                               timePoint = timePoint)
+                           if(saveResults){
+                             saveDir <- paste(analysisPath, "Estimation", outcomeIds[i], comparisonOutcomes[j], sep = "/")
+                             if(!dir.exists(saveDir)){dir.create(saveDir, recursive=T)}
+                             saveRDS(resSwitched[[j]]$relativeRiskReduction, file = file.path(saveDir, 'relativeRiskReduction.rds'))
+                             saveRDS(resSwitched[[j]]$absoluteRiskReduction, file = file.path(saveDir, 'absoluteRiskReduction.rds'))
+                             saveRDS(resSwitched[[j]]$dataKM, file = file.path(saveDir, 'dataKM.rds'))
+                             saveRDS(resSwitched[[j]]$cases, file = file.path(saveDir, 'cases.rds'))
+
+                             ParallelLogger::logInfo('Saved the main results')
+                           }
+                         }
+                       }
+
+
+
+                       list(mainOutcome = res,
+                            otherOutcomes = resSwitched)
+                     }
+
+  names(resultsOverAllOutcomes) <- paste("outcome",
+                                         outcomeIds,
+                                         sep = "_")
+  ParallelLogger::logInfo("Done")
+
+
+  results <- list(ps = psOverAllOutcomes,
+                  results = resultsOverAllOutcomes)
+  ParallelLogger::logInfo('Run finished successfully')
 
   # stop logger
-  OhdsiRTools::clearLoggers()
-  logger <- OhdsiRTools::createLogger(name = "SIMPLE",
-                                      threshold = "INFO",
-                                      appenders = list(OhdsiRTools::createConsoleAppender(layout = OhdsiRTools::layoutTimestamp)))
-  OhdsiRTools::registerLogger(logger)
+  ParallelLogger::clearLoggers()
+  logger <- ParallelLogger::createLogger(name = "SIMPLE",
+                                         threshold = "INFO",
+                                         appenders = list(ParallelLogger::createConsoleAppender(layout = ParallelLogger::layoutTimestamp)))
+  ParallelLogger::registerLogger(logger)
 
   return(results)
 }
+
