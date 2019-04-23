@@ -36,6 +36,8 @@
 #' @param modelSettings                      An object of the class \code{modelSettings} to be used as input for \code{\link[PatientLevelPrediction]{runPlp}}.
 #' @param getPlpDataArgs                     A parameter object for the function \code{\link[PatientLevelPrediction]{getPlpData}}. It can be generated from function
 #'                                           \code{\link[RiskStratifiedEstimation]{createGetPlpDataArgs}}.
+#' @param populationCmSettings               A parameter object for the function \code{\link[CohortMethod]{createStudyPopulation}}. Can be generated from
+#'                                           function \code{\link[CohortMethod]{createStudyPopulationSettings}}.
 #' @param covariateSettingsPlp               An object of type \code{covariateSettings} as created using the
 #'                                           \code{\link[FeatureExtraction]{createCovariateSettings}} to be used for the definition of the
 #'                                           \code{plpData} object. note that a covariate indicating treatment will be added.
@@ -83,9 +85,10 @@
 
 runRiskStratifiedEstimation <- function(cdmDatabaseSchema, cohortDatabaseSchema, outcomeDatabaseSchema, resultsDatabaseSchema,
                                         cohortTable, outcomeTable, mergedCohortTable, attributeDefinitionTable, cohortAttributeTable,
-                                        treatmentCohortId, comparatorCohortId, outcomeIds, targetCohortId, connectionDetails, cdmVersion = "5",
-                                        getDbCohortMethodDataArgs, covariateSettingsCm, exposureTable, psControl = NULL, psPrior = NULL,
-                                        exposureDatabaseSchema, getPlpDataArgs, covariateSettingsPlp, modelSettings, populationPlpSettings,
+                                        treatmentCohortId, comparatorCohortId, outcomeIds, targetCohortId, connectionDetails,
+                                        getDbCohortMethodDataArgs, covariateSettingsCm, populationCmSettings, exposureTable,
+                                        psControl = NULL, psPrior = NULL, exposureDatabaseSchema, getPlpDataArgs,
+                                        covariateSettingsPlp, modelSettings, populationPlpSettings, cdmVersion = "5",
                                         runPlpArgs, riskStrata = 4, weightsType = "ATE", useStabilizedWeights = TRUE,
                                         truncationLevels = c(.01, .99), timePoint, compareAllOutcomes = TRUE,
                                         psThreads = 1, predictionThreads = 1, saveResults, saveDirectory = NULL, fftempdir,
