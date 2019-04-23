@@ -61,7 +61,7 @@ Either the \code{connection} or the \code{connectionDetails} argument should be 
 \code{cohortMethodData} object.}
 
 \item{populationCmSettings}{A parameter object for the function \code{\link[CohortMethod]{createStudyPopulation}}. Can be generated from
-function \code{\link[CohortMethod]{createStudyPopulationSettings}}.}
+function \code{createStudyPopulationCmSettings}.}
 
 \item{exposureTable}{Input of function \code{\link[CohortMethod]{getDbCohortMethodData}}: The tablename that contains the exposure cohorts.}
 

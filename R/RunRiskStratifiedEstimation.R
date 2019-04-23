@@ -37,7 +37,7 @@
 #' @param getPlpDataArgs                     A parameter object for the function \code{\link[PatientLevelPrediction]{getPlpData}}. It can be generated from function
 #'                                           \code{\link[RiskStratifiedEstimation]{createGetPlpDataArgs}}.
 #' @param populationCmSettings               A parameter object for the function \code{\link[CohortMethod]{createStudyPopulation}}. Can be generated from
-#'                                           function \code{\link[CohortMethod]{createStudyPopulationSettings}}.
+#'                                           function \code{createStudyPopulationCmSettings}.
 #' @param covariateSettingsPlp               An object of type \code{covariateSettings} as created using the
 #'                                           \code{\link[FeatureExtraction]{createCovariateSettings}} to be used for the definition of the
 #'                                           \code{plpData} object. note that a covariate indicating treatment will be added.
