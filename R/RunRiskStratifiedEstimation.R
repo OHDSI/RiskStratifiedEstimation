@@ -80,7 +80,7 @@
 #'                                                        \item Number of cases.
 #'                                                   }
 #'                                            }
-#'
+#' @export
 
 
 runRiskStratifiedEstimation <- function(cdmDatabaseSchema, cohortDatabaseSchema, outcomeDatabaseSchema, resultsDatabaseSchema,
