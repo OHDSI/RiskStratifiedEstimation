@@ -44,7 +44,7 @@
 #' @param populationPlpSettings              A parameter object for the function \code{\link[PatientLevelPrediction]{createStudyPopulation}}. Can be generated from
 #'                                           function \code{\link[PatientLevelPrediction]{createStudyPopulationSettings}}.
 #' @param runPlpArgs                         A parameter object for the function \code{\link[PatientLevelPrediction]{runPlp}}. Can be generated from function
-#'                                           \code{\link[RiskStratifiedEstimation]{createRunPlpDataArgs}}.
+#'                                           \code{\link[RiskStratifiedEstimation]{createRunPlpArgs}}.
 #' @param riskStrata                         The number of risk strata to divide the study population.
 #' @param weightsType                        The type of weights for the balancing of covariates. Should be either 'ATE' or 'ATT'
 #' @param useStabilizedWeights               Should stabilized weights be used?

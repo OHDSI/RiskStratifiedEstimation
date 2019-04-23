@@ -87,7 +87,7 @@ function \code{\link[PatientLevelPrediction]{createStudyPopulationSettings}}.}
 \item{cdmVersion}{Define the OMOP CDM version used: currently supported is "5".}
 
 \item{runPlpArgs}{A parameter object for the function \code{\link[PatientLevelPrediction]{runPlp}}. Can be generated from function
-\code{\link[RiskStratifiedEstimation]{createRunPlpDataArgs}}.}
+\code{\link[RiskStratifiedEstimation]{createRunPlpArgs}}.}
 
 \item{riskStrata}{The number of risk strata to divide the study population.}
 
