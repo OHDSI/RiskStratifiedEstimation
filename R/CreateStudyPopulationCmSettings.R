@@ -37,7 +37,7 @@ createStudyPopulationCmSettings <-
 
     # First: get default values:
     analysis <- list()
-    for (name in names(formals(asd))) {
+    for (name in names(formals(createStudyPopulationCmSettings))) {
       analysis[[name]] <- get(name)
     }
     # Second: overwrite defaults with actual values:
