@@ -8,15 +8,16 @@ runRiskStratifiedEstimation(cdmDatabaseSchema, cohortDatabaseSchema,
   outcomeDatabaseSchema, resultsDatabaseSchema, cohortTable, outcomeTable,
   mergedCohortTable, attributeDefinitionTable, cohortAttributeTable,
   treatmentCohortId, comparatorCohortId, outcomeIds, targetCohortId,
-  connectionDetails, cdmVersion = "5", getDbCohortMethodDataArgs,
-  covariateSettingsCm, exposureTable, psCOntrol = NULL, psPrior = NULL,
-  exposureDatabaseSchema, getPlpDataArgs, covariateSettingsPlp,
-  modelSettings, populationPlpSettings, runPlpArgs, riskStrata = 4,
-  weightsType = "ATE", useStabilizedWeights = TRUE,
-  truncationLevels = c(0.01, 0.99), timePoint,
-  compareAllOutcomes = TRUE, psThreads = 1, predictionThreads = 1,
-  saveResults, saveDirectory = NULL, fftempdir, saveMapMatrix = TRUE,
-  savePs = TRUE, verbosity = "INFO", analysisId = NULL)
+  connectionDetails, getDbCohortMethodDataArgs, covariateSettingsCm,
+  populationCmSettings, exposureTable, psControl = NULL,
+  psPrior = NULL, exposureDatabaseSchema, getPlpDataArgs,
+  covariateSettingsPlp, modelSettings, populationPlpSettings,
+  cdmVersion = "5", runPlpArgs, riskStrata = 4, weightsType = "ATE",
+  useStabilizedWeights = TRUE, truncationLevels = c(0.01, 0.99),
+  timePoint, compareAllOutcomes = TRUE, psThreads = 1,
+  predictionThreads = 1, saveResults, saveDirectory = NULL, fftempdir,
+  saveMapMatrix = TRUE, savePs = TRUE, verbosity = "INFO",
+  analysisId = NULL)
 }
 \arguments{
 \item{cdmDatabaseSchema}{The name of the database schema that contains the vocabulary files.
@@ -52,8 +53,6 @@ to this database.}
 \code{\link[DatabaseConnector]{createConnectionDetails}} in the \code{DatabaseConnector} package.
 Either the \code{connection} or the \code{connectionDetails} argument should be specified.}
 
-\item{cdmVersion}{Define the OMOP CDM version used: currently supported is "5".}
-
 \item{getDbCohortMethodDataArgs}{A parameter object for the function \code{\link[CohortMethod]{getDbCohortMethodData}}. Can be generated from function
 \code{\link[CohortMethod]{createGetDbCohortMethodDataArgs}}.}
 
@@ -61,7 +60,12 @@ Either the \code{connection} or the \code{connectionDetails} argument should be 
 \code{\link[FeatureExtraction]{createCovariateSettings}} to be used for the definition of the
 \code{cohortMethodData} object.}
 
+\item{populationCmSettings}{A parameter object for the function \code{\link[CohortMethod]{createStudyPopulation}}. Can be generated from
+function \code{\link[CohortMethod]{createStudyPopulationSettings}}.}
+
 \item{exposureTable}{Input of function \code{\link[CohortMethod]{getDbCohortMethodData}}: The tablename that contains the exposure cohorts.}
+
+\item{psControl}{An object of the type \code{cyclopsControl} generated from \code{\link[Cyclops]{createControl}}.}
 
 \item{psPrior}{An object of the type \code{cyclopsPrior} generated from \code{\link[Cyclops]{createPrior}}.}
 
@@ -79,6 +83,8 @@ location where the exposure data used to define the exposure cohorts is availabl
 
 \item{populationPlpSettings}{A parameter object for the function \code{\link[PatientLevelPrediction]{createStudyPopulation}}. Can be generated from
 function \code{\link[PatientLevelPrediction]{createStudyPopulationSettings}}.}
+
+\item{cdmVersion}{Define the OMOP CDM version used: currently supported is "5".}
 
 \item{runPlpArgs}{A parameter object for the function \code{\link[PatientLevelPrediction]{runPlp}}. Can be generated from function
 \code{\link[RiskStratifiedEstimation]{createRunPlpDataArgs}}.}
@@ -120,8 +126,6 @@ a message will print. The levels are:
     \item{FATAL}{Be silent except for fatal errors}}.}
 
 \item{analysisId}{The identifier of the analysis.}
-
-\item{psControl}{An object of the type \code{cyclopsControl} generated from \code{\link[Cyclops]{createControl}}.}
 }
 \value{
 An object containing two large lists:
