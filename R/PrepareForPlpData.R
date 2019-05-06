@@ -55,3 +55,21 @@ prepareForPlpData <- function(treatmentCohortId,
   DatabaseConnector::executeSql(connection, renderedSql)
 
 }
+
+
+
+
+
+# Removes treatment from the plpData object
+
+removeTreatment <- function(plpData,
+                            treatmentCovariateId){
+
+  plpData <- ffbase::subset.ffdf(plpData$covariates,
+                                 covariateId != treatmentCovariateId)
+  plpData <- ffbase::subset.ffdf(plpData$covariateRef,
+                                 covariateId != treatmentCovariateId)
+
+  return(plpData)
+
+}
