@@ -65,10 +65,10 @@ prepareForPlpData <- function(treatmentCohortId,
 removeTreatment <- function(plpData,
                             treatmentCovariateId){
 
-  plpData <- ffbase::subset.ffdf(plpData$covariates,
-                                 covariateId != treatmentCovariateId)
-  plpData <- ffbase::subset.ffdf(plpData$covariateRef,
-                                 covariateId != treatmentCovariateId)
+  plpData$covariates <- ffbase::subset.ffdf(plpData$covariates,
+                                            covariateId != treatmentCovariateId)
+  plpData$covariateRef <- ffbase::subset.ffdf(plpData$covariateRef,
+                                              covariateId != treatmentCovariateId)
 
   return(plpData)
 
