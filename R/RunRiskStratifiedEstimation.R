@@ -86,7 +86,7 @@
 runRiskStratifiedEstimation <- function(cdmDatabaseSchema, cohortDatabaseSchema, outcomeDatabaseSchema, resultsDatabaseSchema,
                                         cohortTable, outcomeTable, mergedCohortTable, attributeDefinitionTable, cohortAttributeTable,
                                         treatmentCohortId, comparatorCohortId, outcomeIds, targetCohortId, connectionDetails,
-                                        getDbCohortMethodDataArgs, covariateSettingsCm, populationCmSettings, exposureTable,
+                                        getDbCohortMethodDataArgs, covariateSettingsCm, populationCmSettings, exposureTable = "drug_era",
                                         psControl = NULL, psPrior = NULL, exposureDatabaseSchema, getPlpDataArgs,
                                         covariateSettingsPlp, modelSettings, populationPlpSettings, cdmVersion = "5",
                                         runPlpArgs, riskStrata = 4, weightsType = "ATE", useStabilizedWeights = TRUE,
