@@ -284,7 +284,7 @@ runRiskStratifiedEstimation <- function(cdmDatabaseSchema, cohortDatabaseSchema,
                                         restrictToCommonPeriod = getDbCohortMethodDataArgs$restrictToCommonPeriod,
                                         washoutPeriod = getDbCohortMethodDataArgs$washoutPeriod,
                                         maxCohortSize = getDbCohortMethodDataArgs$maxCohortSize,
-                                        covariateSettings = getDbCohortMethodDataArgs$covariateSettingsCm)
+                                        covariateSettings = getDbCohortMethodDataArgs$covariateSettings)
   ParallelLogger::logInfo("Done")
 
   if(is.null(psControl)){
