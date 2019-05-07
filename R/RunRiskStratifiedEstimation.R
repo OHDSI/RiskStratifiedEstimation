@@ -80,6 +80,7 @@
 #'                                                        \item Number of cases.
 #'                                                   }
 #'                                            }
+#' @importFrom foreach %dopar%
 #' @export
 
 

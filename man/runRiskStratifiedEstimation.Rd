@@ -13,11 +13,10 @@ runRiskStratifiedEstimation(cdmDatabaseSchema, cohortDatabaseSchema,
   psPrior = NULL, exposureDatabaseSchema, getPlpDataArgs,
   covariateSettingsPlp, modelSettings, populationPlpSettings,
   cdmVersion = "5", runPlpArgs, riskStrata = 4, weightsType = "ATE",
-  useStabilizedWeights = TRUE, truncationLevels = c(0.01, 0.99),
-  timePoint, compareAllOutcomes = TRUE, psThreads = 1,
-  predictionThreads = 1, saveResults, saveDirectory = NULL, fftempdir,
-  saveMapMatrix = TRUE, savePs = TRUE, verbosity = "INFO",
-  analysisId = NULL)
+  useStabilizedWeights = TRUE, truncationLevels = c(0.01, 0.99), timePoint,
+  compareAllOutcomes = TRUE, psThreads = 1, predictionThreads = 1,
+  saveResults, saveDirectory = NULL, fftempdir, saveMapMatrix = TRUE,
+  savePs = TRUE, verbosity = "INFO", analysisId = NULL)
 }
 \arguments{
 \item{cdmDatabaseSchema}{The name of the database schema that contains the vocabulary files.
