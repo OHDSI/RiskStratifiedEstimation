@@ -1,8 +1,8 @@
 /*********************************
-  treatnmentCovariateSettings.sql
+treatnmentCovariateSettings.sql
 *********************************/
 
-  IF OBJECT_ID('@result_database_schema.@cohort_attribute_table', 'U') IS NOT NULL
+IF OBJECT_ID('@result_database_schema.@cohort_attribute_table', 'U') IS NOT NULL
 DROP TABLE @result_database_schema.@cohort_attribute_table;
 
 IF OBJECT_ID('@result_database_schema.@attribute_definition_table', 'U') IS NOT NULL
