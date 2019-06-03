@@ -38,7 +38,8 @@ prepareForPlpData <- function(treatmentCohortId,
                                                    cohort_database_schema = cohortDatabaseSchema,
                                                    cohort_table = cohortTable,
                                                    target_cohort_id = targetCohortId,
-                                                   cohort_ids = c(treatmentCohortId, comparatorCohortId))
+                                                   cohort_ids = c(treatmentCohortId, comparatorCohortId),
+                                                   dbms = connectionDetails$dbms)
 
   DatabaseConnector::executeSql(connection, renderedSql)
 
@@ -51,7 +52,8 @@ prepareForPlpData <- function(treatmentCohortId,
                                                    merged_cohort_table = mergedCohortTable,
                                                    treatment_cohort_id = treatmentCohortId,
                                                    attribute_definition_table = attributeDefinitionTable,
-                                                   cohort_attribute_table = cohortAttributeTable)
+                                                   cohort_attribute_table = cohortAttributeTable,
+                                                   dbms = connectionDetails$dbms)
   DatabaseConnector::executeSql(connection, renderedSql)
 
 }
