@@ -384,13 +384,6 @@ runRiskStratifiedEstimation <- function(cdmDatabaseSchema, cohortDatabaseSchema,
                                     weightsType = weightsType,
                                     useStabilizedWeights = useStabilizedWeights,
                                     truncationLevels = truncationLevels)
-                       # for(j in 1:length(psOverAllOutcomes[[i]])){
-                       #   ps[[j]] <- createIPW(psOverAllOutcomes[[i]][[j]],
-                       #                                    weightsType = weightsType,
-                       #                                    useStabilizedWeights = useStabilizedWeights,
-                       #                                    truncationLevels = truncationLevels)
-                       #
-                       # }
 
                        res <- generateResults(ps = ps,
                                               timePoint = timePoint)
