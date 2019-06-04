@@ -81,6 +81,7 @@
 #'                                                   }
 #'                                            }
 #' @importFrom foreach %dopar%
+#' @importFrom foreach %do%
 #' @export
 
 
