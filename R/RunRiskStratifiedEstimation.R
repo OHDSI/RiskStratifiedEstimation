@@ -289,7 +289,7 @@ runRiskStratifiedEstimation <- function(cdmDatabaseSchema, cohortDatabaseSchema,
   ParallelLogger::logInfo("Done")
 
   if(is.null(psControl)){
-    psControl <-  Cyclops::createControl(threads = -1)}
+    psControl <-  Cyclops::createControl()}
   if(is.null(psPrior)){
     psPrior <- Cyclops::createPrior(priorType = "laplace",
                                     exclude = c(0),
