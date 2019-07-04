@@ -9,15 +9,15 @@ runRiskStratifiedEstimation(cdmDatabaseSchema, cohortDatabaseSchema,
   mergedCohortTable, attributeDefinitionTable, cohortAttributeTable,
   treatmentCohortId, comparatorCohortId, outcomeIds, targetCohortId,
   connectionDetails, getDbCohortMethodDataArgs, covariateSettingsCm,
-  populationCmSettings, exposureTable = "drug_era", psControl = NULL,
-  psPrior = NULL, exposureDatabaseSchema, getPlpDataArgs,
-  covariateSettingsPlp, modelSettings, populationPlpSettings,
-  cdmVersion = "5", runPlpArgs, riskStrata = 4, weightsType = "ATE",
-  useStabilizedWeights = TRUE, truncationLevels = c(0.01, 0.99),
-  timePoint, compareAllOutcomes = TRUE, psThreads = 1,
-  predictionThreads = 1, saveResults, saveDirectory = NULL, fftempdir,
-  saveMapMatrix = TRUE, savePs = TRUE, verbosity = "INFO",
-  analysisId = NULL)
+  populationCmSettings, exposureTable, psControl = NULL,
+  psPrior = NULL, psMethod = "matchOnPs", exposureDatabaseSchema,
+  getPlpDataArgs, covariateSettingsPlp, modelSettings,
+  populationPlpSettings, cdmVersion = "5", runPlpArgs, riskStrata = 4,
+  weightsType = "ATE", useStabilizedWeights = TRUE,
+  truncationLevels = c(0.01, 0.99), timePoint,
+  compareAllOutcomes = TRUE, psThreads = 1, predictionThreads = 1,
+  saveResults, saveDirectory = NULL, fftempdir, saveMapMatrix = TRUE,
+  savePs = TRUE, verbosity = "INFO", analysisId = NULL)
 }
 \arguments{
 \item{cdmDatabaseSchema}{The name of the database schema that contains the vocabulary files.
@@ -50,7 +50,7 @@ to this database.}
 \item{targetCohortId}{The cohrt definition id of of the merged cohort in the mergedCohortTable.}
 
 \item{connectionDetails}{An R object of type \code{connectionDetails} created using function
-\code{\link[DatabaseConnector]{createConnectionDetails}} in the \code{DatabaseConnector} package.
+\code{\link[DatabaseConnector]{createConnectionDetails}}.
 Either the \code{connection} or the \code{connectionDetails} argument should be specified.}
 
 \item{getDbCohortMethodDataArgs}{A parameter object for the function \code{\link[CohortMethod]{getDbCohortMethodData}}. Can be generated from function
@@ -68,6 +68,9 @@ function \code{createStudyPopulationCmSettings}.}
 \item{psControl}{An object of the type \code{cyclopsControl} generated from \code{\link[Cyclops]{createControl}}.}
 
 \item{psPrior}{An object of the type \code{cyclopsPrior} generated from \code{\link[Cyclops]{createPrior}}.}
+
+\item{psMethod}{Select the propensity score method for the estimation of treatment effects within risk strata. It can be "matchOnPs",
+"stratifyByPs" or "inversePtWeighted".}
 
 \item{exposureDatabaseSchema}{Input of function \code{\link[CohortMethod]{getDbCohortMethodData}}: The name of the database schema that is the
 location where the exposure data used to define the exposure cohorts is available.}
@@ -91,11 +94,12 @@ function \code{\link[PatientLevelPrediction]{createStudyPopulationSettings}}.}
 
 \item{riskStrata}{The number of risk strata to divide the study population.}
 
-\item{weightsType}{The type of weights for the balancing of covariates. Should be either 'ATE' or 'ATT'}
+\item{weightsType}{Only required if \code{weightsType} is "inversePtWeighted". The type of weights for the balancing of covariates.
+Should be either 'ATE' or 'ATT'}
 
-\item{useStabilizedWeights}{Should stabilized weights be used?}
+\item{useStabilizedWeights}{Only required if \code{weightsType} is "inversePtWeighted". Should stabilized weights be used?}
 
-\item{truncationLevels}{The level of truncation expressed in percentiles of the propensity score.}
+\item{truncationLevels}{Only required if \code{weightsType} is "inversePtWeighted". The level of truncation expressed in percentiles of the propensity score.}
 
 \item{timePoint}{The time point of interest for the calculation of the absolute risk reduction.}
 
