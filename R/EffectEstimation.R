@@ -271,6 +271,33 @@ weightedKM <- function(ps,
 
 
 
+#' Calculate stratified Kaplan-Meier estimates
+#'
+#' @param population                The population of interest stratified using the  \code{\link[CohortMethod]{stratifyByPs}}
+#' @param timePoint                 The point in time for which the absolute risk difference is required
+#'
+#' @return                          A vector of the absolute risk difference along with the lowest and highest limits of the
+#'                                  the 95 percent confidence interval
+#'
+stratifiedKaplanMeier <- function(population, timePoint){
+  kaplanMeier <- list()
+  for(i in unique(population$stratumId)){
+    kaplanMeier[[i]] <- survival::survfit(S ~ treatment, data = subset(population, stratumId == i))
+  }
+
+  summaryKMList <- lapply(kaplanMeier, summary, times = timePoint)
+  arrList <- lapply(summaryKMList, getAbsoluteDifference)
+
+  arr <- mean(unlist(arrList))
+  standardErrors <- lapply(summaryKMList, getStandadrdError)
+  pooledStandardError <- sqrt(sum(unlist(standardErrors)^2)/25)
+  return(c(arr, arr - 1.96*pooledStandardError, arr + 1.96*pooledStandardError))
+
+}
+
+
+
+
 
 getCounts <- function(ps, timePoint){
 
@@ -287,3 +314,17 @@ getCounts <- function(ps, timePoint){
 
 }
 
+
+
+
+getStandadrdError <- function(summaryKmList){
+
+  sqrt(sum(summaryKmList$std.err^2))
+}
+
+
+
+
+getAbsoluteDifference <- function(summaryKMList){
+  diff(summaryKMList$surv)
+}
