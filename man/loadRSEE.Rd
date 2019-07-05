@@ -7,7 +7,7 @@
 loadRSEE(file, mainOutcomes = NULL, loadPs = TRUE)
 }
 \arguments{
-\item{file}{The file location where the results are stored. It should point at the "Estimation" folder of
+\item{file}{The file location where the results are stored. It should point at the analysisId folder of
 a risk stratified analysis}
 
 \item{mainOutcomes}{The main outcomes for which the results should be loaded. If set to \code{NULL} the results
