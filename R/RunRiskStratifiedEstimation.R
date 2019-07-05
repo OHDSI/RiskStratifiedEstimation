@@ -190,6 +190,8 @@ runRiskStratifiedEstimation <-
                               nfold,
                               saveDirectory){
 
+      ParallelLogger::registerLogger(logger)
+
       populationPlp <-
         PatientLevelPrediction::createStudyPopulation(plpData = plpData,
                                                       outcomeId = outcomeIds[x],
@@ -253,6 +255,8 @@ runRiskStratifiedEstimation <-
     ParallelLogger::stopCluster(cl)
 
     predictionOutcomes <- numeric()
+
+    ParallelLogger::registerLogger(logger)
     ParallelLogger::logInfo("Estimated prediction models for all outcomes")
 
 
@@ -562,19 +566,14 @@ runRiskStratifiedEstimation <-
                               otherOutcomes = rseeSwitched)
                        }
 
-
-    names(resultsOverAllOutcomes) <- paste("outcome",
-                                           outcomeIds,
-                                           sep = "_")
-
-    names(psOverAllOutcomes) <- paste("outcome",
-                                      outcomeIds,
-                                      sep = "_")
-    ParallelLogger::logInfo("Done")
+    referenceTable <- list(analaysisId = analysisId,
+                           targetId = targetCohortId,
+                           comparatorId = comparatorCohortId,
+                           outcomeIds = outcomeIds,
+                           outputFolder = analysisPath)
 
 
-    results <- list(ps = psOverAllOutcomes,
-                    results = resultsOverAllOutcomes)
+    ParallelLogger::logInfo('Created reference table')
     ParallelLogger::logInfo('Run finished successfully')
 
     # stop logger
@@ -584,5 +583,5 @@ runRiskStratifiedEstimation <-
                                            appenders = list(ParallelLogger::createConsoleAppender(layout = ParallelLogger::layoutTimestamp)))
     ParallelLogger::registerLogger(logger)
 
-    return(results)
+    return(referenceTable)
   }
