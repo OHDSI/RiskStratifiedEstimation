@@ -240,18 +240,3 @@ switchOutcome <- function(ffPsDataFrame,
   ff::as.ffdf(result)
 
 }
-
-
-
-# Removes treatment from the merged plpData object
-removeTreatment <- function(plpData,
-                            treatmentCovariateId){
-
-  plpData$covariates <- ffbase::subset.ffdf(plpData$covariates,
-                                            covariateId != treatmentCovariateId)
-  plpData$covariateRef <- ffbase::subset.ffdf(plpData$covariateRef,
-                                              covariateId != treatmentCovariateId)
-
-  return(plpData)
-
-}
