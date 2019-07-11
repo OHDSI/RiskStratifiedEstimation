@@ -204,6 +204,7 @@ plotCovariateBalance <- function(ps,
   pHatComparator <- sComparator$sum / nComparator
   afterWeighting <- 100*abs((pHatTreatment - pHatComparator) /
                               sqrt((pHatTreatment*(1 - pHatComparator) + pHatComparator*(1 - pHatTreatment))/2))
+  axisLimits <- c(0, max(max(beforeWeighting, na.rm = TRUE), max(afterWeighting, na.rm = TRUE)))
 
   result <- data.frame(beforeWeighting,
                        afterWeighting,
@@ -212,8 +213,13 @@ plotCovariateBalance <- function(ps,
 
   p <- ggplot2::ggplot(result, ggplot2::aes(beforeWeighting, afterWeighting)) +
     ggplot2::geom_point(size = 1, color = 'blue', alpha = .5) +
-    ggplot2::geom_vline(ggplot2::aes(xintercept = 10), linetype = 'dashed', color = 'red') +
-    ggplot2::geom_hline(ggplot2::aes(yintercept = 10, color = 'red'), linetype = 'dashed', color = 'red') +
+    ggplot2::geom_vline(ggplot2::aes(xintercept = 10),
+                        linetype = 'dashed', color = 'red', alpha = .5, size = 1.1) +
+    ggplot2::geom_hline(ggplot2::aes(yintercept = 10, color = 'red'),
+                        linetype = 'dashed', color = 'red', alpha = .5, size = 1.1) +
+    ggplot2::geom_abline(intercept = 0, slope = 1, linetype = "dashed", size = 1) +
+    ggplot2::ylim(axisLimits) +
+    ggplot2::xlim(axisLimits) +
     ggplot2::xlab('Before weighting') +
     ggplot2::ylab('After weighting')
   if(showNotBalancedCovariateIds)
