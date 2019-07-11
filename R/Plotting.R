@@ -227,3 +227,120 @@ plotCovariateBalance <- function(ps,
 
   return(p)
 }
+
+
+
+
+#' Plot a single outcome
+#'
+#' Plots the result of a risk stratified analysis for a single outcome of interest
+#'
+#' @param outcomeId                 The outcome Id of interest
+#' @param mapMatrix                 The matrix that maps patients to their risk quantiles
+#' @param overallResult             The hazard ratio from an analysis on the overall study population
+#' @param mapTreatments             A dataframe with the treatment labels. It should have 2 columns named "cohort" and "labelTreatments".
+#'                                  The former should contain the values "treatment" and "comparator" and the latter should contain
+#'                                  the treatment labels. If set to \code{NULL}, the labels treatment and comaprator appear in
+#'                                  the graph.
+#' @return                          A 3-level graph for a single outcome. In the first level observed outcome rates are presented
+#'                                  for all treatment-outcome combinations across risk strata. In the second level, hazard ratios
+#'                                  across risk strata are given. In the final level, absolute risk difference across risk strata are presented.
+#' @importFrom dplyr %>%
+#'
+#' @export
+
+singlePlotRSEE <- function(outcomeId,
+                           mapMatrix,
+                           overallResult = NULL,
+                           mapTreatments = NULL){
+
+
+
+  mapMatrix <- mapMatrix %>%
+    mutate(riskStratum = paste0("Q", riskStratum)) %>%
+    group_by(riskStratum) %>%
+    summarise(meanRisk = round(median(value), 3))
+
+  relative <- outcomeId$relative
+  relative <- merge(relative, mapMatrix)
+
+  absolute <- outcomeId$absolute
+  absolute <- merge(absolute, mapMatrix)
+
+  cases <- outcomeId$cases
+  cases <- merge(cases, mapMatrix)
+
+  cases <- merge(cases, mapMatrix)
+  cases <-  reshape::melt(cases,
+                          id.vars = c("riskStratum"),
+                          measure.vars = c("comparator", "treatment"))
+  names(cases)[which(names(cases)=="variable")] <- "cohort"
+  if(!is.null(mapTreatments)){
+    cases <- merge(cases, mapTreatments)
+    cases$cohort <- cases$labelTreatments
+  }
+
+  cases$test <- paste(cases$outcome, cases$cohort)
+  cases <- merge(cases, mapMatrix)
+
+  ylimCases <- c(0, max(cases$value))*100
+  ylimRRR <- c(min(relative$lower), max(relative$upper))
+  ylimARR <- c(min(absolute$lower), max(absolute$upper))*100
+
+
+
+  casesPlot <- ggplot2::ggplot(data = cases, ggplot2::aes(x = factor(meanRisk*100), y = value*100)) +
+    ggplot2::geom_bar(stat = 'identity', position = ggplot2::position_dodge(), ggplot2::aes(fill = test), width = .5)+
+    ggplot2::xlab('Risk Stratum') +
+    ggplot2::ylab('Outcome Rate (%)') +
+    ggplot2::geom_hline(yintercept = 0, size = .8) +
+    ggplot2::coord_cartesian(ylim = ylimCases) +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(legend.title = ggplot2::element_blank(),
+                   axis.title.x = ggplot2::element_blank(),
+                   axis.text.x = ggplot2::element_blank(),
+                   legend.direction = 'horizontal',
+                   legend.position = 'top') + ggplot2::scale_y_reverse()
+
+  rrrPlot <- ggplot2::ggplot(relative, ggplot2::aes(x = factor(meanRisk*100),
+                                                    y = HR)) +
+    ggplot2::geom_point(size = 3,
+                        position = ggplot2::position_dodge(w = .3)) +
+    ggplot2::geom_errorbar(ggplot2::aes(ymin = lower, ymax = upper),
+                           width = 0,
+                           position = ggplot2::position_dodge(w = .3)) +
+    ggplot2::geom_hline(yintercept = 1, linetype = 'dashed', size = .8) +
+    ggplot2::xlab('Risk Stratum') +
+    ggplot2::ylab('Hazard Ratio') +
+    ggplot2::coord_cartesian(ylim = ylimRRR) +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(legend.title = ggplot2::element_blank(),
+                   legend.position = 'none',
+                   axis.title.x = ggplot2::element_blank(),
+                   axis.text.x = ggplot2::element_blank())
+  if(!is.null(overallResult))
+    rrrPlot <- rrrPlot +
+    ggplot2::geom_hline(yintercept = overallResult, linetype = 'dashed', size = .8, color = 2, alpha = .4)
+
+
+  arrPlot <- ggplot2::ggplot(absolute, ggplot2::aes(x = factor(meanRisk*100),
+                                                    y = ARR*100)) +
+    ggplot2::geom_point(size = 3,
+                        position = ggplot2::position_dodge(w = .3)) +
+    ggplot2::geom_errorbar(ggplot2::aes(ymin = lower*100, ymax = upper*100),
+                           width = 0,
+                           position = ggplot2::position_dodge(w = .3)) +
+    ggplot2::geom_hline(yintercept = 0, linetype = 'dashed', size = .8) +
+    ggplot2::xlab('Risk stratum median risk (%)') +
+    ggplot2::ylab('Absolute \n Risk Reduction (%)') +
+    ggplot2::coord_cartesian(ylim = ylimARR) +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(legend.direction = 'horizontal',
+                   legend.position = 'bottom',
+                   legend.title = ggplot2::element_blank())
+
+  # plots[[i]] <- grid::grid.draw(rbind(ggplot2::ggplotGrob(rrrPlot), ggplot2::ggplotGrob(arrPlot), size = "last"))
+  ggpubr::ggarrange(casesPlot, rrrPlot, arrPlot, nrow = 3, align = "v")
+
+
+}
