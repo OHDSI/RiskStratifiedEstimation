@@ -4,13 +4,15 @@
 \alias{singlePlotRSEE}
 \title{Plot a single outcome}
 \usage{
-singlePlotRSEE(outcomeId, mapMatrix, overallResult = NULL,
-  mapTreatments = NULL)
+singlePlotRSEE(outcomeId, mapMatrix, title = NULL,
+  overallResult = NULL, mapTreatments = NULL)
 }
 \arguments{
 \item{outcomeId}{The outcome Id of interest}
 
 \item{mapMatrix}{The matrix that maps patients to their risk quantiles}
+
+\item{title}{The title of the graph}
 
 \item{overallResult}{The hazard ratio from an analysis on the overall study population}
 

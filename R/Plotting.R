@@ -237,6 +237,7 @@ plotCovariateBalance <- function(ps,
 #'
 #' @param outcomeId                 The outcome Id of interest
 #' @param mapMatrix                 The matrix that maps patients to their risk quantiles
+#' @param title                     The title of the graph
 #' @param overallResult             The hazard ratio from an analysis on the overall study population
 #' @param mapTreatments             A dataframe with the treatment labels. It should have 2 columns named "cohort" and "labelTreatments".
 #'                                  The former should contain the values "treatment" and "comparator" and the latter should contain
@@ -251,6 +252,7 @@ plotCovariateBalance <- function(ps,
 
 singlePlotRSEE <- function(outcomeId,
                            mapMatrix,
+                           title = NULL,
                            overallResult = NULL,
                            mapTreatments = NULL){
 
@@ -295,12 +297,16 @@ singlePlotRSEE <- function(outcomeId,
     ggplot2::ylab('Outcome Rate (%)') +
     ggplot2::geom_hline(yintercept = 0, size = .8) +
     ggplot2::coord_cartesian(ylim = ylimCases) +
+    ggplot2::scale_fill_brewer(palette="Paired") +
     ggplot2::theme_minimal() +
     ggplot2::theme(legend.title = ggplot2::element_blank(),
                    axis.title.x = ggplot2::element_blank(),
                    axis.text.x = ggplot2::element_blank(),
                    legend.direction = 'horizontal',
                    legend.position = 'top') + ggplot2::scale_y_reverse()
+  if(!is.null(title))
+    casesPlot <- casesPlot +
+    ggplot2::ggtitle(title)
 
   rrrPlot <- ggplot2::ggplot(relative, ggplot2::aes(x = factor(meanRisk*100),
                                                     y = HR)) +
@@ -341,6 +347,4 @@ singlePlotRSEE <- function(outcomeId,
 
   # plots[[i]] <- grid::grid.draw(rbind(ggplot2::ggplotGrob(rrrPlot), ggplot2::ggplotGrob(arrPlot), size = "last"))
   ggpubr::ggarrange(casesPlot, rrrPlot, arrPlot, nrow = 3, align = "v")
-
-
 }
