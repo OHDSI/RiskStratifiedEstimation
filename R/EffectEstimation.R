@@ -298,6 +298,328 @@ stratifiedKaplanMeier <- function(population, timePoint){
 
 
 
+#' Calculate propensity scores for a specific outcome
+#'
+#' Fits a large-scale regularized regression model to estimate propensity scores within predicted risk strata. Designed
+#' to be applied in a parallelized analysis.
+#'
+#' @param cohortMethodDataFolder               The directory where the \code{cohortMethodData} object is stored.
+#' @param plpDataFolder                        The directory where the \code{plpData} object is stored.
+#' @param outcomeId                            The outcome of interest for which the risk stratification is performed.
+#' @param populationCmSettings                 A parameter object for the function \code{\link[CohortMethod]{createStudyPopulation}}.
+#'                                             Can be generated from function \code{createStudyPopulationCmSettings}.
+#' @param populationPlpSettings                A parameter object for the function \code{\link[PatientLevelPrediction]{createStudyPopulation}}.
+#'                                             Can be generated from unction \code{\link[PatientLevelPrediction]{createStudyPopulationSettings}}.
+#' @param saveDirectory                        The direcotry of the RSEE analysis where the prediction models are located.
+#' @param riskStrata                           The considered number of risk strata.
+#' @param analysisId                           The analysis ID of the prediction model used to stratify the population.
+#' @param analysisPath                         The directory where the propensity scores will be stored.
+#'
+#' @return                                     \code{NULL}. The results are all saved.
+#'
+#' @export
+
+fitPsModel <- function(cohortMethodDataFolder,
+                       plpDataFolder,
+                       outcomeId,
+                       populationCmSettings,
+                       populationPlpSettings,
+                       saveDirectory,
+                       riskStrata,
+                       analysisId,
+                       analysisPath){
+
+  cohortMethodData <- CohortMethod::loadCohortMethodData(file = cohortMethodDataFolder)
+  plpData <- PatientLevelPrediction::loadPlpData(file = plpDataFolder)
+
+
+  populationPlp <-
+    PatientLevelPrediction::createStudyPopulation(plpData = plpData,
+                                                  outcomeId = outcomeId,
+                                                  binary = populationPlpSettings$binary,
+                                                  includeAllOutcomes = populationPlpSettings$includeAllOutcomes,
+                                                  firstExposureOnly = populationPlpSettings$firstExposureOnly,
+                                                  washoutPeriod = populationPlpSettings$washoutPeriod,
+                                                  removeSubjectsWithPriorOutcome = populationPlpSettings$removeSubjectsWithPriorOutcome,
+                                                  priorOutcomeLookback = populationPlpSettings$priorOutcomeLookback,
+                                                  requireTimeAtRisk = populationPlpSettings$requireTimeAtRisk,
+                                                  minTimeAtRisk = populationPlpSettings$minTimeAtRisk,
+                                                  riskWindowStart = populationPlpSettings$riskWindowStart,
+                                                  addExposureDaysToStart = populationPlpSettings$addExposureDaysToStart,
+                                                  riskWindowEnd = populationPlpSettings$riskWindowEnd,
+                                                  addExposureDaysToEnd = populationPlpSettings$addExposureDaysToEnd,
+                                                  verbosity = populationPlpSettings$verbosity)
+  populationCm <-
+    CohortMethod::createStudyPopulation(cohortMethodData = cohortMethodData,
+                                        outcomeId = outcomeId,
+                                        firstExposureOnly = populationCmSettings$firstExposureOnly,
+                                        restrictToCommonPeriod = populationCmSettings$restrictToCommonPeriod,
+                                        washoutPeriod = populationCmSettings$washoutPeriod,
+                                        removeDuplicateSubjects = populationCmSettings$removeDuplicateSubjects,
+                                        removeSubjectsWithPriorOutcome = populationCmSettings$removeSubjectsWithPriorOutcome,
+                                        priorOutcomeLookback = populationCmSettings$priorOutcomeLookback,
+                                        minDaysAtRisk = populationCmSettings$minDaysAtRisk,
+                                        riskWindowStart = populationCmSettings$riskWindowStart,
+                                        addExposureDaysToStart = populationCmSettings$addExposureDaysToStart,
+                                        riskWindowEnd = populationCmSettings$riskWindowEnd,
+                                        addExposureDaysToEnd = populationCmSettings$addExposureDaysToEnd,
+                                        censorAtNewRiskWindow = populationCmSettings$censorAtNewRiskWindow)
+
+  populationCmMetaData <- attr(populationCm, "metaData")
+  attr(populationCm, "metaData") <- attr(populationPlp, "metaData")
+
+  predictionResult <-
+    PatientLevelPrediction::loadPlpResult(file.path(saveDirectory, "Prediction", outcomeId, analysisId, "plpResult"))
+
+  riskPredictions <- predictionResult$model$predict(plpData = plpData,
+                                                    population = populationCm)
+  riskPredictions <- subset(riskPredictions,
+                            select = c(rowId, subjectId, value))
+
+  attr(populationCm, "metaData") <- populationCmMetaData
+  ParallelLogger::logInfo("Stratifying estimation population")
+  mapMatrix <- riskPredictions
+  mapMatrix <- dplyr::mutate(mapMatrix, riskStratum = dplyr::ntile(riskPredictions$value,
+                                                                   riskStrata))
+
+  psControl <-  Cyclops::createControl(threads = 1, maxIterations = 1e4)
+  psPrior <- Cyclops::createPrior(priorType = "laplace",
+                                  exclude = c(0),
+                                  useCrossValidation = TRUE)
+  ps <- list()
+  for(i in 1:riskStrata){
+    population <- populationCm[populationCm$subjectId %in% mapMatrix[mapMatrix$riskStratum == i,]$subjectId, ]
+    ps[[i]] <- CohortMethod::createPs(cohortMethodData = cohortMethodData,
+                                      population = population,
+                                      stopOnError = FALSE,
+                                      errorOnHighCorrelation = FALSE,
+                                      control = psControl,
+                                      prior = psPrior)
+  }
+
+
+  saveDir <- file.path(analysisPath, "Estimation", outcomeId)
+  dir.create(saveDir, recursive = TRUE)
+  saveRDS(lapply(ps, as.data.frame),
+          file.path(saveDir, "ps.rds"))
+
+
+  saveRDS(mapMatrix, file.path(analysisPath, "Estimation", outcomeId, 'mapMatrix.rds'))
+  ParallelLogger::logInfo(paste("Saved the map matrix for outcome", outcomeId))
+
+  return(NULL)
+}
+
+
+
+
+
+#' Fit outcome models
+#'
+#' Fits outcome models within risk strata, estimating relative and absolute differences. Designed to be performed within
+#' a parellelized analysis.
+#'
+#' @param outcomeId               The outcome of interest for which the esitmation is performed. That is the outcome for which risk stratification is performed.
+#' @param analysisPath            The path to the \code{RSEE} analysis results.
+#' @param cohortMethodDataFolder  The directory where the \code{cohortMethodData} object is stored.
+#' @param outcomeIdList           The other outcomes for which risk stratified estimates need to derived. Only required \code{compareAllOutcomes} is \code{TRUE}.
+#' @param compareAllOutcomes      Compare all the outcomes within the \code{outcomeIdList} within risk strata of code{outcomeId}?
+#' @param timePoint               The time point at which absolute risk differences will be calculated.
+#' @param psMethod                Select the propensity score method for the estimation of treatment effects within risk strata. It can be "matchOnPs",
+#'                                "stratifyByPs" or "inversePtWeighted".
+#' @param weightsType             Only required if \code{weightsType} is "inversePtWeighted". The type of weights for the balancing of covariates.
+#'                                Should be either 'ATE' or 'ATT'
+#' @param useStabilizedWeights    Only required if \code{weightsType} is "inversePtWeighted". Should stabilized weights be used?
+#' @param truncationLevels        Only required if \code{weightsType} is "inversePtWeighted". The level of truncation expressed in percentiles of the propensity score.
+#' @param populationCmSettings    A parameter object for the function \code{\link[CohortMethod]{createStudyPopulation}}. Can be generated from
+#'                                function \code{createStudyPopulationCmSettings}.
+#'
+#' @return                        \code{NULL}. The results are all saved.
+#'
+#' @export
+
+fitOutcomeModels <- function(outcomeId,
+                             analysisPath,
+                             cohortMethodDataFolder,
+                             outcomeIdList,
+                             compareAllOutcomes,
+                             timePoint,
+                             psMethod,
+                             weightsType,
+                             useStabilizedWeights,
+                             truncationLevels,
+                             populationCmSettings){
+
+  ParallelLogger::logInfo(paste("Calculating main results for outcome:", outcomeId))
+
+  ps <- readRDS(file.path(analysisPath, "Estimation", outcomeId, "ps.rds"))
+  cohortMethodData <- CohortMethod::loadCohortMethodData(file = cohortMethodDataFolder)
+
+  cases <- do.call(rbind, lapply(ps, getCounts, timePoint = timePoint))
+  colnames(cases) <- c("comparator", "treatment")
+  cases <- as.data.frame(cases)
+  riskStrata <- length(ps)
+  cases$riskStratum <- paste0("Q", 1:riskStrata)
+
+  if(psMethod == "matchOnPs"){
+
+    matchedPop <- lapply(ps, CohortMethod::matchOnPs)
+    models <- lapply(matchedPop,
+                     CohortMethod::fitOutcomeModel, stratified = TRUE, modelType = "cox")
+    arr <- do.call(rbind, lapply(matchedPop, absoluteRiskReduction, timePoint = timePoint, psMethod = psMethod))
+    colnames(arr) <- c("ARR", "lower", "upper")
+    arr <- as.data.frame(arr)
+    arr$riskStratum <- paste0("Q", 1:riskStrata)
+    rrr <- do.call(rbind, lapply(models, relativeRiskReduction))
+    colnames(rrr) <- c("HR", "lower", "upper")
+    rrr <- as.data.frame(rrr)
+    rrr$riskStratum <- paste0("Q", 1:riskStrata)
+
+  }
+  else if(psMethod == "stratifyByPs"){
+
+    stratifiedPop <- lapply(ps, CohortMethod::stratifyByPs) # Add stratification settings
+    models <- lapply(stratifiedPop,
+                     CohortMethod::fitOutcomeModel, stratified = TRUE, modelType = "cox")
+    arr <- do.call(rbind, lapply(stratifiedPop, absoluteRiskReduction, timePoint = timePoint, psMethod = "stratifyByPS"))
+    colnames(arr) <- c("ARR", "lower", "upper")
+    arr <- as.data.frame(arr)
+    arr$riskStratum <- paste0("Q", 1:riskStrata)
+    rrr <- do.call(rbind, lapply(models, relativeRiskReduction))
+    colnames(rrr) <- c("HR", "lower", "upper")
+    rrr <- as.data.frame(rrr)
+    rrr$riskStratum <- paste0("Q", 1:riskStrata)
+
+  }
+  else if(psMethod == "inversePtWeighted"){
+
+    ps <- lapply(ps,
+                 createIPW,
+                 weightsType = weightsType,
+                 useStabilizedWeights = useStabilizedWeights,
+                 truncationLevels = truncationLevels)
+    models <- lapply(ps, outcomeModelWeighted, calculateWeights = FALSE)
+    arr <- do.call(rbind, lapply(ps, absoluteRiskReduction, timePoint = timePoint, psMethod = "inversePtWeighted"))
+    colnames(arr) <- c("ARR", "lower", "upper")
+    arr <- as.data.frame(arr)
+    arr$riskStratum <- paste0("Q", 1:riskStrata)
+    rrr <- do.call(rbind, lapply(models, relativeRiskReduction))
+    colnames(rrr) <- c("HR", "lower", "upper")
+    rrr <- as.data.frame(rrr)
+    rrr$riskStratum <- paste0("Q", 1:riskStrata)
+
+  }
+
+  saveDir <- paste(analysisPath, "Estimation", outcomeId, sep = "/")
+  saveRDS(rrr, file = file.path(saveDir, 'relativeRiskReduction.rds'))
+  saveRDS(arr, file = file.path(saveDir, 'absoluteRiskReduction.rds'))
+  saveRDS(models, file = file.path(saveDir, 'models.rds'))
+  saveRDS(cases, file = file.path(saveDir, 'cases.rds'))
+
+  ParallelLogger::logInfo('Saved main the results')
+
+  ParallelLogger::logInfo('Generating results for the other outcomes')
+
+  if(compareAllOutcomes){
+
+    numberOfComparisons <- length(outcomeIdList) - 1
+    comparisonOutcomes <- outcomeIdList[outcomeIdList!=outcomeId]
+    resSwitched <- list()
+    modelsSwitched <- list()
+    kaplanMeierSwitched <- list()
+    rseeSwitched <- list()
+
+    for(j in 1:numberOfComparisons){
+
+      ParallelLogger::logInfo(paste("Stratification outcome", outcomeId, "results outcome:", comparisonOutcomes[j]))
+      ParallelLogger::logInfo("Generating population with switched outcome")
+
+      populationCm <-
+        CohortMethod::createStudyPopulation(cohortMethodData = cohortMethodData,
+                                            outcomeId = comparisonOutcomes[j],
+                                            firstExposureOnly = populationCmSettings$firstExposureOnly,
+                                            restrictToCommonPeriod = populationCmSettings$restrictToCommonPeriod,
+                                            washoutPeriod = populationCmSettings$washoutPeriod,
+                                            removeDuplicateSubjects = TRUE, # needs to be TRUE otherwise there is an error
+                                            removeSubjectsWithPriorOutcome = populationCmSettings$removeSubjectsWithPriorOutcome,
+                                            priorOutcomeLookback = populationCmSettings$priorOutcomeLookback,
+                                            minDaysAtRisk = populationCmSettings$minDaysAtRisk,
+                                            riskWindowStart = populationCmSettings$riskWindowStart,
+                                            addExposureDaysToStart = populationCmSettings$addExposureDaysToStart,
+                                            riskWindowEnd = populationCmSettings$riskWindowEnd,
+                                            addExposureDaysToEnd = populationCmSettings$addExposureDaysToEnd,
+                                            censorAtNewRiskWindow = populationCmSettings$censorAtNewRiskWindow)
+
+      psSwitchedOutcome <- lapply(ps, switchOutcome, populationCm = populationCm)
+      cases <- do.call(rbind, lapply(psSwitchedOutcome, getCounts, timePoint = timePoint))
+      colnames(cases) <- c("comparator", "treatment")
+      cases <- as.data.frame(cases)
+      cases$riskStratum <- paste0("Q", 1:riskStrata)
+
+      if(psMethod == "matchOnPs"){
+
+        matchedPop <- lapply(psSwitchedOutcome, CohortMethod::matchOnPs)
+        models <- lapply(matchedPop,
+                         CohortMethod::fitOutcomeModel, stratified = TRUE, modelType = "cox")
+        arr <- do.call(rbind, lapply(matchedPop, absoluteRiskReduction, timePoint = timePoint, psMethod = psMethod))
+        colnames(arr) <- c("ARR", "lower", "upper")
+        arr <- as.data.frame(arr)
+        arr$riskStratum <- paste0("Q", 1:riskStrata)
+        rrr <- do.call(rbind, lapply(models, relativeRiskReduction))
+        colnames(rrr) <- c("HR", "lower", "upper")
+        rrr <- as.data.frame(rrr)
+        rrr$riskStratum <- paste0("Q", 1:riskStrata)
+
+      }
+      else if(psMethod == "stratifyByPs"){
+
+        stratifiedPop <- lapply(psSwitchedOutcome, CohortMethod::stratifyByPs)
+        models <- lapply(stratifiedPop,
+                         CohortMethod::fitOutcomeModel, stratified = TRUE, modelType = "cox")
+        arr <- do.call(rbind, lapply(stratifiedPop, absoluteRiskReduction, timePoint = timePoint, psMethod = "stratifyByPS"))
+        colnames(arr) <- c("ARR", "lower", "upper")
+        arr <- as.data.frame(arr)
+        arr$riskStratum <- paste0("Q", 1:riskStrata)
+        rrr <- do.call(rbind, lapply(models, relativeRiskReduction))
+        colnames(rrr) <- c("HR", "lower", "upper")
+        rrr <- as.data.frame(rrr)
+        rrr$riskStratum <- paste0("Q", 1:riskStrata)
+
+      }
+      else if(psMethod == "inversePtWeighted"){
+
+        psSwitchedOutcome <- lapply(psSwitchedOutcome,
+                                    createIPW,
+                                    weightsType = weightsType,
+                                    useStabilizedWeights = useStabilizedWeights,
+                                    truncationLevels = truncationLevels)
+        models <- lapply(psSwitchedOutcome, outcomeModelWeighted, calculateWeights = FALSE)
+        arr <- do.call(rbind, lapply(psSwitchedOutcome, absoluteRiskReduction, timePoint = timePoint, psMethod = "inversePtWeighted"))
+        colnames(arr) <- c("ARR", "lower", "upper")
+        arr <- as.data.frame(arr)
+        arr$riskStratum <- paste0("Q", 1:riskStrata)
+        rrr <- do.call(rbind, lapply(models, relativeRiskReduction))
+        colnames(rrr) <- c("HR", "lower", "upper")
+        rrr <- as.data.frame(rrr)
+        rrr$riskStratum <- paste0("Q", 1:riskStrata)
+      }
+
+      saveDir <- paste(analysisPath, "Estimation", outcomeId, comparisonOutcomes[j], sep = "/")
+      if(!dir.exists(saveDir)){dir.create(saveDir, recursive = T)}
+      saveRDS(rrr, file = file.path(saveDir, 'relativeRiskReduction.rds'))
+      saveRDS(arr, file = file.path(saveDir, 'absoluteRiskReduction.rds'))
+      saveRDS(models, file = file.path(saveDir, 'models.rds'))
+      saveRDS(cases, file = file.path(saveDir, 'cases.rds'))
+
+    }
+  }
+  return(NULL)
+}
+
+
+
+
+
 
 getCounts <- function(ps, timePoint){
 

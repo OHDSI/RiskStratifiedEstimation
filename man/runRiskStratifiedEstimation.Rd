@@ -4,22 +4,28 @@
 \alias{runRiskStratifiedEstimation}
 \title{Runs a risk stratified analysis}
 \usage{
-runRiskStratifiedEstimation(cdmDatabaseSchema, cohortDatabaseSchema,
+runRiskStratifiedEstimation(plpDataFolder = NULL,
+  cohortMethodDataFolder = NULL, cdmDatabaseSchema, cohortDatabaseSchema,
   outcomeDatabaseSchema, resultsDatabaseSchema, cohortTable, outcomeTable,
   mergedCohortTable, attributeDefinitionTable, cohortAttributeTable,
   treatmentCohortId, comparatorCohortId, outcomeIds, targetCohortId,
   connectionDetails, getDbCohortMethodDataArgs, covariateSettingsCm,
   populationCmSettings, exposureTable, psControl = NULL,
-  psPrior = NULL, psMethod = "matchOnPs", exposureDatabaseSchema,
-  getPlpDataArgs, covariateSettingsPlp, modelSettings,
-  populationPlpSettings, cdmVersion = "5", runPlpArgs, riskStrata = 4,
-  weightsType = "ATE", useStabilizedWeights = TRUE,
+  psPrior = NULL, psMethod = "matchOnPs", createPsThreads = 1,
+  exposureDatabaseSchema, getPlpDataArgs, covariateSettingsPlp,
+  modelSettings, populationPlpSettings, cdmVersion = "5", runPlpArgs,
+  riskStrata = 4, weightsType = "ATE", useStabilizedWeights = TRUE,
   truncationLevels = c(0.01, 0.99), timePoint,
-  compareAllOutcomes = TRUE, psThreads = 1, predictionThreads = 1,
-  saveResults, saveDirectory = NULL, fftempdir, saveMapMatrix = TRUE,
-  savePs = TRUE, verbosity = "INFO", analysisId = NULL)
+  compareAllOutcomes = TRUE, predictionThreads = 1, saveResults,
+  saveDirectory = NULL, fftempdir, fitOutcomeModelsThreads = 1,
+  saveMapMatrix = TRUE, savePs = TRUE, verbosity = "INFO",
+  analysisId = NULL)
 }
 \arguments{
+\item{plpDataFolder}{Folder where the \code{plpData} object is stored. If \code{NULL}, it will be constructed within the function.}
+
+\item{cohortMethodDataFolder}{Folder where the \code{cohortMethodData} object is stored. If \code{NULL}, it will be constructed within the function.}
+
 \item{cdmDatabaseSchema}{The name of the database schema that contains the vocabulary files.
 Requires read permissions to this database. On SQL Server, this should specifiy both the database and the schema,
 so for example 'cdm_instance.dbo'.}
@@ -72,6 +78,8 @@ function \code{createStudyPopulationCmSettings}.}
 \item{psMethod}{Select the propensity score method for the estimation of treatment effects within risk strata. It can be "matchOnPs",
 "stratifyByPs" or "inversePtWeighted".}
 
+\item{createPsThreads}{The number of threads for the calculation of the propensity scores.}
+
 \item{exposureDatabaseSchema}{Input of function \code{\link[CohortMethod]{getDbCohortMethodData}}: The name of the database schema that is the
 location where the exposure data used to define the exposure cohorts is available.}
 
@@ -105,8 +113,6 @@ Should be either 'ATE' or 'ATT'}
 
 \item{compareAllOutcomes}{Should all the outcomes be analyzed within all stratifications?}
 
-\item{psThreads}{The number of threads to be used for the estimation of the propensity scores.}
-
 \item{predictionThreads}{The number of threads to be used to run the predictions.}
 
 \item{saveResults}{Should the results of the entire analysis be saved?}
@@ -114,6 +120,8 @@ Should be either 'ATE' or 'ATT'}
 \item{saveDirectory}{The file path to the directory where the results of the analysis will be saved.}
 
 \item{fftempdir}{The directory where the temporary \code{ff} files will be saved.}
+
+\item{fitOutcomeModelsThreads}{The number of threadss to be used for the calculation of the risk stratified results.}
 
 \item{saveMapMatrix}{Should the map matrix with the risk sratum allocations be saved?}
 
