@@ -355,7 +355,6 @@ runRiskStratifiedEstimation <-
                                           weightsType = weightsType,
                                           useStabilizedWeights = useStabilizedWeights,
                                           truncationLevels = truncationLevels,
-                                          riskStrata = riskStrata,
                                           compareAllOutcomes = compareAllOutcomes,
                                           populationCmSettings = populationCmSettings)
     ParallelLogger::stopCluster(cluster)
