@@ -227,16 +227,15 @@ removeTreatment <- function(plpData,
 
 
 #' @importFrom dplyr %>%
-switchOutcome <- function(ffPsDataFrame,
+switchOutcome <- function(ps,
                            populationCm){
 
-  ffPsDataFrame <- ffPsDataFrame[]
 
-  result <- ffPsDataFrame %>%
+  result <- ps %>%
     dplyr::select(subjectId, propensityScore) %>%
     dplyr::left_join(populationCm,
                      by = "subjectId")%>%
     dplyr::filter(!is.na(survivalTime))
-  ff::as.ffdf(result)
+  return(result)
 
 }

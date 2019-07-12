@@ -184,15 +184,12 @@ runRiskStratifiedEstimation <-
                                                     excludeDrugsFromCovariates = getPlpDataArgs$excludeDrugsFromCovariates,
                                                     covariateSettings = covariateSettingsList)
 
-      PatientLevelPrediction::savePlpData(plpData, file = file.path(saveDirectory, "Prediction", "plpData"))
-      plpDataFolder <- file.path(saveDirectory, "Prediction", "plpData")
+      PatientLevelPrediction::savePlpData(plpData, file = file.path(analysisPath, "Data", "plpData"))
+      plpDataFolder <- file.path(analysisPath, "Data", "plpData")
     }
     else{
       plpData <- PatientLevelPrediction::loadPlpData(plpDataFolder)
     }
-
-
-
 
     runPrediction <- function(x,
                               populationPlpSettings,
@@ -203,7 +200,7 @@ runRiskStratifiedEstimation <-
                               testFraction,
                               nfold,
                               analysisId,
-                              saveDirectory){
+                              analysisPath){
 
       ParallelLogger::registerLogger(logger)
 
@@ -232,7 +229,7 @@ runRiskStratifiedEstimation <-
         PatientLevelPrediction::runPlp(population = populationPlp,
                                        plpData = plpData,
                                        modelSettings = modelSettings,
-                                       saveDirectory = file.path(saveDirectory, "Prediction", outcomeIds[x]),
+                                       saveDirectory = file.path(analysisPath, "Prediction", outcomeIds[x]),
                                        minCovariateFraction = runPlpArgs$minCovariateFraction,
                                        normalizeData = runPlpArgs$normalizeData ,
                                        testSplit = runPlpArgs$testSplit ,
@@ -267,7 +264,7 @@ runRiskStratifiedEstimation <-
                                                     testFraction = testFraction,
                                                     nfold = nfold,
                                                     analysisId = analysisId,
-                                                    saveDirectory = saveDirectory)
+                                                    analysisPath = analysisPath)
     ParallelLogger::stopCluster(cl)
 
     predictionOutcomes <- numeric()
@@ -309,8 +306,8 @@ runRiskStratifiedEstimation <-
                                             maxCohortSize = getDbCohortMethodDataArgs$maxCohortSize,
                                             covariateSettings = getDbCohortMethodDataArgs$covariateSettings)
 
-      CohortMethod::saveCohortMethodData(cohortMethodData, file.path(analysisPath, "cmData"))
-      cohortMethodDataFolder <- file.path(analysisPath, "cmData")
+      CohortMethod::saveCohortMethodData(cohortMethodData, file.path(analysisPath, "Data", "cmData"))
+      cohortMethodDataFolder <- file.path(analysisPath, "Data", "cmData")
     }
     else{
       cohortMethodData <- CohortMethod::loadCohortMethodData(cohortMethodDataFolder)
@@ -333,7 +330,6 @@ runRiskStratifiedEstimation <-
                                           plpDataFolder = plpDataFolder,
                                           populationCmSettings = populationCmSettings,
                                           populationPlpSettings = populationPlpSettings,
-                                          saveDirectory = saveDirectory,
                                           riskStrata = riskStrata,
                                           analysisPath = analysisPath,
                                           analysisId = analysisId)

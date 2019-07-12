@@ -5,8 +5,8 @@
 \title{Calculate propensity scores for a specific outcome}
 \usage{
 fitPsModel(cohortMethodDataFolder, plpDataFolder, outcomeId,
-  populationCmSettings, populationPlpSettings, saveDirectory, riskStrata,
-  analysisId, analysisPath)
+  populationCmSettings, populationPlpSettings, riskStrata, analysisId,
+  analysisPath)
 }
 \arguments{
 \item{cohortMethodDataFolder}{The directory where the \code{cohortMethodData} object is stored.}
@@ -20,8 +20,6 @@ Can be generated from function \code{createStudyPopulationCmSettings}.}
 
 \item{populationPlpSettings}{A parameter object for the function \code{\link[PatientLevelPrediction]{createStudyPopulation}}.
 Can be generated from unction \code{\link[PatientLevelPrediction]{createStudyPopulationSettings}}.}
-
-\item{saveDirectory}{The direcotry of the RSEE analysis where the prediction models are located.}
 
 \item{riskStrata}{The considered number of risk strata.}
 

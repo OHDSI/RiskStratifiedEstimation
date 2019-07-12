@@ -310,7 +310,6 @@ stratifiedKaplanMeier <- function(population, timePoint){
 #'                                             Can be generated from function \code{createStudyPopulationCmSettings}.
 #' @param populationPlpSettings                A parameter object for the function \code{\link[PatientLevelPrediction]{createStudyPopulation}}.
 #'                                             Can be generated from unction \code{\link[PatientLevelPrediction]{createStudyPopulationSettings}}.
-#' @param saveDirectory                        The direcotry of the RSEE analysis where the prediction models are located.
 #' @param riskStrata                           The considered number of risk strata.
 #' @param analysisId                           The analysis ID of the prediction model used to stratify the population.
 #' @param analysisPath                         The directory where the propensity scores will be stored.
@@ -324,7 +323,6 @@ fitPsModel <- function(cohortMethodDataFolder,
                        outcomeId,
                        populationCmSettings,
                        populationPlpSettings,
-                       saveDirectory,
                        riskStrata,
                        analysisId,
                        analysisPath){
@@ -369,7 +367,7 @@ fitPsModel <- function(cohortMethodDataFolder,
   attr(populationCm, "metaData") <- attr(populationPlp, "metaData")
 
   predictionResult <-
-    PatientLevelPrediction::loadPlpResult(file.path(saveDirectory, "Prediction", outcomeId, analysisId, "plpResult"))
+    PatientLevelPrediction::loadPlpResult(file.path(analysisPath, "Prediction", outcomeId, analysisId, "plpResult"))
 
   riskPredictions <- predictionResult$model$predict(plpData = plpData,
                                                     population = populationCm)
