@@ -313,6 +313,8 @@ stratifiedKaplanMeier <- function(population, timePoint){
 #' @param riskStrata                           The considered number of risk strata.
 #' @param analysisId                           The analysis ID of the prediction model used to stratify the population.
 #' @param analysisPath                         The directory where the propensity scores will be stored.
+#' @param psControl                            An object of the type \code{cyclopsControl} generated from \code{\link[Cyclops]{createControl}}.
+#' @param psPrior                              An object of the type \code{cyclopsPrior} generated from \code{\link[Cyclops]{createPrior}}.
 #'
 #' @return                                     \code{NULL}. The results are all saved.
 #'
@@ -325,7 +327,9 @@ fitPsModel <- function(cohortMethodDataFolder,
                        populationPlpSettings,
                        riskStrata,
                        analysisId,
-                       analysisPath){
+                       analysisPath,
+                       psControl = NULL,
+                       psPrior = NULL){
 
   cohortMethodData <- CohortMethod::loadCohortMethodData(file = cohortMethodDataFolder)
   plpData <- PatientLevelPrediction::loadPlpData(file = plpDataFolder)
@@ -380,10 +384,14 @@ fitPsModel <- function(cohortMethodDataFolder,
   mapMatrix <- dplyr::mutate(mapMatrix, riskStratum = dplyr::ntile(riskPredictions$value,
                                                                    riskStrata))
 
-  psControl <-  Cyclops::createControl(threads = 1, maxIterations = 1e4)
-  psPrior <- Cyclops::createPrior(priorType = "laplace",
-                                  exclude = c(0),
-                                  useCrossValidation = TRUE)
+  if(is.null(psControl))
+    psControl <-  Cyclops::createControl(threads = 1, maxIterations = 1e4)
+  if(is.null(psPrior))
+    psPrior <- Cyclops::createPrior(priorType = "laplace",
+                                    exclude = c(0),
+                                    useCrossValidation = TRUE)
+
+
   ps <- list()
   for(i in 1:riskStrata){
     population <- populationCm[populationCm$subjectId %in% mapMatrix[mapMatrix$riskStratum == i,]$subjectId, ]

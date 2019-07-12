@@ -332,7 +332,10 @@ runRiskStratifiedEstimation <-
                                           populationPlpSettings = populationPlpSettings,
                                           riskStrata = riskStrata,
                                           analysisPath = analysisPath,
-                                          analysisId = analysisId)
+                                          analysisId = analysisId,
+                                          psControl = psControl,
+                                          psPrior = psPrior)
+
     ParallelLogger::stopCluster(cluster)
 
     ParallelLogger::logInfo("Done estimating propensity scores")

@@ -6,7 +6,7 @@
 \usage{
 fitPsModel(cohortMethodDataFolder, plpDataFolder, outcomeId,
   populationCmSettings, populationPlpSettings, riskStrata, analysisId,
-  analysisPath)
+  analysisPath, psControl = NULL, psPrior = NULL)
 }
 \arguments{
 \item{cohortMethodDataFolder}{The directory where the \code{cohortMethodData} object is stored.}
@@ -26,6 +26,10 @@ Can be generated from unction \code{\link[PatientLevelPrediction]{createStudyPop
 \item{analysisId}{The analysis ID of the prediction model used to stratify the population.}
 
 \item{analysisPath}{The directory where the propensity scores will be stored.}
+
+\item{psControl}{An object of the type \code{cyclopsControl} generated from \code{\link[Cyclops]{createControl}}.}
+
+\item{psPrior}{An object of the type \code{cyclopsPrior} generated from \code{\link[Cyclops]{createPrior}}.}
 }
 \value{
 \code{NULL}. The results are all saved.
