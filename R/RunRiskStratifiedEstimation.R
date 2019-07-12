@@ -331,7 +331,6 @@ runRiskStratifiedEstimation <-
                                           fun = fitPsModel,
                                           cohortMethodDataFolder = cohortMethodDataFolder,
                                           plpDataFolder = plpDataFolder,
-                                          getDbCohortMethodDataArgs = getDbCohortMethodDataArgs,
                                           populationCmSettings = populationCmSettings,
                                           populationPlpSettings = populationPlpSettings,
                                           saveDirectory = saveDirectory,
