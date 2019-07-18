@@ -349,7 +349,7 @@ runRiskStratifiedEstimation <-
     ParallelLogger::clusterRequire(cluster, "RiskStratifiedEstimation")
     dummy <- ParallelLogger::clusterApply(cluster = cluster,
                                           x = predictOutcomes,
-                                          fun = fitOutcomeModels1,
+                                          fun = fitOutcomeModels,
                                           analysisPath = analysisPath,
                                           compareOutcomes = compareOutcomes,
                                           cohortMethodDataFolder = cohortMethodDataFolder,
