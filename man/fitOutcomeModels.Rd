@@ -5,7 +5,7 @@
 \title{Fit outcome models}
 \usage{
 fitOutcomeModels(outcomeId, analysisPath, cohortMethodDataFolder,
-  outcomeIdList, compareAllOutcomes, timePoint, psMethod, weightsType,
+  compareOutcomes = NULL, timePoint, psMethod, weightsType,
   useStabilizedWeights, truncationLevels, populationCmSettings)
 }
 \arguments{
@@ -15,9 +15,7 @@ fitOutcomeModels(outcomeId, analysisPath, cohortMethodDataFolder,
 
 \item{cohortMethodDataFolder}{The directory where the \code{cohortMethodData} object is stored.}
 
-\item{outcomeIdList}{The other outcomes for which risk stratified estimates need to derived. Only required \code{compareAllOutcomes} is \code{TRUE}.}
-
-\item{compareAllOutcomes}{Compare all the outcomes within the \code{outcomeIdList} within risk strata of code{outcomeId}?}
+\item{compareOutcomes}{The  outcomes for which risk stratified estimates need to be derived.}
 
 \item{timePoint}{The time point at which absolute risk differences will be calculated.}
 

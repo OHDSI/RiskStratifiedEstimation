@@ -8,18 +8,17 @@ runRiskStratifiedEstimation(plpDataFolder = NULL,
   cohortMethodDataFolder = NULL, cdmDatabaseSchema, cohortDatabaseSchema,
   outcomeDatabaseSchema, resultsDatabaseSchema, cohortTable, outcomeTable,
   mergedCohortTable, attributeDefinitionTable, cohortAttributeTable,
-  treatmentCohortId, comparatorCohortId, outcomeIds, targetCohortId,
-  connectionDetails, getDbCohortMethodDataArgs, covariateSettingsCm,
-  populationCmSettings, exposureTable, psControl = NULL,
-  psPrior = NULL, psMethod = "matchOnPs", createPsThreads = 1,
-  exposureDatabaseSchema, getPlpDataArgs, covariateSettingsPlp,
-  modelSettings, populationPlpSettings, cdmVersion = "5", runPlpArgs,
-  riskStrata = 4, weightsType = "ATE", useStabilizedWeights = TRUE,
-  truncationLevels = c(0.01, 0.99), timePoint,
-  compareAllOutcomes = TRUE, predictionThreads = 1, saveResults,
-  saveDirectory = NULL, fftempdir, fitOutcomeModelsThreads = 1,
-  saveMapMatrix = TRUE, savePs = TRUE, verbosity = "INFO",
-  analysisId = NULL)
+  treatmentCohortId, comparatorCohortId, targetCohortId, predictOutcomes,
+  compareOutcomes = NULL, connectionDetails, getDbCohortMethodDataArgs,
+  covariateSettingsCm, populationCmSettings, exposureTable,
+  psControl = NULL, psPrior = NULL, psMethod = "matchOnPs",
+  createPsThreads = 1, exposureDatabaseSchema, getPlpDataArgs,
+  covariateSettingsPlp, modelSettings, populationPlpSettings,
+  cdmVersion = "5", runPlpArgs, riskStrata = 4, weightsType = "ATE",
+  useStabilizedWeights = TRUE, truncationLevels = c(0.01, 0.99),
+  timePoint, predictionThreads = 1, saveResults, saveDirectory = NULL,
+  fftempdir, fitOutcomeModelsThreads = 1, saveMapMatrix = TRUE,
+  savePs = TRUE, verbosity = "INFO", analysisId = NULL)
 }
 \arguments{
 \item{plpDataFolder}{Folder where the \code{plpData} object is stored. If \code{NULL}, it will be constructed within the function.}
@@ -51,9 +50,12 @@ to this database.}
 
 \item{comparatorCohortId}{The cohort definition id of the comparator cohort in the cohortTable.}
 
-\item{outcomeIds}{A list of cohort definition ids used to define the outcomes in the outcome table.}
+\item{targetCohortId}{The cohort definition id of of the merged cohort in the mergedCohortTable.}
 
-\item{targetCohortId}{The cohrt definition id of of the merged cohort in the mergedCohortTable.}
+\item{predictOutcomes}{The outcomes for which the risk stratification will be performed.}
+
+\item{compareOutcomes}{The  outcomes for which risk stratified estimates need to be derived. If set to \code{NULL}, all \code{predictOutcomes}
+will be considered.}
 
 \item{connectionDetails}{An R object of type \code{connectionDetails} created using function
 \code{\link[DatabaseConnector]{createConnectionDetails}}.
@@ -111,8 +113,6 @@ Should be either 'ATE' or 'ATT'}
 
 \item{timePoint}{The time point of interest for the calculation of the absolute risk reduction.}
 
-\item{compareAllOutcomes}{Should all the outcomes be analyzed within all stratifications?}
-
 \item{predictionThreads}{The number of threads to be used to run the predictions.}
 
 \item{saveResults}{Should the results of the entire analysis be saved?}
@@ -140,16 +140,15 @@ a message will print. The levels are:
 \item{analysisId}{The identifier of the analysis.}
 }
 \value{
-An object containing two large lists:
+A reference list for the analaysis results:
                                           \itemize{
-                                              \item The propensity scores within risk strata for each outcome in \code{outcomeIds}
-                                              \item The results of the risk stratified analyis within risk strata for all outcomes in \code{outcomeIds}:
-                                                  \itemize{
-                                                       \item Weighted Kaplan-Meier estimates.
-                                                       \item Relative risk reduction.
-                                                       \item Absolute risk reduction.
-                                                       \item Number of cases.
-                                                  }
+                                              \item analaysisId
+                                              \item targetId
+                                              \item comparatorId
+                                              \item compareOutcomes
+                                              \item predictOutcomes
+                                              \item outputFolder
+
                                            }
 }
 \description{

@@ -19,8 +19,10 @@
 #' @param cohortAttributeTable               The table where the covariate values with regard to treatment will be stored.
 #' @param treatmentCohortId                  The cohort definition id of the treatment cohort in the cohortTable.
 #' @param comparatorCohortId                 The cohort definition id of the comparator cohort in the cohortTable.
-#' @param outcomeIds                         A list of cohort definition ids used to define the outcomes in the outcome table.
-#' @param targetCohortId                     The cohrt definition id of of the merged cohort in the mergedCohortTable.
+#' @param targetCohortId                     The cohort definition id of of the merged cohort in the mergedCohortTable.
+#' @param predictOutcomes                    The outcomes for which the risk stratification will be performed.
+#' @param compareOutcomes                    The  outcomes for which risk stratified estimates need to be derived. If set to \code{NULL}, all \code{predictOutcomes}
+#'                                           will be considered.
 #' @param connectionDetails                  An R object of type \code{connectionDetails} created using function
 #'                                           \code{\link[DatabaseConnector]{createConnectionDetails}}.
 #'                                           Either the \code{connection} or the \code{connectionDetails} argument should be specified.
@@ -56,7 +58,6 @@
 #' @param useStabilizedWeights               Only required if \code{weightsType} is "inversePtWeighted". Should stabilized weights be used?
 #' @param truncationLevels                   Only required if \code{weightsType} is "inversePtWeighted". The level of truncation expressed in percentiles of the propensity score.
 #' @param timePoint                          The time point of interest for the calculation of the absolute risk reduction.
-#' @param compareAllOutcomes                 Should all the outcomes be analyzed within all stratifications?
 #' @param predictionThreads                  The number of threads to be used to run the predictions.
 #' @param saveResults                        Should the results of the entire analysis be saved?
 #' @param saveDirectory                      The file path to the directory where the results of the analysis will be saved.
@@ -75,16 +76,15 @@
 #'                                               \item{FATAL}{Be silent except for fatal errors}}.
 #' @param analysisId                         The identifier of the analysis.
 #'
-#' @return                                   An object containing two large lists:
+#' @return                                   A reference list for the analaysis results:
 #'                                           \itemize{
-#'                                               \item The propensity scores within risk strata for each outcome in \code{outcomeIds}
-#'                                               \item The results of the risk stratified analyis within risk strata for all outcomes in \code{outcomeIds}:
-#'                                                   \itemize{
-#'                                                        \item Weighted Kaplan-Meier estimates.
-#'                                                        \item Relative risk reduction.
-#'                                                        \item Absolute risk reduction.
-#'                                                        \item Number of cases.
-#'                                                   }
+#'                                               \item analaysisId
+#'                                               \item targetId
+#'                                               \item comparatorId
+#'                                               \item compareOutcomes
+#'                                               \item predictOutcomes
+#'                                               \item outputFolder
+#'
 #'                                            }
 #' @importFrom foreach %dopar%
 #' @importFrom foreach %do%
@@ -93,12 +93,12 @@
 runRiskStratifiedEstimation <-
   function(plpDataFolder = NULL, cohortMethodDataFolder = NULL, cdmDatabaseSchema, cohortDatabaseSchema, outcomeDatabaseSchema,
            resultsDatabaseSchema, cohortTable, outcomeTable, mergedCohortTable, attributeDefinitionTable, cohortAttributeTable,
-           treatmentCohortId, comparatorCohortId, outcomeIds, targetCohortId, connectionDetails, getDbCohortMethodDataArgs,
-           covariateSettingsCm, populationCmSettings, exposureTable, psControl = NULL, psPrior = NULL, psMethod = "matchOnPs",
-           createPsThreads = 1, exposureDatabaseSchema, getPlpDataArgs, covariateSettingsPlp, modelSettings, populationPlpSettings,
-           cdmVersion = "5", runPlpArgs, riskStrata = 4, weightsType = "ATE", useStabilizedWeights = TRUE,
-           truncationLevels = c(.01, .99), timePoint, compareAllOutcomes = TRUE, predictionThreads = 1, saveResults, saveDirectory = NULL,
-           fftempdir, fitOutcomeModelsThreads = 1, saveMapMatrix = TRUE, savePs = TRUE, verbosity = "INFO", analysisId = NULL){
+           treatmentCohortId, comparatorCohortId, targetCohortId, predictOutcomes, compareOutcomes = NULL ,connectionDetails,
+           getDbCohortMethodDataArgs, covariateSettingsCm, populationCmSettings, exposureTable, psControl = NULL, psPrior = NULL,
+           psMethod = "matchOnPs", createPsThreads = 1, exposureDatabaseSchema, getPlpDataArgs, covariateSettingsPlp, modelSettings,
+           populationPlpSettings, cdmVersion = "5", runPlpArgs, riskStrata = 4, weightsType = "ATE", useStabilizedWeights = TRUE,
+           truncationLevels = c(.01, .99), timePoint, predictionThreads = 1, saveResults, saveDirectory = NULL, fftempdir,
+           fitOutcomeModelsThreads = 1, saveMapMatrix = TRUE, savePs = TRUE, verbosity = "INFO", analysisId = NULL){
 
 
     if(missing(verbosity)){
@@ -131,13 +131,19 @@ runRiskStratifiedEstimation <-
     ParallelLogger::registerLogger(logger)
     logSep <- paste(rep('*', 96), collapse = '')
 
+    if(is.null(compareOutcomes))
+      compareOutcomes <- predictOutcomes
+
+    outcomeIds <- unique(c(predictOutcomes, compareOutcomes))
+
     ParallelLogger::logInfo(paste0('Risk Stratified Effect Estimation Package version ', utils::packageVersion("RiskStratifiedEstimation")))
     ParallelLogger::logInfo(logSep)
 
     ParallelLogger::logInfo(sprintf('%-20s%s', 'AnalysisID: ',analysisId))
     ParallelLogger::logInfo(sprintf('%-20s%s', 'treatmentId: ', treatmentCohortId))
-    ParallelLogger::logInfo(sprintf('%-20s%s', 'comparatorId', comparatorCohortId))
-    ParallelLogger::logInfo(sprintf('%-20s%s', 'OutcomeID: ', outcomeIds))
+    ParallelLogger::logInfo(sprintf('%-20s%s', 'comparatorId:', comparatorCohortId))
+    ParallelLogger::logInfo(sprintf('%-20s%s', 'PredictionIds:', paste(predictOutcomes, collapse = " ")))
+    ParallelLogger::logInfo(sprintf('%-20s%s', 'EstimationIds:', paste(compareOutcomes, collapse = " ")))
 
     #######################
     # Prediction step
@@ -251,7 +257,7 @@ runRiskStratifiedEstimation <-
     }
 
     predictionList <- list()
-    lengthOutcomes <- length(outcomeIds)
+    lengthOutcomes <- length(predictOutcomes)
     cl <- ParallelLogger::makeCluster(numberOfThreads = predictionThreads)
     predictionList <-  ParallelLogger::clusterApply(cluster = cl,
                                                     fun = runPrediction,
@@ -260,7 +266,7 @@ runRiskStratifiedEstimation <-
                                                     populationPlpSettings = populationPlpSettings,
                                                     modelSettings = modelSettings,
                                                     testSplit = testSplit,
-                                                    outcomeIds = outcomeIds,
+                                                    outcomeIds = predictOutcomes,
                                                     testFraction = testFraction,
                                                     nfold = nfold,
                                                     analysisId = analysisId,
@@ -313,8 +319,6 @@ runRiskStratifiedEstimation <-
       cohortMethodData <- CohortMethod::loadCohortMethodData(cohortMethodDataFolder)
     }
 
-    numberOfOutcomes <- length(outcomeIds)
-
     ParallelLogger::logInfo("Starting propensity score estimation")
     psOverAllOutcomes <- list()
 
@@ -324,7 +328,7 @@ runRiskStratifiedEstimation <-
 
 
     dummy <- ParallelLogger::clusterApply(cluster = cluster,
-                                          x = outcomeIds,
+                                          x = predictOutcomes,
                                           fun = fitPsModel,
                                           cohortMethodDataFolder = cohortMethodDataFolder,
                                           plpDataFolder = plpDataFolder,
@@ -344,24 +348,24 @@ runRiskStratifiedEstimation <-
     cluster <- ParallelLogger::makeCluster(fitOutcomeModelsThreads)
     ParallelLogger::clusterRequire(cluster, "RiskStratifiedEstimation")
     dummy <- ParallelLogger::clusterApply(cluster = cluster,
-                                          x = outcomeIds,
-                                          fun = fitOutcomeModels,
+                                          x = predictOutcomes,
+                                          fun = fitOutcomeModels1,
                                           analysisPath = analysisPath,
-                                          outcomeIdList = outcomeIds,
+                                          compareOutcomes = compareOutcomes,
                                           cohortMethodDataFolder = cohortMethodDataFolder,
                                           timePoint = timePoint,
                                           psMethod = psMethod,
                                           weightsType = weightsType,
                                           useStabilizedWeights = useStabilizedWeights,
                                           truncationLevels = truncationLevels,
-                                          compareAllOutcomes = compareAllOutcomes,
                                           populationCmSettings = populationCmSettings)
     ParallelLogger::stopCluster(cluster)
 
     referenceTable <- list(analaysisId = analysisId,
                            targetId = targetCohortId,
                            comparatorId = comparatorCohortId,
-                           outcomeIds = outcomeIds,
+                           compareOutcomes = compareOutcomes,
+                           predictOutcomes = predictOutcomes,
                            outputFolder = analysisPath)
 
 

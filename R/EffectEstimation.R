@@ -384,9 +384,9 @@ fitPsModel <- function(cohortMethodDataFolder,
   mapMatrix <- dplyr::mutate(mapMatrix, riskStratum = dplyr::ntile(riskPredictions$value,
                                                                    riskStrata))
 
-  if(is.null(psControl))
+  if(length(psControl) == 0)
     psControl <-  Cyclops::createControl(threads = 1, maxIterations = 1e4)
-  if(is.null(psPrior))
+  if(length(psPrior) == 0)
     psPrior <- Cyclops::createPrior(priorType = "laplace",
                                     exclude = c(0),
                                     useCrossValidation = TRUE)
@@ -428,8 +428,7 @@ fitPsModel <- function(cohortMethodDataFolder,
 #' @param outcomeId               The outcome of interest for which the esitmation is performed. That is the outcome for which risk stratification is performed.
 #' @param analysisPath            The path to the \code{RSEE} analysis results.
 #' @param cohortMethodDataFolder  The directory where the \code{cohortMethodData} object is stored.
-#' @param outcomeIdList           The other outcomes for which risk stratified estimates need to derived. Only required \code{compareAllOutcomes} is \code{TRUE}.
-#' @param compareAllOutcomes      Compare all the outcomes within the \code{outcomeIdList} within risk strata of code{outcomeId}?
+#' @param compareOutcomes         The  outcomes for which risk stratified estimates need to be derived.
 #' @param timePoint               The time point at which absolute risk differences will be calculated.
 #' @param psMethod                Select the propensity score method for the estimation of treatment effects within risk strata. It can be "matchOnPs",
 #'                                "stratifyByPs" or "inversePtWeighted".
@@ -447,8 +446,7 @@ fitPsModel <- function(cohortMethodDataFolder,
 fitOutcomeModels <- function(outcomeId,
                              analysisPath,
                              cohortMethodDataFolder,
-                             outcomeIdList,
-                             compareAllOutcomes,
+                             compareOutcomes = NULL,
                              timePoint,
                              psMethod,
                              weightsType,
@@ -524,12 +522,15 @@ fitOutcomeModels <- function(outcomeId,
 
   ParallelLogger::logInfo('Saved main the results')
 
+  if(length(compareOutcomes[compareOutcomes!=outcomeId]) == 0)
+    compareOutcomes <- NULL
+
   ParallelLogger::logInfo('Generating results for the other outcomes')
 
-  if(compareAllOutcomes){
+  if(!is.null(compareOutcomes)){
 
-    numberOfComparisons <- length(outcomeIdList) - 1
-    comparisonOutcomes <- outcomeIdList[outcomeIdList!=outcomeId]
+    compareOutcomes <- compareOutcomes[compareOutcomes!=outcomeId]
+    numberOfComparisons <- length(compareOutcomes)
     resSwitched <- list()
     modelsSwitched <- list()
     kaplanMeierSwitched <- list()
@@ -537,12 +538,12 @@ fitOutcomeModels <- function(outcomeId,
 
     for(j in 1:numberOfComparisons){
 
-      ParallelLogger::logInfo(paste("Stratification outcome", outcomeId, "results outcome:", comparisonOutcomes[j]))
+      ParallelLogger::logInfo(paste("Stratification outcome", outcomeId, "results outcome:", compareOutcomes[j]))
       ParallelLogger::logInfo("Generating population with switched outcome")
 
       populationCm <-
         CohortMethod::createStudyPopulation(cohortMethodData = cohortMethodData,
-                                            outcomeId = comparisonOutcomes[j],
+                                            outcomeId = compareOutcomes[j],
                                             firstExposureOnly = populationCmSettings$firstExposureOnly,
                                             restrictToCommonPeriod = populationCmSettings$restrictToCommonPeriod,
                                             washoutPeriod = populationCmSettings$washoutPeriod,
@@ -610,7 +611,7 @@ fitOutcomeModels <- function(outcomeId,
         rrr$riskStratum <- paste0("Q", 1:riskStrata)
       }
 
-      saveDir <- paste(analysisPath, "Estimation", outcomeId, comparisonOutcomes[j], sep = "/")
+      saveDir <- paste(analysisPath, "Estimation", outcomeId, compareOutcomes[j], sep = "/")
       if(!dir.exists(saveDir)){dir.create(saveDir, recursive = T)}
       saveRDS(rrr, file = file.path(saveDir, 'relativeRiskReduction.rds'))
       saveRDS(arr, file = file.path(saveDir, 'absoluteRiskReduction.rds'))
