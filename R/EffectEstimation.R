@@ -428,7 +428,9 @@ fitPsModel <- function(cohortMethodDataFolder,
 #' @param outcomeId               The outcome of interest for which the esitmation is performed. That is the outcome for which risk stratification is performed.
 #' @param analysisPath            The path to the \code{RSEE} analysis results.
 #' @param cohortMethodDataFolder  The directory where the \code{cohortMethodData} object is stored.
-#' @param compareOutcomes         The  outcomes for which risk stratified estimates need to be derived.
+#' @param analysisRef             A list containing a vector called \code{outcomeIds} with the outcome ids of interest and a square matrix
+#'                                of 0s and 1s called \code{analysisMatrix}. where the columns define the risk stratification outcomes and
+#'                                the rows the estimation outcomes.
 #' @param timePoint               The time point at which absolute risk differences will be calculated.
 #' @param psMethod                Select the propensity score method for the estimation of treatment effects within risk strata. It can be "matchOnPs",
 #'                                "stratifyByPs" or "inversePtWeighted".
@@ -446,7 +448,7 @@ fitPsModel <- function(cohortMethodDataFolder,
 fitOutcomeModels <- function(outcomeId,
                              analysisPath,
                              cohortMethodDataFolder,
-                             compareOutcomes = NULL,
+                             analysisRef,
                              timePoint,
                              psMethod,
                              weightsType,
@@ -459,17 +461,18 @@ fitOutcomeModels <- function(outcomeId,
   ps <- readRDS(file.path(analysisPath, "Estimation", outcomeId, "ps.rds"))
   cohortMethodData <- CohortMethod::loadCohortMethodData(file = cohortMethodDataFolder)
 
-  cases <- do.call(rbind, lapply(ps, getCounts, timePoint = timePoint))
-  colnames(cases) <- c("comparator", "treatment")
-  cases <- as.data.frame(cases)
-  riskStrata <- length(ps)
-  cases$riskStratum <- paste0("Q", 1:riskStrata)
-
   if(psMethod == "matchOnPs"){
 
     matchedPop <- lapply(ps, CohortMethod::matchOnPs)
     models <- lapply(matchedPop,
                      CohortMethod::fitOutcomeModel, stratified = TRUE, modelType = "cox")
+
+    cases <- do.call(rbind, lapply(matchedPop, getCounts, timePoint = timePoint, psMethod = psMethod))
+    colnames(cases) <- c("comparator", "treatment")
+    cases <- as.data.frame(cases)
+    riskStrata <- length(ps)
+    cases$riskStratum <- paste0("Q", 1:riskStrata)
+
     arr <- do.call(rbind, lapply(matchedPop, absoluteRiskReduction, timePoint = timePoint, psMethod = psMethod))
     colnames(arr) <- c("ARR", "lower", "upper")
     arr <- as.data.frame(arr)
@@ -480,7 +483,7 @@ fitOutcomeModels <- function(outcomeId,
     rrr$riskStratum <- paste0("Q", 1:riskStrata)
 
   }
-  else if(psMethod == "stratifyByPs"){
+  else if(psMethod == "stratifyByPs"){ # Need to fix the cases variable for stratification on ps!!!!
 
     stratifiedPop <- lapply(ps, CohortMethod::stratifyByPs) # Add stratification settings
     models <- lapply(stratifiedPop,
@@ -503,6 +506,13 @@ fitOutcomeModels <- function(outcomeId,
                  useStabilizedWeights = useStabilizedWeights,
                  truncationLevels = truncationLevels)
     models <- lapply(ps, outcomeModelWeighted, calculateWeights = FALSE)
+
+    cases <- do.call(rbind, lapply(ps, getCounts, timePoint = timePoint, psMethod = "inversePtWeighted"))
+    colnames(cases) <- c("comparator", "treatment")
+    cases <- as.data.frame(cases)
+    riskStrata <- length(ps)
+    cases$riskStratum <- paste0("Q", 1:riskStrata)
+
     arr <- do.call(rbind, lapply(ps, absoluteRiskReduction, timePoint = timePoint, psMethod = "inversePtWeighted"))
     colnames(arr) <- c("ARR", "lower", "upper")
     arr <- as.data.frame(arr)
@@ -522,13 +532,16 @@ fitOutcomeModels <- function(outcomeId,
 
   ParallelLogger::logInfo('Saved main the results')
 
+  predLoc <- which(analysisRef$outcomeIds == outcomeId)
+  compLoc <- analysisRef$analysisMatrix[, predLoc]
+  compareOutcomes <- analysisRef$outcomeIds[as.logical(compLoc)]
+
   if(length(compareOutcomes[compareOutcomes!=outcomeId]) == 0)
     compareOutcomes <- NULL
 
-  ParallelLogger::logInfo('Generating results for the other outcomes')
-
   if(!is.null(compareOutcomes)){
 
+    ParallelLogger::logInfo('Generating results for the other outcomes')
     compareOutcomes <- compareOutcomes[compareOutcomes!=outcomeId]
     numberOfComparisons <- length(compareOutcomes)
     resSwitched <- list()
@@ -558,16 +571,18 @@ fitOutcomeModels <- function(outcomeId,
                                             censorAtNewRiskWindow = populationCmSettings$censorAtNewRiskWindow)
 
       psSwitchedOutcome <- lapply(ps, switchOutcome, populationCm = populationCm)
-      cases <- do.call(rbind, lapply(psSwitchedOutcome, getCounts, timePoint = timePoint))
-      colnames(cases) <- c("comparator", "treatment")
-      cases <- as.data.frame(cases)
-      cases$riskStratum <- paste0("Q", 1:riskStrata)
 
       if(psMethod == "matchOnPs"){
 
         matchedPop <- lapply(psSwitchedOutcome, CohortMethod::matchOnPs)
         models <- lapply(matchedPop,
                          CohortMethod::fitOutcomeModel, stratified = TRUE, modelType = "cox")
+
+        cases <- do.call(rbind, lapply(psSwitchedOutcome, getCounts, timePoint = timePoint, psMethod = "matchOnPs"))
+        colnames(cases) <- c("comparator", "treatment")
+        cases <- as.data.frame(cases)
+        cases$riskStratum <- paste0("Q", 1:riskStrata)
+
         arr <- do.call(rbind, lapply(matchedPop, absoluteRiskReduction, timePoint = timePoint, psMethod = psMethod))
         colnames(arr) <- c("ARR", "lower", "upper")
         arr <- as.data.frame(arr)
@@ -578,7 +593,7 @@ fitOutcomeModels <- function(outcomeId,
         rrr$riskStratum <- paste0("Q", 1:riskStrata)
 
       }
-      else if(psMethod == "stratifyByPs"){
+      else if(psMethod == "stratifyByPs"){ # Need to fix the cases variable for stratification on ps !!!!
 
         stratifiedPop <- lapply(psSwitchedOutcome, CohortMethod::stratifyByPs)
         models <- lapply(stratifiedPop,
@@ -601,6 +616,12 @@ fitOutcomeModels <- function(outcomeId,
                                     useStabilizedWeights = useStabilizedWeights,
                                     truncationLevels = truncationLevels)
         models <- lapply(psSwitchedOutcome, outcomeModelWeighted, calculateWeights = FALSE)
+
+        cases <- do.call(rbind, lapply(psSwitchedOutcome, getCounts, timePoint = timePoint, psMethod = psMethod))
+        colnames(cases) <- c("comparator", "treatment")
+        cases <- as.data.frame(cases)
+        cases$riskStratum <- paste0("Q", 1:riskStrata)
+
         arr <- do.call(rbind, lapply(psSwitchedOutcome, absoluteRiskReduction, timePoint = timePoint, psMethod = "inversePtWeighted"))
         colnames(arr) <- c("ARR", "lower", "upper")
         arr <- as.data.frame(arr)
@@ -625,22 +646,48 @@ fitOutcomeModels <- function(outcomeId,
 
 
 
+getCounts <- function(population,
+                      timePoint,
+                      psMethod){
 
+  population <- as.data.frame(population)
+  population$event <- ifelse(is.na(population$daysToEvent), 0, 1)
+  population$S <- survival::Surv(population$survivalTime, population$event)
 
+  kaplanMeier <-  survival::survfit(S ~ treatment, data = population)
 
-getCounts <- function(ps, timePoint){
+  if(psMethod == "matchOnPs"){
 
-  ps <- as.data.frame(ps)
+    summaryKM <- summary(kaplanMeier, times = timePoint)
+    res <- 1 - summaryKM$surv
 
-  ps$event <- ifelse(is.na(ps$daysToEvent), 0, 1)
-  ps$S <- survival::Surv(ps$survivalTime, ps$event)
+  }
+  else if(psMethod == "stratifyByPS"){
 
-  kaplanMeier <-  survival::survfit(S ~ treatment, data = ps)
+    kaplanMeier <- list()
+    stratId <- sort(unique(population$stratumId))
+    for(i in stratId){
+      kaplanMeier[[i]] <- survival::survfit(S ~ treatment, data = subset(population, stratumId == i))
+    }
 
-  summaryKM <- summary(kaplanMeier, times = timePoint)
-  1 - summaryKM$surv
+    summaryKMList <- lapply(kaplanMeier, summary, times = timePoint)
+    arrList <- lapply(summaryKMList, getAbsoluteDifference)
 
+    arr <- mean(unlist(arrList))
+    standardErrors <- lapply(summaryKMList, getStandadrdError)
+    pooledStandardError <- sqrt(sum(unlist(standardErrors)^2)/25)
+    res <- c(arr, arr - 1.96*pooledStandardError, arr + 1.96*pooledStandardError)
 
+  }
+  else if(psMethod == "inversePtWeighted"){
+
+    kaplanMeier <-  survival::survfit(S ~ treatment, data = population, weights = weights)
+    summaryKM <- summary(kaplanMeier, times = timePoint)
+    res <- 1 - summaryKM$surv
+
+  }
+
+  return(res)
 }
 
 

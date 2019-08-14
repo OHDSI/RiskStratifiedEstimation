@@ -18,7 +18,8 @@ runRiskStratifiedEstimation(plpDataFolder = NULL,
   useStabilizedWeights = TRUE, truncationLevels = c(0.01, 0.99),
   timePoint, predictionThreads = 1, saveResults, saveDirectory = NULL,
   fftempdir, fitOutcomeModelsThreads = 1, saveMapMatrix = TRUE,
-  savePs = TRUE, verbosity = "INFO", analysisId = NULL)
+  savePs = TRUE, verbosity = "INFO", analysisId = NULL,
+  analysisRef = NULL)
 }
 \arguments{
 \item{plpDataFolder}{Folder where the \code{plpData} object is stored. If \code{NULL}, it will be constructed within the function.}
@@ -138,6 +139,10 @@ a message will print. The levels are:
     \item{FATAL}{Be silent except for fatal errors}}.}
 
 \item{analysisId}{The identifier of the analysis.}
+
+\item{analysisRef}{A list containing a vector called \code{outcomeIds} with the outcome ids of interest and a square matrix
+of 0s and 1s called \code{analysisMatrix}. where the columns define the risk stratification outcomes and
+the rows the estimation outcomes}
 }
 \value{
 A reference list for the analaysis results:

@@ -75,6 +75,9 @@
 #'                                               \item{ERROR}{Show error messages}
 #'                                               \item{FATAL}{Be silent except for fatal errors}}.
 #' @param analysisId                         The identifier of the analysis.
+#' @param analysisRef                        A list containing a vector called \code{outcomeIds} with the outcome ids of interest and a square matrix
+#'                                           of 0s and 1s called \code{analysisMatrix}. where the columns define the risk stratification outcomes and
+#'                                           the rows the estimation outcomes
 #'
 #' @return                                   A reference list for the analaysis results:
 #'                                           \itemize{
@@ -98,7 +101,8 @@ runRiskStratifiedEstimation <-
            psMethod = "matchOnPs", createPsThreads = 1, exposureDatabaseSchema, getPlpDataArgs, covariateSettingsPlp, modelSettings,
            populationPlpSettings, cdmVersion = "5", runPlpArgs, riskStrata = 4, weightsType = "ATE", useStabilizedWeights = TRUE,
            truncationLevels = c(.01, .99), timePoint, predictionThreads = 1, saveResults, saveDirectory = NULL, fftempdir,
-           fitOutcomeModelsThreads = 1, saveMapMatrix = TRUE, savePs = TRUE, verbosity = "INFO", analysisId = NULL){
+           fitOutcomeModelsThreads = 1, saveMapMatrix = TRUE, savePs = TRUE, verbosity = "INFO", analysisId = NULL,
+           analysisRef = NULL){
 
 
     if(missing(verbosity)){
@@ -131,19 +135,42 @@ runRiskStratifiedEstimation <-
     ParallelLogger::registerLogger(logger)
     logSep <- paste(rep('*', 96), collapse = '')
 
-    if(is.null(compareOutcomes))
-      compareOutcomes <- predictOutcomes
+    if(!is.null(analysisRef)){
+      predictOutcomes <- unique(analysisRef$outcomeIds[col(analysisRef$analysisMatrix)[which(!analysisRef$analysisMatrix == 0)]])
+      compareOutcomes <- list()
+      for(i in 1:length(predictOutcomes)){
+        colNumber <- which(predictOutcomes == predictOutcomes[i])
+        compareOutcomes[[i]] <- analysisRef$outcomeIds[as.logical(analysisRef$analysisMatrix[, colNumber])]
+      }
+      outcomeIds <- analysisRef$outcomeIds
+    }
+    else{
+      if(is.null(compareOutcomes))
+        compareOutcomes <- predictOutcomes
+      outcomeIds <- unique(c(predictOutcomes, compareOutcomes))
+      analysisMatrix <- matrix(0, nrow = length(outcomeIds), ncol = length(outcomeIds))
+      predLoc <- which(outcomeIds%in%predictOutcomes)
+      analysisMatrix[predLoc, predLoc] <- diag(1, length(predLoc))
+      compLoc <- which(outcomeIds%in%compareOutcomes)
+      analysisMatrix[compLoc, predLoc] <- 1
+      analysisRef$analysisMatrix <- analysisMatrix
+      analysisRef$outcomeIds <- outcomeIds
+    }
 
-    outcomeIds <- unique(c(predictOutcomes, compareOutcomes))
+    # ParallelLogger::logInfo(paste0('Risk Stratified Effect Estimation Package version ', utils::packageVersion("RiskStratifiedEstimation")))
+    # ParallelLogger::logInfo(logSep)
+    #
+    # ParallelLogger::logInfo(sprintf('%-20s%s', 'AnalysisID: ',analysisId))
+    # ParallelLogger::logInfo(sprintf('%-20s%s', 'treatmentId: ', treatmentCohortId))
+    # ParallelLogger::logInfo(sprintf('%-20s%s', 'comparatorId:', comparatorCohortId))
+    #
+    # if(is.null(analysisRef)){
+    #
+    #   ParallelLogger::logInfo(sprintf('%-20s%s', 'PredictionIds:', paste(predictOutcomes, collapse = " ")))
+    #   ParallelLogger::logInfo(sprintf('%-20s%s', 'EstimationIds:', paste(compareOutcomes, collapse = " ")))
+    #
+    # }
 
-    ParallelLogger::logInfo(paste0('Risk Stratified Effect Estimation Package version ', utils::packageVersion("RiskStratifiedEstimation")))
-    ParallelLogger::logInfo(logSep)
-
-    ParallelLogger::logInfo(sprintf('%-20s%s', 'AnalysisID: ',analysisId))
-    ParallelLogger::logInfo(sprintf('%-20s%s', 'treatmentId: ', treatmentCohortId))
-    ParallelLogger::logInfo(sprintf('%-20s%s', 'comparatorId:', comparatorCohortId))
-    ParallelLogger::logInfo(sprintf('%-20s%s', 'PredictionIds:', paste(predictOutcomes, collapse = " ")))
-    ParallelLogger::logInfo(sprintf('%-20s%s', 'EstimationIds:', paste(compareOutcomes, collapse = " ")))
 
     #######################
     # Prediction step
@@ -201,7 +228,7 @@ runRiskStratifiedEstimation <-
                               populationPlpSettings,
                               modelSettings,
                               plpDataFolder,
-                              outcomeIds,
+                              predictOutcomes,
                               testSplit,
                               testFraction,
                               nfold,
@@ -215,7 +242,7 @@ runRiskStratifiedEstimation <-
 
       populationPlp <-
         PatientLevelPrediction::createStudyPopulation(plpData = plpData,
-                                                      outcomeId = outcomeIds[x],
+                                                      outcomeId = predictOutcomes[x],
                                                       binary = populationPlpSettings$binary,
                                                       includeAllOutcomes = populationPlpSettings$includeAllOutcomes,
                                                       firstExposureOnly = populationPlpSettings$firstExposureOnly,
@@ -235,7 +262,7 @@ runRiskStratifiedEstimation <-
         PatientLevelPrediction::runPlp(population = populationPlp,
                                        plpData = plpData,
                                        modelSettings = modelSettings,
-                                       saveDirectory = file.path(analysisPath, "Prediction", outcomeIds[x]),
+                                       saveDirectory = file.path(analysisPath, "Prediction", predictOutcomes[x]),
                                        minCovariateFraction = runPlpArgs$minCovariateFraction,
                                        normalizeData = runPlpArgs$normalizeData ,
                                        testSplit = runPlpArgs$testSplit ,
@@ -266,7 +293,7 @@ runRiskStratifiedEstimation <-
                                                     populationPlpSettings = populationPlpSettings,
                                                     modelSettings = modelSettings,
                                                     testSplit = testSplit,
-                                                    outcomeIds = predictOutcomes,
+                                                    predictOutcomes = predictOutcomes,
                                                     testFraction = testFraction,
                                                     nfold = nfold,
                                                     analysisId = analysisId,
@@ -351,7 +378,7 @@ runRiskStratifiedEstimation <-
                                           x = predictOutcomes,
                                           fun = fitOutcomeModels,
                                           analysisPath = analysisPath,
-                                          compareOutcomes = compareOutcomes,
+                                          analysisRef = analysisRef,
                                           cohortMethodDataFolder = cohortMethodDataFolder,
                                           timePoint = timePoint,
                                           psMethod = psMethod,

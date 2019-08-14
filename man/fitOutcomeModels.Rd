@@ -5,8 +5,8 @@
 \title{Fit outcome models}
 \usage{
 fitOutcomeModels(outcomeId, analysisPath, cohortMethodDataFolder,
-  compareOutcomes = NULL, timePoint, psMethod, weightsType,
-  useStabilizedWeights, truncationLevels, populationCmSettings)
+  analysisRef, timePoint, psMethod, weightsType, useStabilizedWeights,
+  truncationLevels, populationCmSettings)
 }
 \arguments{
 \item{outcomeId}{The outcome of interest for which the esitmation is performed. That is the outcome for which risk stratification is performed.}
@@ -15,7 +15,9 @@ fitOutcomeModels(outcomeId, analysisPath, cohortMethodDataFolder,
 
 \item{cohortMethodDataFolder}{The directory where the \code{cohortMethodData} object is stored.}
 
-\item{compareOutcomes}{The  outcomes for which risk stratified estimates need to be derived.}
+\item{analysisRef}{A list containing a vector called \code{outcomeIds} with the outcome ids of interest and a square matrix
+of 0s and 1s called \code{analysisMatrix}. where the columns define the risk stratification outcomes and
+the rows the estimation outcomes.}
 
 \item{timePoint}{The time point at which absolute risk differences will be calculated.}
 
