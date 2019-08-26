@@ -33,6 +33,8 @@ loadRSEE <- function(file,
       psRes[[i]] <- list(ps = readRDS(file = file.path(dir, mainOutcomes[i], "ps.rds")),
                          mapMatrix = readRDS(file = file.path(dir, mainOutcomes[i], "mapMatrix.rds")))
 
+    names(psRes) <- paste("outcome", mainOutcomes, sep = "_")
+
   }
 
   for(i in 1:length(mainOutcomes)){
@@ -73,7 +75,7 @@ loadRSEE <- function(file,
 
   }
 
-  names(results) <- names(psRes) <- paste("outcome", mainOutcomes, sep = "_")
+  names(results) <- paste("outcome", mainOutcomes, sep = "_")
 
   finalRes <- list(results = results)
 
