@@ -4,7 +4,8 @@
 \alias{loadRSEE}
 \title{Load the result of a risk stratified analysis}
 \usage{
-loadRSEE(file, mainOutcomes = NULL, loadPs = TRUE)
+loadRSEE(file, mainOutcomes = NULL, loadOtherOutcomes = TRUE,
+  otherOutcomes = NULL, loadPs = TRUE)
 }
 \arguments{
 \item{file}{The file location where the results are stored. It should point at the analysisId folder of
@@ -12,6 +13,11 @@ a risk stratified analysis}
 
 \item{mainOutcomes}{The main outcomes for which the results should be loaded. If set to \code{NULL} the results
 for all the outcomes are loaded.}
+
+\item{loadOtherOutcomes}{Logical: Whether to load results for other outcomes. If \code{FALSE}, only the main outcome
+results are loaded.}
+
+\item{otherOutcomes}{The Ids of the other outcomes to be loaded.}
 
 \item{loadPs}{Should the propensity scores along with the matrices mapping risk stratification be loaded?}
 }

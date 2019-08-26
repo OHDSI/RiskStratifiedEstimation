@@ -6,6 +6,9 @@
 #'                               a risk stratified analysis
 #' @param mainOutcomes           The main outcomes for which the results should be loaded. If set to \code{NULL} the results
 #'                               for all the outcomes are loaded.
+#' @param loadOtherOutcomes      Logical: Whether to load results for other outcomes. If \code{FALSE}, only the main outcome
+#'                               results are loaded.
+#' @param otherOutcomes          The Ids of the other outcomes to be loaded.
 #' @param loadPs                 Should the propensity scores along with the matrices mapping risk stratification be loaded?
 #'
 #' @return                       The result of a previous risk stratified analysis.
@@ -14,6 +17,8 @@
 
 loadRSEE <- function(file,
                      mainOutcomes = NULL,
+                     loadOtherOutcomes = TRUE,
+                     otherOutcomes = NULL,
                      loadPs = TRUE){
 
   dir <- file.path(file, "Estimation")
@@ -50,29 +55,50 @@ loadRSEE <- function(file,
                             absolute = absolute,
                             cases = cases)
 
-    otherOutcomes <- list.dirs(file.path(dir, mainOutcomes[i]),
-                               recursive = FALSE,
-                               full.names = FALSE)
+    if(loadOtherOutcomes){
+      if(is.null(otherOutcomes)){
+        otherOutcomes <- list.dirs(file.path(dir, mainOutcomes[i]),
+                                   recursive = FALSE,
+                                   full.names = FALSE)
 
-    for(j in 1:length(otherOutcomes)){
+        for(j in 1:length(otherOutcomes)){
 
-      models <- readRDS(file = file.path(dir, mainOutcomes[i], otherOutcomes[j], "models.rds"))
-      relative <- readRDS(file = file.path(dir, mainOutcomes[i], otherOutcomes[j], "relativeRiskReduction.rds"))
-      absolute <- readRDS(file = file.path(dir, mainOutcomes[i], otherOutcomes[j], "absoluteRiskReduction.rds"))
-      cases <- readRDS(file = file.path(dir, mainOutcomes[i], otherOutcomes[j], "cases.rds"))
+          models <- readRDS(file = file.path(dir, mainOutcomes[i], otherOutcomes[j], "models.rds"))
+          relative <- readRDS(file = file.path(dir, mainOutcomes[i], otherOutcomes[j], "relativeRiskReduction.rds"))
+          absolute <- readRDS(file = file.path(dir, mainOutcomes[i], otherOutcomes[j], "absoluteRiskReduction.rds"))
+          cases <- readRDS(file = file.path(dir, mainOutcomes[i], otherOutcomes[j], "cases.rds"))
 
-      otherOutcomesRes[[j]] <- list(models = models,
-                                    relative = relative,
-                                    absolute = absolute,
-                                    cases = cases)
+          otherOutcomesRes[[j]] <- list(models = models,
+                                        relative = relative,
+                                        absolute = absolute,
+                                        cases = cases)
 
+        }
+        names(otherOutcomesRes) <- paste("outcome", otherOutcomes, sep = "_")
+      }
+      else{
+        for(j in 1:length(otherOutcomes)){
+
+          models <- readRDS(file = file.path(dir, mainOutcomes[i], otherOutcomes[j], "models.rds"))
+          relative <- readRDS(file = file.path(dir, mainOutcomes[i], otherOutcomes[j], "relativeRiskReduction.rds"))
+          absolute <- readRDS(file = file.path(dir, mainOutcomes[i], otherOutcomes[j], "absoluteRiskReduction.rds"))
+          cases <- readRDS(file = file.path(dir, mainOutcomes[i], otherOutcomes[j], "cases.rds"))
+
+          otherOutcomesRes[[j]] <- list(models = models,
+                                        relative = relative,
+                                        absolute = absolute,
+                                        cases = cases)
+
+        }
+        names(otherOutcomesRes) <- paste("outcome", otherOutcomes, sep = "_")
+      }
+    }
+    else{
+      otherOutcomesRes <- NULL
     }
 
-    names(otherOutcomesRes) <- paste("outcome", otherOutcomes, sep = "_")
     results[[i]] <- list(mainOutcome = mainOutcomesRes,
                          otherOutcomes = otherOutcomesRes)
-
-
   }
 
   names(results) <- paste("outcome", mainOutcomes, sep = "_")
@@ -81,7 +107,6 @@ loadRSEE <- function(file,
 
   if(loadPs)
     finalRes$ps <- psRes
-
 
   return(finalRes)
 }
