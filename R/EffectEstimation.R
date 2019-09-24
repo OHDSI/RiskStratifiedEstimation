@@ -273,7 +273,8 @@ weightedKM <- function(ps,
 
 #' Calculate stratified Kaplan-Meier estimates
 #'
-#' @param population                The population of interest stratified using the  \code{\link[CohortMethod]{stratifyByPs}}
+#' @param population                The population of interest stratified using the
+#'                                  \code{\link[CohortMethod]{stratifyByPs}}
 #' @param timePoint                 The point in time for which the absolute risk difference is required
 #'
 #' @return                          A vector of the absolute risk difference along with the lowest and highest limits of the

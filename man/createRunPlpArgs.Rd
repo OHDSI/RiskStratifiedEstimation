@@ -4,16 +4,19 @@
 \alias{createRunPlpArgs}
 \title{Create a parameter object for the function runPlp}
 \usage{
-createRunPlpArgs(minCovariateFraction = 0.001, normalizeData = TRUE,
-  testSplit = "person", testFraction = 0.25, trainFraction = NULL,
-  splitSeed = NULL, nfold = 3, indexes = NULL, savePlpData = TRUE,
-  savePlpResult = TRUE, savePlpPlots = TRUE, saveEvaluation = TRUE,
-  verbosity = "INFO", timeStamp = FALSE, analysisId = NULL)
+createRunPlpArgs(minCovariateFraction = 0.001, normalizeData = T,
+  modelSettings, testSplit = "time", testFraction = 0.25,
+  trainFraction = NULL, splitSeed = NULL, nfold = 3,
+  indexes = NULL, savePlpData = T, savePlpResult = T,
+  savePlpPlots = T, saveEvaluation = T, verbosity = "INFO",
+  timeStamp = FALSE, analysisId = NULL)
 }
 \arguments{
 \item{minCovariateFraction}{The minimum fraction of target population who must have a covariate for it to be included in the model training}
 
 \item{normalizeData}{Whether to normalise the covariates before training (Default: TRUE)}
+
+\item{modelSettings}{An object of class modelSettings created using one of the function:setLassoLogisticRegression() A lasso logistic regression modelsetGradientBoostingMachine() A gradient boosting machinesetAdaBoost() An ada boost modelsetRandomForest() A random forest modelsetDecisionTree() A decision tree modelsetCovNN()) A convolutional neural network modelsetCIReNN() A recurrent neural network modelsetMLP() A neural network modelsetDeepNN() A deep neural network modelsetKNN() A KNN model}
 
 \item{testSplit}{Either 'person' or 'time' specifying the type of evaluation used.'time' find the date where testFraction of patients had an index after the date and assigns patients with an index prior to this date into the training set and post the date into the test set'person' splits the data into test (1-testFraction of the data) andtrain (validationFraction of the data) sets.  The split is stratified by the class label.}
 
