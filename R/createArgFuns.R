@@ -153,6 +153,21 @@ createRunPlpArgs <- function(minCovariateFraction = 0.001,
 
 
 
+createRunSettings <- function(runPlpSettings =
+                                createRunPlpArgs(modelSettings =
+                                                   PatientLevelPrediction::setLassoLogisticRegression()),
+                              runCmSettings =
+                                createRunCmArgs()){
+
+  res <- list(runPlpSettings = runPlpSettings,
+              runCmSettings = runCmSettings)
+
+  return(res)
+
+}
+
+
+
 #' Create a parameter object for the function getPlpData
 #'
 #' @details
@@ -287,7 +302,7 @@ createGetCmDataArgs <- function(studyStartDate = "",
 #'
 #' @export
 
-createCmPopulationSettingsArgs <- function(firstExposureOnly = FALSE,
+createPopulationCmSettingsArgs <- function(firstExposureOnly = FALSE,
                                            restrictToCommonPeriod = FALSE,
                                            washoutPeriod = 0,
                                            removeDuplicateSubjects = FALSE,
@@ -359,7 +374,7 @@ createCmPopulationSettingsArgs <- function(firstExposureOnly = FALSE,
 #' A list containing all the settings required for creating the study population
 #' @export
 
-createplpPopulationSettingsArgs <- function(binary = T,
+createPopulationPlpSettingsArgs <- function(binary = T,
                                             includeAllOutcomes = T,
                                             firstExposureOnly = FALSE,
                                             washoutPeriod = 0,
@@ -445,14 +460,17 @@ createCreatePsArgs <- function(excludeCovariateIds = c(),
 
 
 createRunCmArgs <- function(psMethod = "inversePtWeighted",
+                            effectEstimationSettings = createCreateIPWArgs(),
                             psSettings = createCreatePsArgs(),
                             createPsThreads = 1,
                             fitOutcomeModelsThreads = 1,
-                            estimateOverallResults = FALSE){
+                            estimateOverallResults = FALSE,
+                            timePoint = 365){
 
 
   res <- list(psMethod = psMethod,
               psSettings = psSettings,
+              effectEstimationSettings = effectEstimationSettings,
               createPsThreads = createPsThreads,
               fitOutcomeModelsThreads = fitOutcomeModelsThreads,
               estimateOverallResults = estimateOverallResults)
@@ -574,4 +592,105 @@ createCreateIPWArgs <- function(weightsType = "ATE",
   }
   class(analysis) <- "args"
   return(analysis)
+}
+
+
+
+
+createAnalysisSettings <- function(analysisId = NULL,
+                                   treatmentCohortId,
+                                   comparatorCohortId,
+                                   outcomeIds,
+                                   analysisMatrix = diag(length(outcomeIds)),
+                                   verbosity = NULL,
+                                   saveDirectory = NULL){
+
+  res <- list(analysisId = analysisId,
+              treatmentCohortId = treatmentCohortId,
+              comparatorCohortId = comparatorCohortId,
+              outcomeIds = outcomeIds,
+              analysisMatrix = analysisMatrix,
+              verbosity = verbosity,
+              saveDirectory = saveDirectory)
+
+  return(res)
+
+}
+
+
+
+
+# Make sure saved data can be loaded!!!!
+createGetDataSettings <- function(getPlpDataSettings = createGetPlpDataArgs(),
+                                  getCmDataSettings = createGetCmDataArgs(),
+                                  plpDataFolder = NULL,
+                                  cohortMethodDataFolder = NULL){
+
+  res <- list(getPlpDataSettings = getPlpDataSettings,
+              getCmDataSettings = getCmDataSettings,
+              plpDataFolder = plpDataFolder,
+              cohortMethodDataFolder = cohortMethodDataFolder)
+
+  return(res)
+}
+
+
+
+
+createPopulationSettings <- function(populationPlpSettings = createPopulationPlpSettingsArgs(),
+                                     populationCmSettings = createPopulationCmSettingsArgs()){
+
+  res <- list(populationPlpSettings = populationPlpSettings,
+              populationCmSettings = populationCmSettings)
+
+  return(res)
+
+}
+
+
+
+
+createDatabaseSettings <- function(cdmVersion = "5",
+                                   cdmDatabaseschema,
+                                   cohortDatabaseSchema = cdmDatabaseschema,
+                                   outcomeDatabasesSchema = cdmDatabaseschema,
+                                   resultsDatabaseSchema = cdmDatabaseschema,
+                                   exposureDatabaseSchema = cdmDatabaseschema,
+                                   cohortTable,
+                                   outcomeTable,
+                                   mergedCohortTable,
+                                   attributeDefinitionTable,
+                                   cohortAttributeTable,
+                                   targetCohortId = 1){
+
+  res <- list(cdmVersion = cdmVersion,
+              cdmDatabaseschema = cdmDatabaseschema,
+              cohortDatabaseSchema = cohortDatabaseSchema,
+              outcomeDatabasesSchema = outcomeDatabasesSchema,
+              resultsDatabaseSchema = resultsDatabaseSchema,
+              exposureDatabaseSchema = exposureDatabaseSchema,
+              cohortTable = cohortTable,
+              outcomeTable = outcomeTable,
+              mergedCohortTable = mergedCohortTable,
+              attributeDefinitionTable = attributeDefinitionTable,
+              cohortAttributeTable = cohortAttributeTable,
+              targetCohortId = targetCohortId)
+
+  return(res)
+
+}
+
+
+
+
+getCovariateSettings <- function(covariateSettingsCm =
+                                   FeatureExtraction::createCovariateSettings(),
+                                 covariateSettingsPlp =
+                                   FeatureExtraction::createCovariateSettings()){
+
+  res <- list(covariateSettingsCm = covariateSettingsCm,
+              covariateSettingsPlp = covariateSettingsPlp)
+
+  return(res)
+
 }
