@@ -120,7 +120,7 @@ createStudyPopulationCmSettings <-
 #' @export
 
 createRunPlpArgs <- function(minCovariateFraction = 0.001,
-                             normalizeData = T,
+                             normalizeData = TRUE,
                              modelSettings,
                              testSplit = "time",
                              testFraction = 0.25,
@@ -128,10 +128,10 @@ createRunPlpArgs <- function(minCovariateFraction = 0.001,
                              splitSeed = NULL,
                              nfold = 3,
                              indexes = NULL,
-                             savePlpData = T,
-                             savePlpResult = T,
-                             savePlpPlots = T,
-                             saveEvaluation = T,
+                             savePlpData = TRUE,
+                             savePlpResult = TRUE,
+                             savePlpPlots = TRUE,
+                             saveEvaluation = TRUE,
                              verbosity = "INFO",
                              timeStamp = FALSE,
                              analysisId = NULL) {
