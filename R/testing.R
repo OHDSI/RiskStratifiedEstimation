@@ -171,7 +171,7 @@ runRiskStratifiedEstimation1 <- function(connectionDetails,
   for(i in 1:length(predictOutcomes)){
     colNumber <- which(predictOutcomes == predictOutcomes[i])
     compareOutcomes[[i]] <- analysisSettings$outcomeIds[as.logical(analysisSettings$analysisMatrix[, colNumber])]
-  }0
+  }
 
   #######################
   # Overall results step
@@ -291,15 +291,16 @@ runRiskStratifiedEstimation1 <- function(connectionDetails,
                                                   covariateSettings = covariateSettingsList)
 
     PatientLevelPrediction::savePlpData(plpData, file = file.path(analysisPath, "Data", "plpData"))
-    plpDataFolder <- file.path(analysisPath, "Data", "plpData")
+    getDataSettings$plpDataFolder <- file.path(analysisPath, "Data", "plpData")
   }
   else{
-    plpData <- PatientLevelPrediction::loadPlpData(plpDataFolder)
+    plpData <- PatientLevelPrediction::loadPlpData(getDataSettings$plpDataFolder)
   }
 
   runPrediction <- function(x,
                             populationPlpSettings,
-                            modelSettings,
+                            runPlpSettnigs,
+                            getPlpDataSettings
                             plpDataFolder,
                             predictOutcomes,
                             testSplit,

@@ -1,0 +1,155 @@
+databaseSettings
+
+	- cdmVersion
+        - cdmDatabaseschema
+        - cohortDatabaseSchema
+        - outcomeDatabasesSchema
+        - resultsDatabaseSchema
+        - exposureDatabaseSchema
+        - cohortTable
+        - outcomeTable
+        - mergedCohortTable
+        - attributeDefinitionTable
+        - cohortAttributeTable
+        - targetCohortId
+
+____________________________________________________________________________________________________________________________
+
+getDataSettings
+
+	- getPlpDataSettings
+		- studyStartDate
+		- studyEndDate
+		- firstExposureOnly
+		- washoutPeriod
+		- excludeDrugsFromCovariates
+
+	- getCmDataSettings
+		- studyStartDate
+		- studyEndDate
+		- excludeDrugsFromCovariates
+		- firstExposureOnly
+		- removeDuplicateSubjects
+                - restrictToCommonPeriod
+                - washoutPeriod
+                - maxCohortSize
+
+	- plpDataFolder
+
+	- cohortMethodDataFolder
+
+____________________________________________________________________________________________________________________________
+
+analysisSettings
+
+	- analysisId
+        - treatmentCohortId
+        - comparatorCohortId
+        - outcomeIds
+        - analysisMatrix
+        - verbosity
+        - saveDirectory
+
+____________________________________________________________________________________________________________________________
+
+covariateSettings
+
+	- covariateSettingsCm
+		- FeatureExtraction::createCovariateSettings
+	
+	-covariateSettingsPlp
+		- FeatureExtraction::createCovariateSettings
+
+____________________________________________________________________________________________________________________________
+
+populationSettings
+
+	- populationPlpSettings
+		- binary
+                - includeAllOutcomes
+                - firstExposureOnly
+                - washoutPeriod
+                - removeSubjectsWithPriorOutcome
+                - priorOutcomeLookback
+                - requireTimeAtRisk
+                - minTimeAtRisk
+                - riskWindowStart
+                - addExposureDaysToStart
+                - riskWindowEnd
+                - addExposureDaysToEnd
+                - verbosity
+
+	- populationCmSettings
+		- firstExposureOnly
+                - restrictToCommonPeriod
+                - washoutPeriod
+                - removeDuplicateSubjects
+                - removeSubjectsWithPriorOutcome
+                - priorOutcomeLookback
+                - minDaysAtRisk
+                - riskWindowStart
+                - addExposureDaysToStart
+                - startAnchor
+                - riskWindowEnd
+                - addExposureDaysToEnd
+                - endAnchor
+                - censorAtNewRiskWindow
+
+____________________________________________________________________________________________________________________________
+
+runSettings
+
+	- runPlpSettings
+		- minCovariateFraction
+                - normalizeData
+                - modelSettings
+                - testSplit
+                - testFraction
+                - trainFraction
+                - splitSeed
+                - nfold
+                - indexes
+                - savePlpData
+                - savePlpResult
+                - savePlpPlots
+                - saveEvaluation
+                - verbosity
+                - timeStamp
+                - analysisId
+
+	- runCmSettings
+		- psMethod
+                - effectEstimationSettings
+			- case: psMethod = inversePtWeighted
+				- weightsType
+				- useStabilizedWeights
+				- truncationLevels
+			- case: psMethod = stratifyByPs
+				- numberOfStrata
+				- stratificationColumns
+				- baseSelection
+			- case: psMethod = matchOnPs
+				- caliper
+				- caliperScale
+				- maxRatio
+				- stratificationColumns
+                - psSettings
+			- excludeCovariateIds
+                        - includeCovariateIds
+                        - maxCohortSizeForFitting
+                        - errorOnHighCorrelation
+                        - stopOnError
+                        - prior
+                        - control
+                - createPsThreads
+                - fitOutcomeModelsThreads
+                - estimateOverallResults
+                - timePoint
+
+
+
+
+
+
+
+
