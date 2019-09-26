@@ -299,20 +299,17 @@ runRiskStratifiedEstimation1 <- function(connectionDetails,
 
   runPrediction <- function(x,
                             populationPlpSettings,
-                            runPlpSettnigs,
-                            getPlpDataSettings
-                            plpDataFolder,
-                            predictOutcomes,
-                            testSplit,
-                            testFraction,
-                            nfold,
-                            analysisId,
-                            analysisPath){
+                            runPlpSettnigs, # For testPlit, testFraction, nfold
+                            getPlpDataSettings, # For plpDataFolder
+                            analysisSettings){ # For predictOutcomes, analysisId, analysisPath
 
     ParallelLogger::registerLogger(logger)
 
+    analysisPath <- file.path(analysisSettings$saveDirectory, analysisSettings$analysisId)
 
-    plpData <- PatientLevelPrediction::loadPlpData(file = plpDataFolder)
+    plpData <- PatientLevelPrediction::loadPlpData(file = runPlpSettnigs$plpDataFolder)
+    predictOutcomes <- unique(
+      analysisSettings$outcomeIds[col(analysisSettings$analysisMatrix)[which(!analysisSettings$analysisMatrix == 0)]])
 
     populationPlp <-
       PatientLevelPrediction::createStudyPopulation(plpData = plpData,
@@ -337,7 +334,7 @@ runRiskStratifiedEstimation1 <- function(connectionDetails,
     predictionResult <-
       PatientLevelPrediction::runPlp(population = populationPlp,
                                      plpData = plpData,
-                                     modelSettings = modelSettings,
+                                     modelSettings = runPlpSettnigs$modelSettings,
                                      saveDirectory = file.path(analysisPath, "Prediction", predictOutcomes[x]),
                                      minCovariateFraction = runPlpArgs$minCovariateFraction,
                                      normalizeData = runPlpArgs$normalizeData ,
@@ -346,8 +343,8 @@ runRiskStratifiedEstimation1 <- function(connectionDetails,
                                      trainFraction = runPlpArgs$trainFraction ,
                                      nfold = runPlpArgs$nfold ,
                                      indexes = runPlpArgs$indexes ,
-                                     savePlpData = FALSE, # Maybe change that???
-                                     savePlpResult = TRUE ,
+                                     savePlpData = runPlpArgs$savePlpData, # Maybe change that???
+                                     savePlpResult = runPlpArgs$savePlpResult,
                                      savePlpPlots = runPlpArgs$savePlpPlots ,
                                      saveEvaluation = runPlpArgs$saveEvaluation ,
                                      verbosity = runPlpArgs$verbosity ,
