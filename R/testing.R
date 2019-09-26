@@ -343,13 +343,13 @@ runRiskStratifiedEstimation1 <- function(connectionDetails,
                                      trainFraction = runPlpArgs$trainFraction ,
                                      nfold = runPlpArgs$nfold ,
                                      indexes = runPlpArgs$indexes ,
-                                     savePlpData = runPlpArgs$savePlpData, # Maybe change that???
+                                     savePlpData = runPlpArgs$savePlpData,
                                      savePlpResult = runPlpArgs$savePlpResult,
                                      savePlpPlots = runPlpArgs$savePlpPlots ,
                                      saveEvaluation = runPlpArgs$saveEvaluation ,
                                      verbosity = runPlpArgs$verbosity ,
                                      timeStamp = runPlpArgs$timeStamp ,
-                                     analysisId = analysisId)
+                                     analysisId = analysisSettings$analysisId)
 
 
     return(NULL)
@@ -362,15 +362,10 @@ runRiskStratifiedEstimation1 <- function(connectionDetails,
   predictionList <-  ParallelLogger::clusterApply(cluster = cl,
                                                   fun = runPrediction,
                                                   x = 1:lengthOutcomes,
-                                                  plpDataFolder = plpDataFolder,
                                                   populationPlpSettings = populationPlpSettings,
-                                                  modelSettings = modelSettings,
-                                                  testSplit = testSplit,
-                                                  predictOutcomes = predictOutcomes,
-                                                  testFraction = testFraction,
-                                                  nfold = nfold,
-                                                  analysisId = analysisId,
-                                                  analysisPath = analysisPath)
+                                                  runPlpSettnigs = runPlpSettnigs,
+                                                  getPlpDataSettings = getPlpDataSettings,
+                                                  analysisSettings = analysisSettings)
   ParallelLogger::stopCluster(cl)
 
   predictionOutcomes <- numeric()
