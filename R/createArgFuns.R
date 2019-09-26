@@ -97,12 +97,13 @@ createStudyPopulationCmSettings <-
 #' @param indexes                         A dataframe containing a rowId and index column where the index value of
 #'                                        -1 means in the test set, and positive integer represents the cross
 #'                                        validation fold (default is NULL)
-#' @param savePlpData                     Binary indicating whether to save the plpData object (default is T)
+#' @param savePlpData                     Binary indicating whether to save the plpData object (default is FALSE)
 #' @param savePlpResult                   Binary indicating whether to save the object returned by runPlp
-#'                                        (default is T)
+#'                                        (default is TRUE)
 #' @param savePlpPlots                    Binary indicating whether to save the performance plots as pdf files
-#'                                        (default is T)
-#' @param saveEvaluation                  Binary indicating whether to save the oerformance as csv files (default is T)
+#'                                        (default is TRUE)
+#' @param saveEvaluation                  Binary indicating whether to save the oerformance as csv files (default is
+#'                                        TRUE)
 #' @param verbosity                       Sets the level of the verbosity. If the log level is at or higher in priority
 #'                                        than the logger threshold, a message will print. The levels are:
 #'                                        \itemize{
@@ -121,14 +122,14 @@ createStudyPopulationCmSettings <-
 
 createRunPlpArgs <- function(minCovariateFraction = 0.001,
                              normalizeData = TRUE,
-                             modelSettings,
+                             modelSettings = PatientLevelPrediction::setLassoLogisticRegression(),
                              testSplit = "time",
                              testFraction = 0.25,
                              trainFraction = NULL,
                              splitSeed = NULL,
                              nfold = 3,
                              indexes = NULL,
-                             savePlpData = TRUE,
+                             savePlpData = FALSE,
                              savePlpResult = TRUE,
                              savePlpPlots = TRUE,
                              saveEvaluation = TRUE,
