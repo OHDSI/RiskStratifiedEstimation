@@ -56,7 +56,7 @@ covariateSettings
 
 	- covariateSettingsCm
 		- FeatureExtraction::createCovariateSettings
-	
+
 	-covariateSettingsPlp
 		- FeatureExtraction::createCovariateSettings
 
@@ -145,6 +145,7 @@ runSettings
                 - fitOutcomeModelsThreads
                 - estimateOverallResults
                 - timePoint
+      - riskStrata
 
 
 

@@ -466,7 +466,8 @@ createRunCmArgs <- function(psMethod = "inversePtWeighted",
                             createPsThreads = 1,
                             fitOutcomeModelsThreads = 1,
                             estimateOverallResults = FALSE,
-                            timePoint = 365){
+                            timePoint = 365,
+                            riskStrata = 4){
 
 
   res <- list(psMethod = psMethod,
@@ -474,7 +475,8 @@ createRunCmArgs <- function(psMethod = "inversePtWeighted",
               effectEstimationSettings = effectEstimationSettings,
               createPsThreads = createPsThreads,
               fitOutcomeModelsThreads = fitOutcomeModelsThreads,
-              estimateOverallResults = estimateOverallResults)
+              estimateOverallResults = estimateOverallResults,
+              riskStrata = riskStrata)
 
   return(res)
 
