@@ -528,34 +528,58 @@ runRiskStratifiedEstimation1 <- function(connectionDetails,
 #' @export
 
 fitOutcomeModels1 <- function(outcomeId,
-                              analysisPath,
-                              cohortMethodDataFolder,
-                              analysisRef,
-                              timePoint,
-                              psMethod,
-                              weightsType,
-                              useStabilizedWeights,
-                              truncationLevels,
+                              analysisSettings, # For analysisPath, analysisRef
+                              getCmDataSettings, # For cohortMethodDataFolder
+                              runCmSettings, # For timePoint, psMethod
                               populationCmSettings){
 
   ParallelLogger::logInfo(paste("Calculating main results for outcome:", outcomeId))
+  analysisPath <- file.path(analysisSettings$saveDirectory,
+                            analysisSettings$analysisId)
 
   ps <- readRDS(file.path(analysisPath, "Estimation", outcomeId, "ps.rds"))
-  cohortMethodData <- CohortMethod::loadCohortMethodData(file = cohortMethodDataFolder)
+  cohortMethodData <- CohortMethod::loadCohortMethodData(file = getCmDataSettings$cohortMethodDataFolder)
 
-  if(psMethod == "matchOnPs"){
+  if(runCmDataSettings$psMethod == "matchOnPs"){
 
-    matchedPop <- lapply(ps, CohortMethod::matchOnPs)
+    matchedPop <- lapply(ps,
+                         CohortMethod::matchOnPs,
+                         caliper = runCmSettings$
+                           effectEstimationSettings$
+                           caliper,
+                         caliperScale = runCmSettings$
+                           effectEstimationSettings$
+                           caliperScale,
+                         maxRatio = runCmSettings$
+                           effectEstimationSettings$
+                           maxRatio,
+                         stratificationColumns = runCmSettings$
+                           effectEstimationSettings$
+                           stratificationColumns)
+
     models <- lapply(matchedPop,
-                     CohortMethod::fitOutcomeModel, stratified = TRUE, modelType = "cox")
+                     CohortMethod::fitOutcomeModel,
+                     stratified = TRUE,
+                     modelType = "cox")
 
-    cases <- do.call(rbind, lapply(matchedPop, getCounts, timePoint = timePoint, psMethod = psMethod))
+    cases <- do.call(rbind, lapply(matchedPop,
+                                   getCounts,
+                                   timePoint = runCmSettings$
+                                     timePoint,
+                                   psMethod = runCmSettings$
+                                     psMethod))
+
     colnames(cases) <- c("comparator", "treatment")
     cases <- as.data.frame(cases)
     riskStrata <- length(ps)
     cases$riskStratum <- paste0("Q", 1:riskStrata)
 
-    arr <- do.call(rbind, lapply(matchedPop, absoluteRiskReduction, timePoint = timePoint, psMethod = psMethod))
+    arr <- do.call(rbind, lapply(matchedPop,
+                                 absoluteRiskReduction,
+                                 timePoint = runCmSettings$
+                                   timePoint,
+                                 psMethod = "matchOnPs"))
+
     colnames(arr) <- c("ARR", "lower", "upper")
     arr <- as.data.frame(arr)
     arr$riskStratum <- paste0("Q", 1:riskStrata)
@@ -567,15 +591,40 @@ fitOutcomeModels1 <- function(outcomeId,
   }
   else if(psMethod == "stratifyByPs"){ # Need to fix the cases variable for stratification on ps!!!!
 
-    stratifiedPop <- lapply(ps, CohortMethod::stratifyByPs) # Add stratification settings
-    cases <- do.call(rbind, lapply(stratifiedPop, getCounts, timePoint = timePoint, psMethod = psMethod))
+    stratifiedPop <- lapply(ps,
+                            CohortMethod::stratifyByPs,
+                            numberOfStrata = runCmSettings$
+                              effectEstimationSettings$
+                              numberOfStrata,
+                            stratificationColumns = runCmSettings$
+                              effectEstimationSettings$
+                              stratificationColumns,
+                            baseSelection = runCmSettings$
+                              effectEstimationSettings$
+                              baseSelection)
+
+    cases <- do.call(rbind, lapply(stratifiedPop,
+                                   getCounts,
+                                   timePoint = runCmSettings$
+                                     timePoint,
+                                   psMethod = "stratifyByPs"))
+
     colnames(cases) <- c("comparator", "treatment")
     cases <- as.data.frame(cases)
     riskStrata <- length(ps)
     cases$riskStratum <- paste0("Q", 1:riskStrata)
+
     models <- lapply(stratifiedPop,
-                     CohortMethod::fitOutcomeModel, stratified = TRUE, modelType = "cox")
-    arr <- do.call(rbind, lapply(stratifiedPop, absoluteRiskReduction, timePoint = timePoint, psMethod = "stratifyByPS"))
+                     CohortMethod::fitOutcomeModel,
+                     stratified = TRUE,
+                     modelType = "cox")
+
+    arr <- do.call(rbind, lapply(stratifiedPop,
+                                 absoluteRiskReduction,
+                                 timePoint = runCmSettings$
+                                   timePoint,
+                                 psMethod = "stratifyByPS"))
+
     colnames(arr) <- c("ARR", "lower", "upper")
     arr <- as.data.frame(arr)
     arr$riskStratum <- paste0("Q", 1:riskStrata)
@@ -589,18 +638,36 @@ fitOutcomeModels1 <- function(outcomeId,
 
     ps <- lapply(ps,
                  createIPW,
-                 weightsType = weightsType,
-                 useStabilizedWeights = useStabilizedWeights,
-                 truncationLevels = truncationLevels)
-    models <- lapply(ps, outcomeModelWeighted, calculateWeights = FALSE)
+                 weightsType = runCmSettings$
+                   effectEstimationSettings$
+                   weightsType,
+                 useStabilizedWeights = runCmSettings$
+                   effectEstimationSettings$
+                   useStabilizedWeights,
+                 truncationLevels = runCmSettings$
+                   effectEstimationSettings$
+                   truncationLevels)
 
-    cases <- do.call(rbind, lapply(ps, getCounts, timePoint = timePoint, psMethod = "inversePtWeighted"))
+    models <- lapply(ps,
+                     outcomeModelWeighted,
+                     calculateWeights = FALSE)
+
+    cases <- do.call(rbind, lapply(ps, getCounts,
+                                   timePoint = runCmSettings$
+                                     timePoint,
+                                   psMethod = "inversePtWeighted"))
+
     colnames(cases) <- c("comparator", "treatment")
     cases <- as.data.frame(cases)
     riskStrata <- length(ps)
     cases$riskStratum <- paste0("Q", 1:riskStrata)
 
-    arr <- do.call(rbind, lapply(ps, absoluteRiskReduction, timePoint = timePoint, psMethod = "inversePtWeighted"))
+    arr <- do.call(rbind, lapply(ps,
+                                 absoluteRiskReduction,
+                                 timePoint = runCmSettings$
+                                   timePoint,
+                                 psMethod = "inversePtWeighted"))
+
     colnames(arr) <- c("ARR", "lower", "upper")
     arr <- as.data.frame(arr)
     arr$riskStratum <- paste0("Q", 1:riskStrata)
@@ -619,9 +686,9 @@ fitOutcomeModels1 <- function(outcomeId,
 
   ParallelLogger::logInfo('Saved main the results')
 
-  predLoc <- which(analysisRef$outcomeIds == outcomeId)
-  compLoc <- analysisRef$analysisMatrix[, predLoc]
-  compareOutcomes <- analysisRef$outcomeIds[as.logical(compLoc)]
+  predLoc <- which(analysisSettings$analysisMatrix$outcomeIds == outcomeId)
+  compLoc <- analysisSettings$analysisMatrix[, predLoc]
+  compareOutcomes <- analysisSettings$outcomeIds[as.logical(compLoc)]
 
   if(length(compareOutcomes[compareOutcomes!=outcomeId]) == 0)
     compareOutcomes <- NULL
@@ -842,18 +909,26 @@ fitOutcomeModelsOverall <- function(outcomeId,
   if(runCmSettings$psMethod == "matchOnPs"){
 
     matchedPop <-  CohortMethod::matchOnPs(ps,
-                                           caliper = runCmSettings$effectEstimationSettings$caliper,
-                                           caliperScale = runCmSettings$effectEstimationSettings$caliperScale,
-                                           maxRatio = runCmSettings$effectEstimationSettings$maxRatio,
-                                           stratificationColumns =
-                                             runCmSettings$effectEstimationSettings$stratificationColumns)
+                                           caliper = runCmSettings$
+                                             effectEstimationSettings$
+                                             caliper,
+                                           caliperScale = runCmSettings$
+                                             effectEstimationSettings$
+                                             caliperScale,
+                                           maxRatio = runCmSettings$
+                                             effectEstimationSettings$
+                                             maxRatio,
+                                           stratificationColumns = runCmSettings$
+                                             effectEstimationSettings$
+                                             stratificationColumns)
 
     outcomeModel <- CohortMethod::fitOutcomeModel(matchedPop,
                                                   stratified = TRUE,
                                                   modelType = "cox")
 
     arr <- absoluteRiskReduction(matchedPop,
-                                 timePoint = runCmSettings$timePoint,
+                                 timePoint = runCmSettings$
+                                   timePoint,
                                  psMethod = "matchOnPs")
 
     rrr <- relativeRiskReduction(outcomeModel)
@@ -862,17 +937,23 @@ fitOutcomeModelsOverall <- function(outcomeId,
   else if(runCmSettings$psMethod == "stratifyByPs"){
 
     stratifiedPop <- CohortMethod::stratifyByPs(ps,
-                                                numberOfStrata = runCmSettings$effectEstimationSettings$numberOfStrata,
-                                                stratificationColumns =
-                                                  runCmSettings$effectEstimationSettings$stratificationColumns,
-                                                baseSelection = runCmSettings$effectEstimationSettings$baseSelection)
+                                                numberOfStrata = runCmSettings$
+                                                  effectEstimationSettings$
+                                                  numberOfStrata,
+                                                stratificationColumns = runCmSettings$
+                                                  effectEstimationSettings$
+                                                  stratificationColumns,
+                                                baseSelection = runCmSettings$
+                                                  effectEstimationSettings$
+                                                  baseSelection)
 
     outcomeModel <- CohortMethod::fitOutcomeModel(stratifiedPop,
                                                   stratified = TRUE,
                                                   modelType = "cox")
 
     arr <- absoluteRiskReduction(stratifiedPop,
-                                 timePoint = runCmSettings$timePoint,
+                                 timePoint = runCmSettings$
+                                   timePoint,
                                  psMethod = "stratifyByPS")
     rrr <- relativeRiskReduction(outcomeModel)
 
@@ -880,15 +961,22 @@ fitOutcomeModelsOverall <- function(outcomeId,
   else if(psMethod == "inversePtWeighted"){
 
     ps <- createIPW(ps,
-                    weightsType = runCmSettings$effectEstimationSettings$weightsType,
-                    useStabilizedWeights = runCmSettings$effectEstimationSettings$useStabilizedWeights,
-                    truncationLevels = runCmSettings$effectEstimationSettings$truncationLevels)
+                    weightsType = runCmSettings$
+                      effectEstimationSettings$
+                      weightsType,
+                    useStabilizedWeights = runCmSettings$
+                      effectEstimationSettings$
+                      useStabilizedWeights,
+                    truncationLevels = runCmSettings$
+                      effectEstimationSettings$
+                      truncationLevels)
 
     outcomeModel <- outcomeModelWeighted(ps,
                                          calculateWeights = FALSE)
 
     arr <- absoluteRiskReduction(ps,
-                                 timePoint = runCmSettings$timePoint,
+                                 timePoint = runCmSettings$
+                                   timePoint,
                                  psMethod = "inversePtWeighted")
 
     rrr <- relativeRiskReduction(outcomeModel)
@@ -1091,12 +1179,10 @@ fitPsModel <- function(outcomeId,
                                         control)
   }
 
-
   saveDir <- file.path(analysisPath, "Estimation", outcomeId)
   dir.create(saveDir, recursive = TRUE)
   saveRDS(lapply(ps, as.data.frame),
           file.path(saveDir, "ps.rds"))
-
 
   saveRDS(mapMatrix, file.path(analysisPath, "Estimation", outcomeId, 'mapMatrix.rds'))
   ParallelLogger::logInfo(paste("Saved the map matrix for outcome", outcomeId))
