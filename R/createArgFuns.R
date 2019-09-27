@@ -98,8 +98,6 @@ createStudyPopulationCmSettings <-
 #'                                        -1 means in the test set, and positive integer represents the cross
 #'                                        validation fold (default is NULL)
 #' @param savePlpData                     Binary indicating whether to save the plpData object (default is FALSE)
-#' @param savePlpResult                   Binary indicating whether to save the object returned by runPlp
-#'                                        (default is TRUE)
 #' @param savePlpPlots                    Binary indicating whether to save the performance plots as pdf files
 #'                                        (default is TRUE)
 #' @param saveEvaluation                  Binary indicating whether to save the oerformance as csv files (default is
@@ -130,7 +128,6 @@ createRunPlpArgs <- function(minCovariateFraction = 0.001,
                              nfold = 3,
                              indexes = NULL,
                              savePlpData = FALSE,
-                             savePlpResult = TRUE,
                              savePlpPlots = TRUE,
                              saveEvaluation = TRUE,
                              verbosity = "INFO",
