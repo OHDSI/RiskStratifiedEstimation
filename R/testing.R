@@ -355,76 +355,103 @@ runRiskStratifiedEstimation1 <- function(connectionDetails,
     plpData <- PatientLevelPrediction::loadPlpData(getDataSettings$plpDataFolder)
   }
 
-  # !!!!!!!! Use runPlpAnalyses !!!!!!!!
-  runPrediction <- function(populationPlpSettings,
-                            runPlpSettings, # For testPlit, testFraction, nfold
-                            getPlpDataSettings, # For plpDataFolder
-                            analysisSettings){ # For predictOutcomes, analysisId, analysisPath
+  predictionList <- list()
+  lengthOutcomes <- length(predictOutcomes)
 
-    ParallelLogger::registerLogger(logger)
-
-    analysisPath <- file.path(analysisSettings$saveDirectory, analysisSettings$analysisId)
-
-    plpData <- PatientLevelPrediction::loadPlpData(file = getPlpDataSettings$plpDataFolder)
-    predictOutcomes <- unique(
-      analysisSettings$outcomeIds[col(analysisSettings$analysisMatrix)[which(!analysisSettings$analysisMatrix == 0)]])
+  for(i in 1:lengthOutcomes){
 
     populationPlp <-
       PatientLevelPrediction::createStudyPopulation(plpData = plpData,
-                                                    outcomeId = predictOutcomes[x],
-                                                    binary = populationPlpSettings$binary,
-                                                    includeAllOutcomes = populationPlpSettings$includeAllOutcomes,
-                                                    firstExposureOnly = populationPlpSettings$firstExposureOnly,
-                                                    washoutPeriod = populationPlpSettings$washoutPeriod,
-                                                    removeSubjectsWithPriorOutcome =
-                                                      populationPlpSettings$removeSubjectsWithPriorOutcome,
-                                                    priorOutcomeLookback = populationPlpSettings$priorOutcomeLookback,
-                                                    requireTimeAtRisk = populationPlpSettings$requireTimeAtRisk,
-                                                    minTimeAtRisk = populationPlpSettings$minTimeAtRisk,
-                                                    riskWindowStart = populationPlpSettings$riskWindowStart,
-                                                    addExposureDaysToStart =
-                                                      populationPlpSettings$addExposureDaysToStart,
-                                                    riskWindowEnd = populationPlpSettings$riskWindowEnd,
-                                                    addExposureDaysToEnd = populationPlpSettings$addExposureDaysToEnd,
-                                                    verbosity = populationPlpSettings$verbosity)
+                                                    outcomeId = predictOutcomes[i],
+                                                    binary = populationSettings$populationPlpSettings$
+                                                      binary,
+                                                    includeAllOutcomes = populationSettings$
+                                                      populationPlpSettings$
+                                                      includeAllOutcomes,
+                                                    firstExposureOnly = populationSettings$
+                                                      populationPlpSettings$
+                                                      firstExposureOnly,
+                                                    washoutPeriod = populationSettings$
+                                                      populationPlpSettings$
+                                                      washoutPeriod,
+                                                    removeSubjectsWithPriorOutcome = populationSettings$
+                                                      populationPlpSettings$
+                                                      removeSubjectsWithPriorOutcome,
+                                                    priorOutcomeLookback = populationSettings$
+                                                      populationPlpSettings$
+                                                      priorOutcomeLookback,
+                                                    requireTimeAtRisk = populationSettings$
+                                                      populationPlpSettings$
+                                                      requireTimeAtRisk,
+                                                    minTimeAtRisk = populationSettings$
+                                                      populationPlpSettings$
+                                                      minTimeAtRisk,
+                                                    riskWindowStart = populationSettings$
+                                                      populationPlpSettings$
+                                                      riskWindowStart,
+                                                    addExposureDaysToStart = populationSettings$
+                                                      populationPlpSettings$
+                                                      addExposureDaysToStart,
+                                                    riskWindowEnd = populationSettings$
+                                                      populationPlpSettings$
+                                                      riskWindowEnd,
+                                                    addExposureDaysToEnd = populationSettings$
+                                                      populationPlpSettings$
+                                                      addExposureDaysToEnd,
+                                                    verbosity = populationSettings$
+                                                      populationPlpSettings$
+                                                      verbosity)
 
-
-    predictionResult <-
+    # !!!!!!!! Use runPlpAnalyses !!!!!!!!
+    predictionList[[i]] <-
       PatientLevelPrediction::runPlp(population = populationPlp,
                                      plpData = plpData,
-                                     modelSettings = runPlpSettings$modelSettings,
-                                     saveDirectory = file.path(analysisPath, "Prediction", predictOutcomes[x]),
-                                     minCovariateFraction = runPlpArgs$minCovariateFraction,
-                                     normalizeData = runPlpArgs$normalizeData,
-                                     testSplit = runPlpArgs$testSplit,
-                                     testFraction = runPlpArgs$testFraction,
-                                     trainFraction = runPlpArgs$trainFraction ,
-                                     nfold = runPlpArgs$nfold,
-                                     indexes = runPlpArgs$indexes ,
-                                     savePlpData = runPlpArgs$savePlpData,
-                                     savePlpResult = runPlpArgs$savePlpResult,
-                                     savePlpPlots = runPlpArgs$savePlpPlots,
-                                     saveEvaluation = runPlpArgs$saveEvaluation,
-                                     verbosity = runPlpArgs$verbosity,
-                                     timeStamp = runPlpArgs$timeStamp,
-                                     analysisId = analysisSettings$analysisId)
-
-
-    return(NULL)
+                                     modelSettings = runSettings$runPlpSettings$
+                                       modelSettings,
+                                     saveDirectory = file.path(analysisPath, "Prediction", predictOutcomes[i]),
+                                     minCovariateFraction = runSettings$runPlpArgs$
+                                       minCovariateFraction,
+                                     normalizeData = runSettings$
+                                       runPlpArgs$
+                                       normalizeData,
+                                     testSplit = runSettings$
+                                       runPlpArgs$
+                                       testSplit,
+                                     testFraction = runSettings$
+                                       runPlpArgs$
+                                       testFraction,
+                                     trainFraction = runSettings$
+                                       runPlpArgs$
+                                       trainFraction ,
+                                     nfold = runSettings$
+                                       runPlpArgs$
+                                       nfold,
+                                     indexes = runSettings$
+                                       runPlpArgs$
+                                       indexes ,
+                                     savePlpData = runSettings$
+                                       runPlpArgs$
+                                       savePlpData,
+                                     savePlpResult = runSettings$
+                                       runPlpArgs$
+                                       savePlpResult,
+                                     savePlpPlots = runSettings$
+                                       runPlpArgs$
+                                       savePlpPlots,
+                                     saveEvaluation = runSettings$
+                                       runPlpArgs$
+                                       saveEvaluation,
+                                     verbosity = runSettings$
+                                       runPlpArgs$
+                                       verbosity,
+                                     timeStamp = runSettings$
+                                       runPlpArgs$
+                                       timeStamp,
+                                     analysisId = analysisSettings$
+                                       analysisId)
 
   }
 
-  predictionList <- list()
-  lengthOutcomes <- length(predictOutcomes)
-  cl <- ParallelLogger::makeCluster(numberOfThreads = predictionThreads)
-  predictionList <-  ParallelLogger::clusterApply(cluster = cl,
-                                                  fun = runPrediction,
-                                                  x = 1:lengthOutcomes,
-                                                  populationPlpSettings = populationPlpSettings,
-                                                  runPlpSettings = runPlpSettings,
-                                                  getPlpDataSettings = getPlpDataSettings,
-                                                  analysisSettings = analysisSettings)
-  ParallelLogger::stopCluster(cl)
 
   ParallelLogger::registerLogger(logger)
   ParallelLogger::logInfo("Estimated prediction models for all outcomes")
