@@ -355,7 +355,6 @@ runRiskStratifiedEstimation1 <- function(connectionDetails,
     plpData <- PatientLevelPrediction::loadPlpData(getDataSettings$plpDataFolder)
   }
 
-  predictionList <- list()
   lengthOutcomes <- length(predictOutcomes)
 
   for(i in 1:lengthOutcomes){
@@ -403,7 +402,7 @@ runRiskStratifiedEstimation1 <- function(connectionDetails,
                                                       verbosity)
 
     # !!!!!!!! Use runPlpAnalyses !!!!!!!!
-    predictionList[[i]] <-
+    predictionResults <-
       PatientLevelPrediction::runPlp(population = populationPlp,
                                      plpData = plpData,
                                      modelSettings = runSettings$runPlpSettings$
@@ -432,9 +431,7 @@ runRiskStratifiedEstimation1 <- function(connectionDetails,
                                      savePlpData = runSettings$
                                        runPlpArgs$
                                        savePlpData,
-                                     savePlpResult = runSettings$
-                                       runPlpArgs$
-                                       savePlpResult,
+                                     savePlpResult = TRUE,
                                      savePlpPlots = runSettings$
                                        runPlpArgs$
                                        savePlpPlots,
