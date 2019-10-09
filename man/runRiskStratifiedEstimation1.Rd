@@ -4,9 +4,9 @@
 \alias{runRiskStratifiedEstimation1}
 \title{Runs a risk stratified analysis}
 \usage{
-runRiskStratifiedEstimation1(connectionDetails, databaseSettings,
-  getDataArgs, covariateSettings, populationSettings, runSettings,
-  analysisRef)
+runRiskStratifiedEstimation1(connectionDetails, analysisSettings,
+  databaseSettings, getDataSettings, covariateSettings, populationSettings,
+  runSettings)
 }
 \arguments{
 \item{connectionDetails}{An R object of type \code{connectionDetails} created using function

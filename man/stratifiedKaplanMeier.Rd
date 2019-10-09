@@ -7,7 +7,8 @@
 stratifiedKaplanMeier(population, timePoint)
 }
 \arguments{
-\item{population}{The population of interest stratified using the  \code{\link[CohortMethod]{stratifyByPs}}}
+\item{population}{The population of interest stratified using the
+\code{\link[CohortMethod]{stratifyByPs}}}
 
 \item{timePoint}{The point in time for which the absolute risk difference is required}
 }
