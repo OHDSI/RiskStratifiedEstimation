@@ -30,7 +30,7 @@
 #'
 #' @export
 
-createStudyPopulationCmSettings <-
+createStudyPopulationCmArgs <-
   function(population = NULL,
            firstExposureOnly = FALSE,
            restrictToCommonPeriod = FALSE,
@@ -121,7 +121,7 @@ createStudyPopulationCmSettings <-
 createRunPlpArgs <- function(minCovariateFraction = 0.001,
                              normalizeData = TRUE,
                              modelSettings = PatientLevelPrediction::setLassoLogisticRegression(),
-                             testSplit = "time",
+                             testSplit = "person",
                              testFraction = 0.25,
                              trainFraction = NULL,
                              splitSeed = NULL,
@@ -144,22 +144,37 @@ createRunPlpArgs <- function(minCovariateFraction = 0.001,
     if (name %in% names(analysis))
       analysis[[name]] <- values[[name]]
   }
-  class(analysis) <- "args"
+  attr(analysis, "fun") <- "createRunPlpArgs"
+  class(analysis) <- "runPlpArgs"
   return(analysis)
 }
 
 
 
 
-createRunSettings <- function(runPlpSettings =
+#' Create a settings object for running the analyses
+#'
+#' Create the settings for running the analyses. The input consists of two parts: 1) the settings for running the
+#' prediction algorithms and 2) the settings for estimating treatment effects within strata of predicted risk.
+#'
+#' @param runPlpArgs         A parameterer object of type \code{runPlpArgs} defined using the function
+#'                           \code{\link[RiskStratifiedEstimation]{createRunPlpArgs}}.
+#' @param runCmArgs          A parameter object of type \dode{runCmArgs} defined using the function
+#'                           \code{\link[RiskStratifiedEstimation]{createRunCmArgs}}
+#'
+#' @return                   An R object of type \code{runSettings}
+#' @export
+
+createRunSettings <- function(runPlpArgs =
                                 createRunPlpArgs(modelSettings =
                                                    PatientLevelPrediction::setLassoLogisticRegression()),
-                              runCmSettings =
+                              runCmArgs =
                                 createRunCmArgs()){
 
-  res <- list(runPlpSettings = runPlpSettings,
-              runCmSettings = runCmSettings)
-
+  res <- list(runPlpArgs = runPlpArgs,
+              runCmArgs = runCmArgs)
+  attr(res, "fun") <- "createRunSettings"
+  class(res) <- "runSettings"
   return(res)
 
 }
@@ -203,6 +218,7 @@ createGetPlpDataArgs <- function(studyStartDate = "",
     if (name %in% names(analysis))
       analysis[[name]] <- values[[name]]
   }
+  attr(analysis, "fun") <- "createGetPlpDataArgs"
   class(analysis) <- "args"
   return(analysis)
 }
@@ -257,6 +273,7 @@ createGetCmDataArgs <- function(studyStartDate = "",
     if (name %in% names(analysis))
       analysis[[name]] <- values[[name]]
   }
+  attr(analysis, "fun") <- "createGetCmDataArgs"
   class(analysis) <- "args"
   return(analysis)
 }
@@ -298,6 +315,9 @@ createGetCmDataArgs <- function(studyStartDate = "",
 #' @param censorAtNewRiskWindow            If a subject is in multiple cohorts, should time-at-risk be
 #'                                         censoredwhen the new time-at-risk starts to prevent overlap?
 #'
+#' @return                                 A parameter object containing all the information for defining the
+#'                                         estimation step population
+#'
 #' @export
 
 createPopulationCmSettingsArgs <- function(firstExposureOnly = FALSE,
@@ -325,6 +345,7 @@ createPopulationCmSettingsArgs <- function(firstExposureOnly = FALSE,
     if (name %in% names(analysis))
       analysis[[name]] <- values[[name]]
   }
+  attr(analysis, "fun") <- "createPopulationCmSettingsArgs"
   class(analysis) <- "args"
   return(analysis)
 }
@@ -333,10 +354,10 @@ createPopulationCmSettingsArgs <- function(firstExposureOnly = FALSE,
 
 
 
-#' create the study population settings
+#' Create the population settings for the prediction step
 #'
-#' @details
 #' Takes as input the inputs to create study population
+#'
 #' @param binary                                 Forces the outcomeCount to be 0 or 1 (use for binary prediction
 #'                                               problems)
 #' @param includeAllOutcomes                     (binary) indicating whether to include people with outcomes who are
@@ -368,8 +389,9 @@ createPopulationCmSettingsArgs <- function(firstExposureOnly = FALSE,
 #'                                                 \item{ERROR}{Show error messages}
 #'                                                 \item{FATAL}{Be silent except for fatal errors}
 #'                                                }
-#' @return
-#' A list containing all the settings required for creating the study population
+#'
+#' @return                                      A parameter object containing all the settings required for creating
+#'                                              the prediction step population
 #' @export
 
 createPopulationPlpSettingsArgs <- function(binary = T,
@@ -400,7 +422,8 @@ createPopulationPlpSettingsArgs <- function(binary = T,
                  addExposureDaysToEnd = addExposureDaysToEnd,
                  verbosity = verbosity)
 
-  class(result) <- 'populationSettings'
+  attr(result, "fun") <- "createPopulationPlpSettingsArgs"
+  class(result) <- 'args'
   return(result)
 
 }
@@ -429,6 +452,8 @@ createPopulationPlpSettingsArgs <- function(binary = T,
 #' @param control                         The control object used to control the cross-validation used to determine the
 #'                                        hyperparameters of the prior (if applicable). See createControl for details.
 #'
+#' @return                                A parameter object for creating propensity scores.
+#'
 #' @export
 
 createCreatePsArgs <- function(excludeCovariateIds = c(),
@@ -450,12 +475,40 @@ createCreatePsArgs <- function(excludeCovariateIds = c(),
     if (name %in% names(analysis))
       analysis[[name]] <- values[[name]]
   }
+  attr(analysis, "fun") <- "createCreatePsArgs"
   class(analysis) <- "args"
   return(analysis)
 }
 
 
 
+
+#' Create a parameter object for running the estimation step
+#'
+#' Create a parameter object for running the estimation step. This function is used to create part of the input of
+#' \code{\link[RiskStratifiedEstimation]{createRunSettings}}.
+#'
+#' @param psMethod                             How should the propensity scores be used? Can be one of
+#'                                             "inversePtWeighted", "stratifyByPs" or "matchOnPs".
+#' @param effectEstimationSettings             Parameter object providing further settings for the implementation of
+#'                                             selected \code{psMethod} to the estimation process. Can be created using
+#'                                             one of \code{\link[RiskStratifiedEstimation]{createCreateIPWArgs}}, when
+#'                                             \code{inversePtWeighted} is selected,
+#'                                             \code{\link[RiskStratifiedEstimation]{createStratifyByPs}} when
+#'                                             \code{stratifyByPs} is selected or
+#'                                             \code{\link[RiskStratifiedEstimation]{createMatchOnPsArgs}} when
+#'                                             \code{matchOnPs} is selected.
+#' @param psSettings                           Parameter object for \code{\link[CohortMethod]{createPs}}
+#' @param createPsThreads                      The number of parallel threads for the estimation of the propensity
+#'                                             scores. Default is 1.
+#' @param fitOutcomeModelsThreads              The number of parallel threads for the estimation of the outcome models
+#' @param estimateOverallResults               Should overall results be estimated? Default is \code{FALSE}
+#' @param timePoint                            The time point after cohort start that absolute differences should be
+#'                                             estimated.
+#' @param riskStrata                           The number of risk strata. Default is 4.
+#'
+#' @return                                     A parameter object for running the the estimation step.
+#' @export
 
 createRunCmArgs <- function(psMethod = "inversePtWeighted",
                             effectEstimationSettings = createCreateIPWArgs(),
@@ -474,6 +527,8 @@ createRunCmArgs <- function(psMethod = "inversePtWeighted",
               fitOutcomeModelsThreads = fitOutcomeModelsThreads,
               estimateOverallResults = estimateOverallResults,
               riskStrata = riskStrata)
+
+  class(res) <- "args"
 
   return(res)
 
@@ -566,7 +621,6 @@ createMatchOnPsArgs <- function(caliper = 0.2,
 
 #' Create a parameter object for the function createIPW
 #'
-#' @details
 #' Create an object defining the parameter values.
 #'
 #' @param weightsType                The type of the weights to be used. Allowed options are 'ATE' for average treatment
@@ -597,6 +651,29 @@ createCreateIPWArgs <- function(weightsType = "ATE",
 
 
 
+#' Create a parameter defining the performed risk stratified analysis
+#'
+#'
+#' @param analysisId               The analysis ID.
+#' @param treatmentCohortId        The cohort definition id of the treatment cohort in the cohortTable.
+#' @param comparatorCohortId       The cohort definition id of the comparator cohort in the cohortTable.
+#' @param outcomeIds               The cohort definition ids of the outcome cohorts in the outcomeTable.
+#' @param analysisMatrix           Boolean matrix defining the outcomes to be assessed (rows) within risk strata
+#'                                 (columns). Default is the diagonal matrix, which leads to the risk stratified
+#'                                 assessment of only the outcome for which the risk strata were defined.
+#' @param verbosity                Sets the level of the verbosity. If the log level is at or higher in priority than
+#'                                 the logger threshold, a message will print. The levels are:
+#'                                           \itemize{
+#'                                               \item{DEBUG}{Highest verbosity showing all debug statements}
+#'                                               \item{TRACE}{Showing information about start and end of steps}
+#'                                               \item{INFO}{Show informative information (Default)}
+#'                                               \item{WARN}{Show warning messages}
+#'                                               \item{ERROR}{Show error messages}
+#'                                               \item{FATAL}{Be silent except for fatal errors}}.
+#' @param saveDirectory            The directory name where the results of the analyses will be stored.
+#'
+#' @export
+
 createAnalysisSettings <- function(analysisId = NULL,
                                    treatmentCohortId,
                                    comparatorCohortId,
@@ -613,6 +690,9 @@ createAnalysisSettings <- function(analysisId = NULL,
               verbosity = verbosity,
               saveDirectory = saveDirectory)
 
+  attr(res, "fun") <- "createAnalysisSettings"
+  class(res) <- "analysisSettings"
+
   return(res)
 
 }
@@ -620,7 +700,21 @@ createAnalysisSettings <- function(analysisId = NULL,
 
 
 
-# Make sure saved data can be loaded!!!!
+#' Create parameter object for extracting the data
+#'
+#'
+#'
+#' @param getPlpDataSettings           Parameter object for the extraction of the \code{plpData} object created from
+#'                                     \code{\link[RiskStratifiedEstimation]{createGetPlpDataArgs}}.
+#' @param getCmDataSettings            Parameter object for the extraction of the \code{cohortMethodData} object
+#'                                     created from \code{\link[RiskStratifiedEstimation]{createGetPlpDataArgs}}.
+#' @param plpDataFolder                The directory path where the \code{plpData} object has already been saved
+#'                                     locally.
+#' @param cohortMethodDataFolder       The directory path where the \code{cohortMethodData} object has already been
+#'                                     saved locally.
+#'
+#' @export
+
 createGetDataSettings <- function(getPlpDataSettings = createGetPlpDataArgs(),
                                   getCmDataSettings = createGetCmDataArgs(),
                                   plpDataFolder = NULL,
@@ -631,11 +725,25 @@ createGetDataSettings <- function(getPlpDataSettings = createGetPlpDataArgs(),
               plpDataFolder = plpDataFolder,
               cohortMethodDataFolder = cohortMethodDataFolder)
 
+  attr(res, "fun") <- "createGetDataSettings"
+  class(res) <- "getDataSettings"
+
   return(res)
 }
 
 
 
+
+#' Create parameter object for defining the analysis populations
+#'
+#' Contains the settings for defining both the \code{populationPlp} and the \code{populationCm} objects.
+#
+#' @param populationPlpSettings     Parameter object for the definition of the \code{populationPlp} object created from
+#'                                  \code{\link[RiskStratifiedEstimation]{createPopulationPlpSettingsArgs}}.
+#' @param populationCmSettings      Parameter object for the definition of the \code{populationCm} object created from
+#'                                  \code{\link[RiskStratifiedEstimation]{createPopulationCmSettingsArgs}}.
+#'
+#' @export
 
 createPopulationSettings <- function(populationPlpSettings = createPopulationPlpSettingsArgs(),
                                      populationCmSettings = createPopulationCmSettingsArgs()){
@@ -643,12 +751,50 @@ createPopulationSettings <- function(populationPlpSettings = createPopulationPlp
   res <- list(populationPlpSettings = populationPlpSettings,
               populationCmSettings = populationCmSettings)
 
+
+  attr(res, "fun") <- "createPopulationSettings"
+  class(res) <- "populationSettings"
+
   return(res)
 
 }
 
 
 
+
+#' Create parameter object for database to be reached
+#'
+#' @param cdmVersion                     Define the OMOP CDM version
+#' @param cdmDatabaseschema              The name of the database schema that contains the OMOP CDM instance. Requires
+#'                                       read permissions to this database. On SQL Server, this should specify both
+#'                                       the database and the schema, so for example "cdm_instance.dbo"
+#' @param cohortDatabaseSchema           The name of the database schema that is the location where the cohort data
+#'                                       used to define the at risk cohort is available. If cohortTable = DRUG_ERA,
+#'                                       \code{cohortDatabaseSchema} is not used by assumed to be
+#'                                       \code{cdmDatabaseSchema}.
+#' @param outcomeDatabasesSchema         The name of the database schema that is the location where the data used to
+#'                                       define the outcome cohorts is available. If cohortTable = CONDITION_ERA,
+#'                                       exposureDatabaseSchema is not used by assumed to be cdmSchema. Requires
+#'                                       read permissions to this database.
+#' @param resultsDatabaseSchema          The name of the database schema with write permissions.
+#' @param exposureDatabaseSchema         Input of function \code{\link[CohortMethod]{getDbCohortMethodData}}:
+#'                                       The name of the database schema that is the location where the exposure data
+#'                                       used to define the exposure cohorts is available.
+#' @param cohortTable                    The tablename that contains the at risk cohort. If cohortTable <> DRUG_ERA,
+#'                                       then expectation is cohortTable has format of COHORT table: cohort_concept_id,
+#'                                       SUBJECT_ID, COHORT_START_DATE, COHORT_END_DATE.
+#' @param outcomeTable                   The tablename that contains the outcome cohorts. If outcomeTable <>
+#'                                       CONDITION_OCCURRENCE, then expectation is outcomeTable has format of
+#'                                       COHORT table: COHORT_DEFINITION_ID, SUBJECT_ID,
+#'                                       COHORT_START_DATE, COHORT_END_DATE.
+#' @param mergedCohortTable              The name of the table where the merged treatment and comparator cohorts will
+#'                                       be stored.
+#' @param attributeDefinitionTable       The table where the definition of the treatment covariate will be stored.
+#' @param cohortAttributeTable           The table where the covariate values with regard to treatment will be stored.
+#' @param targetCohortId                 The cohort definition id of of the merged cohort in the
+#'                                       \code{mergedCohortTable}.
+#'
+#' @export
 
 createDatabaseSettings <- function(cdmVersion = "5",
                                    cdmDatabaseschema,
@@ -676,6 +822,10 @@ createDatabaseSettings <- function(cdmVersion = "5",
               cohortAttributeTable = cohortAttributeTable,
               targetCohortId = targetCohortId)
 
+
+  attr(res, "fun") <- "createDatabaseSettings"
+  class(res) <- "databaseSettings"
+
   return(res)
 
 }
@@ -683,10 +833,22 @@ createDatabaseSettings <- function(cdmVersion = "5",
 
 
 
-getCovariateSettings <- function(covariateSettingsCm =
-                                   FeatureExtraction::createCovariateSettings(),
-                                 covariateSettingsPlp =
-                                   FeatureExtraction::createCovariateSettings()){
+#' Create the parameter object for extracting the covariates
+#'
+#' Contains the arguments for the extraction of both the covariates related to the prediction step and the estimation
+#' step.
+#'
+#' @param covariateSettingsCm     The covariate settings object related to the estimation step created from
+#'                                \code{\link[FeatureExtraction]{createCovariateSettings}}.
+#' @param covariateSettingsPlp    The covariate settings objec related to the prediction step created from
+#'                                \code{\link[FeatureExtraction]{createCovariateSettings}}.
+#'
+#' @export
+
+createGetCovariateSettings <- function(covariateSettingsCm =
+                                         FeatureExtraction::createCovariateSettings(),
+                                       covariateSettingsPlp =
+                                         FeatureExtraction::createCovariateSettings()){
 
   res <- list(covariateSettingsCm = covariateSettingsCm,
               covariateSettingsPlp = covariateSettingsPlp)
