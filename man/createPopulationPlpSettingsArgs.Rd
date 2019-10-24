@@ -2,7 +2,7 @@
 % Please edit documentation in R/createArgFuns.R
 \name{createPopulationPlpSettingsArgs}
 \alias{createPopulationPlpSettingsArgs}
-\title{create the study population settings}
+\title{Create the population settings for the prediction step}
 \usage{
 createPopulationPlpSettingsArgs(binary = T, includeAllOutcomes = T,
   firstExposureOnly = FALSE, washoutPeriod = 0,
@@ -57,11 +57,9 @@ The levels are:
  }}
 }
 \value{
-A list containing all the settings required for creating the study population
+A parameter object containing all the settings required for creating
+                                             the prediction step population
 }
 \description{
-create the study population settings
-}
-\details{
 Takes as input the inputs to create study population
 }

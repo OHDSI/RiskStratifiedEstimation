@@ -4,125 +4,25 @@
 #' \code{PatientLevelPrediction} to derive baseline patient risks and then derives estimates within risk strata using
 #' \code{CohortMethod} package.
 #'
-#' @param plpDataFolder                      Folder where the \code{plpData} object is stored. If \code{NULL}, it will
-#'                                           be constructed within the function.
-#' @param cohortMethodDataFolder             Folder where the \code{cohortMethodData} object is stored. If \code{NULL},
-#'                                           it will be constructed within the function.
-#' @param cdmDatabaseSchema                  The name of the database schema that contains the vocabulary files.
-#'                                           Requires read permissions to this database. On SQL Server, this should
-#'                                           specifiy both the database and the schema,
-#'                                           so for example 'cdm_instance.dbo'.
-#' @param cohortDatabaseSchema               The name of the database schema that contains the treatment and comaparator
-#'                                           cohorts. Requires read permissions
-#'                                           to this database.
-#' @param outcomeDatabaseSchema              The name of the database schema that contains the outcome cohorts. Requires
-#'                                           read permissions to this database.
-#' @param resultsDatabaseSchema              The name of the database schema with write permissions.
-#' @param cohortTable                        The name of the table holding the treatment and comparator cohorts.
-#' @param outcomeTable                       The name of the table hodling the outcome cohorts.
-#' @param mergedCohortTable                  The name of the table where the merged treatment and comparator cohorts
-#'                                           will be stored.
-#' @param attributeDefinitionTable           The table where the definition of the treatment covariate will be stored.
-#' @param cohortAttributeTable               The table where the covariate values with regard to treatment will be
-#'                                           stored.
-#' @param treatmentCohortId                  The cohort definition id of the treatment cohort in the cohortTable.
-#' @param comparatorCohortId                 The cohort definition id of the comparator cohort in the cohortTable.
-#' @param targetCohortId                     The cohort definition id of of the merged cohort in the mergedCohortTable.
-#' @param predictOutcomes                    The outcomes for which the risk stratification will be performed.
-#' @param compareOutcomes                    The  outcomes for which risk stratified estimates need to be derived. If
-#'                                           set to \code{NULL}, all \code{predictOutcomes} will be considered.
-#' @param connectionDetails                  An R object of type \code{connectionDetails} created using function
-#'                                           \code{\link[DatabaseConnector]{createConnectionDetails}}.
-#'                                           Either the \code{connection} or the \code{connectionDetails} argument
-#'                                           should be specified.
-#' @param cdmVersion                         Define the OMOP CDM version used: currently supported is "5".
-#' @param getDbCohortMethodDataArgs          A parameter object for the function
-#'                                           \code{\link[CohortMethod]{getDbCohortMethodData}}. Can be generated from
-#'                                           function
-#'                                           \code{\link[CohortMethod]{createGetDbCohortMethodDataArgs}}.
-#' @param covariateSettingsCm                An object of type \code{covariateSettings} as created using the
-#'                                           \code{\link[FeatureExtraction]{createCovariateSettings}} to be used for the
-#'                                            definition of the \code{cohortMethodData} object.
-#' @param exposureDatabaseSchema             Input of function \code{\link[CohortMethod]{getDbCohortMethodData}}: The
-#'                                           name of the database schema that is the
-#'                                           location where the exposure data used to define the exposure cohorts is
-#'                                           available.
-#' @param exposureTable                      Input of function \code{\link[CohortMethod]{getDbCohortMethodData}}: The
-#'                                           tablename that contains the exposure cohorts.
-#' @param psControl                          An object of the type \code{cyclopsControl} generated from
-#'                                           \code{\link[Cyclops]{createControl}}.
-#' @param psPrior                            An object of the type \code{cyclopsPrior} generated from
-#'                                           \code{\link[Cyclops]{createPrior}}.
-#' @param psMethod                           Select the propensity score method for the estimation of treatment effects
-#'                                           within risk strata. It can be "matchOnPs", "stratifyByPs" or
-#'                                           "inversePtWeighted".
-#' @param createPsThreads                    The number of threads for the calculation of the propensity scores.
-#' @param modelSettings                      An object of the class \code{modelSettings} to be used as input for
-#'                                           \code{\link[PatientLevelPrediction]{runPlp}}.
-#' @param getPlpDataArgs                     A parameter object for the function
-#'                                           \code{\link[PatientLevelPrediction]{getPlpData}}. It can be generated from
-#'                                            function
-#'                                           \code{\link[RiskStratifiedEstimation]{createGetPlpDataArgs}}.
-#' @param populationCmSettings               A parameter object for the function
-#'                                           \code{\link[CohortMethod]{createStudyPopulation}}. Can be generated from
-#'                                           function \code{createStudyPopulationCmSettings}.
-#' @param covariateSettingsPlp               An object of type \code{covariateSettings} as created using the
-#'                                           \code{\link[FeatureExtraction]{createCovariateSettings}} to be used for
-#'                                            the definition of the
-#'                                           \code{plpData} object. note that a covariate indicating treatment will be
-#'                                           added.
-#' @param populationPlpSettings              A parameter object for the function
-#'                                           \code{\link[PatientLevelPrediction]{createStudyPopulation}}. Can be
-#'                                           generated from function
-#'                                           \code{\link[PatientLevelPrediction]{createStudyPopulationSettings}}.
-#' @param runPlpArgs                         A parameter object for the function
-#'                                           \code{\link[PatientLevelPrediction]{runPlp}}. Can be generated from
-#'                                           function
-#'                                           \code{\link[RiskStratifiedEstimation]{createRunPlpArgs}}.
-#' @param riskStrata                         The number of risk strata to divide the study population.
-#' @param weightsType                        Only required if \code{weightsType} is "inversePtWeighted". The type of
-#'                                           weights for the balancing of covariates.
-#'                                           Should be either 'ATE' or 'ATT'
-#' @param useStabilizedWeights               Only required if \code{weightsType} is "inversePtWeighted". Should
-#'                                           stabilized weights be used?
-#' @param truncationLevels                   Only required if \code{weightsType} is "inversePtWeighted". The level of
-#'                                           truncation expressed in percentiles of the propensity score.
-#' @param timePoint                          The time point of interest for the calculation of the absolute risk
-#'                                           reduction.
-#' @param predictionThreads                  The number of threads to be used to run the predictions.
-#' @param saveResults                        Should the results of the entire analysis be saved?
-#' @param saveDirectory                      The file path to the directory where the results of the analysis will be
-#'                                           saved.
-#' @param fftempdir                          The directory where the temporary \code{ff} files will be saved.
-#' @param fitOutcomeModelsThreads            The number of threadss to be used for the calculation of the risk
-#'                                           stratified results.
-#' @param saveMapMatrix                      Should the map matrix with the risk sratum allocations be saved?
-#' @param savePs                             Should the propensity scores be saved?
-#' @param verbosity                          Sets the level of the verbosity. If the log level is at or higher in
-#'                                           priority than the logger threshold,
-#'                                           a message will print. The levels are:
-#'                                           \itemize{
-#'                                               \item{DEBUG}{Highest verbosity showing all debug statements}
-#'                                               \item{TRACE}{Showing information about start and end of steps}
-#'                                               \item{INFO}{Show informative information (Default)}
-#'                                               \item{WARN}{Show warning messages}
-#'                                               \item{ERROR}{Show error messages}
-#'                                               \item{FATAL}{Be silent except for fatal errors}}.
-#' @param analysisId                         The identifier of the analysis.
+#' @param connectionDetails          An R object of type \code{connectionDetails} created using the function
+#'                                   \code{\link[DatabaseConnector]{createConnectionDetails}}.
+#' @param analysisSettings           An R object of type \code(analysisSettings) created using the function
+#'                                   \code{\link[RiskStratifiedEstimation]{createAnalysisSettings}}.
+#' @param databaseSettings           An R object of type \code{databaseSettings} created using the function
+#'                                   \code{\link[RiskStratifiedEstimation]{createDatabaseSettings}}.
+#' @param getDataSettings            An R object of type \code{getDataSettings} created using the function
+#'                                   \code{\link[RiskStratifiedEstimation]{createGetDataSettings}}.
+#' @param covariateSettings          An R object of type \code{covariateSettings} created using the function
+#'                                   \code{\link[RiskStratifiedEstimation]{createCovariateSettings}}.
+#' @param populationSettings         An R object of type \code{populationSettings} created using the function
+#'                                   \code{\link[RiskStratifiedEstimation]{createPopulationSettings}}.
+#' @param runSettings                An R object of type \code{runSettings} created using the function
+#'                                   \code{\link[RiskStratifiedEstimation]{createRunSettings}}.
 #'
-#' @return                                   A reference list for the analaysis results:
-#'                                           \itemize{
-#'                                               \item analaysisId
-#'                                               \item targetId
-#'                                               \item comparatorId
-#'                                               \item compareOutcomes
-#'                                               \item predictOutcomes
-#'                                               \item outputFolder
+#' @return
 #'
-#'                                            }
-#' @importFrom foreach %dopar%
-#' @importFrom foreach %do%
 #' @export
+
 
 runRiskStratifiedEstimation1 <- function(connectionDetails,
                                          analysisSettings,

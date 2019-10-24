@@ -34,6 +34,9 @@ assumed to be perfectly separable.}
 \item{control}{The control object used to control the cross-validation used to determine the
 hyperparameters of the prior (if applicable). See createControl for details.}
 }
+\value{
+A parameter object for creating propensity scores.
+}
 \description{
 Create a parameter object for the function createPs
 }

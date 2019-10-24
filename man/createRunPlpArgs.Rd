@@ -6,7 +6,7 @@
 \usage{
 createRunPlpArgs(minCovariateFraction = 0.001, normalizeData = TRUE,
   modelSettings = PatientLevelPrediction::setLassoLogisticRegression(),
-  testSplit = "time", testFraction = 0.25, trainFraction = NULL,
+  testSplit = "person", testFraction = 0.25, trainFraction = NULL,
   splitSeed = NULL, nfold = 3, indexes = NULL, savePlpData = FALSE,
   savePlpPlots = TRUE, saveEvaluation = TRUE, verbosity = "INFO",
   timeStamp = FALSE, analysisId = NULL)

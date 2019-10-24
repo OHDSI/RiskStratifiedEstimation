@@ -56,6 +56,10 @@ endAnchor instead.}
 \item{censorAtNewRiskWindow}{If a subject is in multiple cohorts, should time-at-risk be
 censoredwhen the new time-at-risk starts to prevent overlap?}
 }
+\value{
+A parameter object containing all the information for defining the
+                                        estimation step population
+}
 \description{
 Create a parameter object for the function createStudyPopulation
 }

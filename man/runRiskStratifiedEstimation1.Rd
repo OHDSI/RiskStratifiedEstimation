@@ -9,168 +9,29 @@ runRiskStratifiedEstimation1(connectionDetails, analysisSettings,
   runSettings)
 }
 \arguments{
-\item{connectionDetails}{An R object of type \code{connectionDetails} created using function
-\code{\link[DatabaseConnector]{createConnectionDetails}}.
-Either the \code{connection} or the \code{connectionDetails} argument
-should be specified.}
+\item{connectionDetails}{An R object of type \code{connectionDetails} created using the function
+\code{\link[DatabaseConnector]{createConnectionDetails}}.}
 
-\item{plpDataFolder}{Folder where the \code{plpData} object is stored. If \code{NULL}, it will
-be constructed within the function.}
+\item{analysisSettings}{An R object of type \code(analysisSettings) created using the function
+\code{\link[RiskStratifiedEstimation]{createAnalysisSettings}}.}
 
-\item{cohortMethodDataFolder}{Folder where the \code{cohortMethodData} object is stored. If \code{NULL},
-it will be constructed within the function.}
+\item{databaseSettings}{An R object of type \code{databaseSettings} created using the function
+\code{\link[RiskStratifiedEstimation]{createDatabaseSettings}}.}
 
-\item{cdmDatabaseSchema}{The name of the database schema that contains the vocabulary files.
-Requires read permissions to this database. On SQL Server, this should
-specifiy both the database and the schema,
-so for example 'cdm_instance.dbo'.}
+\item{getDataSettings}{An R object of type \code{getDataSettings} created using the function
+\code{\link[RiskStratifiedEstimation]{createGetDataSettings}}.}
 
-\item{cohortDatabaseSchema}{The name of the database schema that contains the treatment and comaparator
-cohorts. Requires read permissions
-to this database.}
+\item{covariateSettings}{An R object of type \code{covariateSettings} created using the function
+\code{\link[RiskStratifiedEstimation]{createCovariateSettings}}.}
 
-\item{outcomeDatabaseSchema}{The name of the database schema that contains the outcome cohorts. Requires
-read permissions to this database.}
+\item{populationSettings}{An R object of type \code{populationSettings} created using the function
+\code{\link[RiskStratifiedEstimation]{createPopulationSettings}}.}
 
-\item{resultsDatabaseSchema}{The name of the database schema with write permissions.}
-
-\item{cohortTable}{The name of the table holding the treatment and comparator cohorts.}
-
-\item{outcomeTable}{The name of the table hodling the outcome cohorts.}
-
-\item{mergedCohortTable}{The name of the table where the merged treatment and comparator cohorts
-will be stored.}
-
-\item{attributeDefinitionTable}{The table where the definition of the treatment covariate will be stored.}
-
-\item{cohortAttributeTable}{The table where the covariate values with regard to treatment will be
-stored.}
-
-\item{treatmentCohortId}{The cohort definition id of the treatment cohort in the cohortTable.}
-
-\item{comparatorCohortId}{The cohort definition id of the comparator cohort in the cohortTable.}
-
-\item{targetCohortId}{The cohort definition id of of the merged cohort in the mergedCohortTable.}
-
-\item{predictOutcomes}{The outcomes for which the risk stratification will be performed.}
-
-\item{compareOutcomes}{The  outcomes for which risk stratified estimates need to be derived. If
-set to \code{NULL}, all \code{predictOutcomes} will be considered.}
-
-\item{cdmVersion}{Define the OMOP CDM version used: currently supported is "5".}
-
-\item{getDbCohortMethodDataArgs}{A parameter object for the function
-\code{\link[CohortMethod]{getDbCohortMethodData}}. Can be generated from
-function
-\code{\link[CohortMethod]{createGetDbCohortMethodDataArgs}}.}
-
-\item{covariateSettingsCm}{An object of type \code{covariateSettings} as created using the
-\code{\link[FeatureExtraction]{createCovariateSettings}} to be used for the
- definition of the \code{cohortMethodData} object.}
-
-\item{exposureDatabaseSchema}{Input of function \code{\link[CohortMethod]{getDbCohortMethodData}}: The
-name of the database schema that is the
-location where the exposure data used to define the exposure cohorts is
-available.}
-
-\item{exposureTable}{Input of function \code{\link[CohortMethod]{getDbCohortMethodData}}: The
-tablename that contains the exposure cohorts.}
-
-\item{psControl}{An object of the type \code{cyclopsControl} generated from
-\code{\link[Cyclops]{createControl}}.}
-
-\item{psPrior}{An object of the type \code{cyclopsPrior} generated from
-\code{\link[Cyclops]{createPrior}}.}
-
-\item{psMethod}{Select the propensity score method for the estimation of treatment effects
-within risk strata. It can be "matchOnPs", "stratifyByPs" or
-"inversePtWeighted".}
-
-\item{createPsThreads}{The number of threads for the calculation of the propensity scores.}
-
-\item{modelSettings}{An object of the class \code{modelSettings} to be used as input for
-\code{\link[PatientLevelPrediction]{runPlp}}.}
-
-\item{getPlpDataArgs}{A parameter object for the function
-\code{\link[PatientLevelPrediction]{getPlpData}}. It can be generated from
- function
-\code{\link[RiskStratifiedEstimation]{createGetPlpDataArgs}}.}
-
-\item{populationCmSettings}{A parameter object for the function
-\code{\link[CohortMethod]{createStudyPopulation}}. Can be generated from
-function \code{createStudyPopulationCmSettings}.}
-
-\item{covariateSettingsPlp}{An object of type \code{covariateSettings} as created using the
-\code{\link[FeatureExtraction]{createCovariateSettings}} to be used for
- the definition of the
-\code{plpData} object. note that a covariate indicating treatment will be
-added.}
-
-\item{populationPlpSettings}{A parameter object for the function
-\code{\link[PatientLevelPrediction]{createStudyPopulation}}. Can be
-generated from function
-\code{\link[PatientLevelPrediction]{createStudyPopulationSettings}}.}
-
-\item{runPlpArgs}{A parameter object for the function
-\code{\link[PatientLevelPrediction]{runPlp}}. Can be generated from
-function
-\code{\link[RiskStratifiedEstimation]{createRunPlpArgs}}.}
-
-\item{riskStrata}{The number of risk strata to divide the study population.}
-
-\item{weightsType}{Only required if \code{weightsType} is "inversePtWeighted". The type of
-weights for the balancing of covariates.
-Should be either 'ATE' or 'ATT'}
-
-\item{useStabilizedWeights}{Only required if \code{weightsType} is "inversePtWeighted". Should
-stabilized weights be used?}
-
-\item{truncationLevels}{Only required if \code{weightsType} is "inversePtWeighted". The level of
-truncation expressed in percentiles of the propensity score.}
-
-\item{timePoint}{The time point of interest for the calculation of the absolute risk
-reduction.}
-
-\item{predictionThreads}{The number of threads to be used to run the predictions.}
-
-\item{saveResults}{Should the results of the entire analysis be saved?}
-
-\item{saveDirectory}{The file path to the directory where the results of the analysis will be
-saved.}
-
-\item{fftempdir}{The directory where the temporary \code{ff} files will be saved.}
-
-\item{fitOutcomeModelsThreads}{The number of threadss to be used for the calculation of the risk
-stratified results.}
-
-\item{saveMapMatrix}{Should the map matrix with the risk sratum allocations be saved?}
-
-\item{savePs}{Should the propensity scores be saved?}
-
-\item{verbosity}{Sets the level of the verbosity. If the log level is at or higher in
-priority than the logger threshold,
-a message will print. The levels are:
-\itemize{
-    \item{DEBUG}{Highest verbosity showing all debug statements}
-    \item{TRACE}{Showing information about start and end of steps}
-    \item{INFO}{Show informative information (Default)}
-    \item{WARN}{Show warning messages}
-    \item{ERROR}{Show error messages}
-    \item{FATAL}{Be silent except for fatal errors}}.}
-
-\item{analysisId}{The identifier of the analysis.}
+\item{runSettings}{An R object of type \code{runSettings} created using the function
+\code{\link[RiskStratifiedEstimation]{createRunSettings}}.}
 }
 \value{
-A reference list for the analaysis results:
-                                          \itemize{
-                                              \item analaysisId
-                                              \item targetId
-                                              \item comparatorId
-                                              \item compareOutcomes
-                                              \item predictOutcomes
-                                              \item outputFolder
 
-                                           }
 }
 \description{
 Runs a risk stratified analysis in two stages. It first runs a prediction algorithm using

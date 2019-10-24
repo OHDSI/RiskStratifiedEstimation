@@ -16,8 +16,5 @@ effect and 'ATT' for average treatment effect on the treated weights}
 \item{truncationLevels}{The level of truncation expressed in percentiles of the propensity score.}
 }
 \description{
-Create a parameter object for the function createIPW
-}
-\details{
 Create an object defining the parameter values.
 }
