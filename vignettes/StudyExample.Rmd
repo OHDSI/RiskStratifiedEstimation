@@ -1,5 +1,5 @@
 ---
-title: "RiskStratifiedEstimation manual"
+title: "Study example"
 author: "Alexandros Rekkas and Peter R. Rijnbeek"
 date: "`r Sys.Date()`"
 output:
@@ -11,7 +11,7 @@ output:
     number_sections: yes
     toc: yes
 vignette: >
-  %\VignetteIndexEntry{RiskStratifiedEstimation manual}
+  %\VignetteIndexEntry{Study example}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
