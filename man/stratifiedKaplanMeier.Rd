@@ -13,8 +13,8 @@ stratifiedKaplanMeier(population, timePoint)
 \item{timePoint}{The point in time for which the absolute risk difference is required}
 }
 \value{
-A vector of the absolute risk difference along with the lowest and highest limits of the
-                                 the 95 percent confidence interval
+A vector of the absolute risk difference along with the lowest and highest limits
+                                 of the the 95 percent confidence interval
 }
 \description{
 Calculate stratified Kaplan-Meier estimates

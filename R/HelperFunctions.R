@@ -9,7 +9,6 @@
 #' @param cohortTable The table that contains the treatment and comparator cohorts.
 #' @param resultsDatabaseSchema The name of the database schema to store the new tables. Need to have write access.
 #' @param mergedCohortTable The table that will contain the merged cohorts.
-#' @param attributeDefinitionTable The table that will contain the definition of the treatment variable.
 #' @param cohortAttributeTable The table that will contain the patients along with their new covariate values.
 #' @param connectionDetails The connection details required to connect to a database.
 #'
@@ -25,11 +24,14 @@ prepareForPlpData <- function(treatmentCohortId,
                               cohortTable,
                               resultsDatabaseSchema,
                               mergedCohortTable,
-                              attributeDefinitionTable,
-                              cohortAttributeTable,
                               connectionDetails){
 
+  addTable(connectionDetails,
+           resultsDatabaseSchema = resultsDatabaseSchema,
+           table = mergedCohortTable)
+
   connection <- DatabaseConnector::connect(connectionDetails)
+
 
   renderedSql <- SqlRender::loadRenderTranslateSql("mergeCohorts.sql",
                                                    packageName = "RiskStratifiedEstimation",
@@ -42,19 +44,7 @@ prepareForPlpData <- function(treatmentCohortId,
                                                    dbms = connectionDetails$dbms)
 
   DatabaseConnector::executeSql(connection, renderedSql)
-
-
-  renderedSql <- SqlRender::loadRenderTranslateSql("treatmentCovariateSettingsTest.sql",
-                                                   packageName = "RiskStratifiedEstimation",
-                                                   result_database_schema = resultsDatabaseSchema,
-                                                   cohort_database_schema = cohortDatabaseSchema,
-                                                   cohort_table = cohortTable,
-                                                   merged_cohort_table = mergedCohortTable,
-                                                   treatment_cohort_id = treatmentCohortId,
-                                                   attribute_definition_table = attributeDefinitionTable,
-                                                   cohort_attribute_table = cohortAttributeTable,
-                                                   dbms = connectionDetails$dbms)
-  DatabaseConnector::executeSql(connection, renderedSql)
+  DatabaseConnector::disconnect(connection)
 
 }
 
@@ -73,6 +63,22 @@ removeTreatment <- function(plpData,
                                               covariateId != treatmentCovariateId)
 
   return(plpData)
+
+}
+
+addTable <- function(connectionDetails,
+                     resultsDatabaseSchema,
+                     table){
+
+  renderedSql <- SqlRender::loadRenderTranslateSql("createTable.sql",
+                                                   packageName = "RiskStratifiedEstimation",
+                                                   result_database_schema = resultsDatabaseSchema,
+                                                   target_cohort_table = table,
+                                                   dbms = connectionDetails$dbms)
+
+  connection <- DatabaseConnector::connect(connectionDetails)
+  DatabaseConnector::executeSql(connection, renderedSql)
+  DatabaseConnector::disconnect(connection)
 
 }
 

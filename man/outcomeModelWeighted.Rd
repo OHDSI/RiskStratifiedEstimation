@@ -8,11 +8,13 @@ outcomeModelWeighted(ps, calculateWeights = TRUE, weightsType = "ATE",
   useStabilizedWeights = TRUE, truncationLevels)
 }
 \arguments{
-\item{ps}{A dataframe wiht propensity scores as generated from \code{\link[CohortMethod]{createPs}}.}
+\item{ps}{A dataframe wiht propensity scores as generated from
+\code{\link[CohortMethod]{createPs}}.}
 
 \item{calculateWeights}{Should weights be calculated?}
 
-\item{weightsType}{The type of weights for the balancing of covariates. Should be either 'ATE' or 'ATT'}
+\item{weightsType}{The type of weights for the balancing of covariates. Should be either 'ATE' or
+'ATT'}
 
 \item{useStabilizedWeights}{Should stabilized weights be used?}
 

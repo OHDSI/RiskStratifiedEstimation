@@ -4,35 +4,35 @@
 \alias{fitOutcomeModels}
 \title{Fit outcome models}
 \usage{
-fitOutcomeModels(outcomeId, analysisPath, cohortMethodDataFolder,
-  analysisRef, timePoint, psMethod, weightsType, useStabilizedWeights,
-  truncationLevels, populationCmSettings)
+fitOutcomeModels(outcomeId, analysisPath, getDataSettings,
+  covariateSettings, analysisSettings, runSettings, populationSettings)
 }
 \arguments{
-\item{outcomeId}{The outcome of interest for which the esitmation is performed. That is the outcome for which risk stratification is performed.}
+\item{outcomeId}{The outcome of interest for which the esitmation is performed. That is the outcome
+for which risk stratification is performed.}
 
 \item{analysisPath}{The path to the \code{RSEE} analysis results.}
 
 \item{cohortMethodDataFolder}{The directory where the \code{cohortMethodData} object is stored.}
 
-\item{analysisRef}{A list containing a vector called \code{outcomeIds} with the outcome ids of interest and a square matrix
-of 0s and 1s called \code{analysisMatrix}. where the columns define the risk stratification outcomes and
-the rows the estimation outcomes.}
+\item{compareOutcomes}{The  outcomes for which risk stratified estimates need to be derived.}
 
 \item{timePoint}{The time point at which absolute risk differences will be calculated.}
 
-\item{psMethod}{Select the propensity score method for the estimation of treatment effects within risk strata. It can be "matchOnPs",
-"stratifyByPs" or "inversePtWeighted".}
+\item{psMethod}{Select the propensity score method for the estimation of treatment effects within
+risk strata. It can be "matchOnPs", "stratifyByPs" or "inversePtWeighted".}
 
-\item{weightsType}{Only required if \code{weightsType} is "inversePtWeighted". The type of weights for the balancing of covariates.
-Should be either 'ATE' or 'ATT'}
+\item{weightsType}{Only required if \code{weightsType} is "inversePtWeighted". The type of weights for
+the balancing of covariates. Should be either 'ATE' or 'ATT'}
 
-\item{useStabilizedWeights}{Only required if \code{weightsType} is "inversePtWeighted". Should stabilized weights be used?}
+\item{useStabilizedWeights}{Only required if \code{weightsType} is "inversePtWeighted". Should stabilized weights
+be used?}
 
-\item{truncationLevels}{Only required if \code{weightsType} is "inversePtWeighted". The level of truncation expressed in percentiles of the propensity score.}
+\item{truncationLevels}{Only required if \code{weightsType} is "inversePtWeighted". The level of truncation
+expressed in percentiles of the propensity score.}
 
-\item{populationCmSettings}{A parameter object for the function \code{\link[CohortMethod]{createStudyPopulation}}. Can be generated from
-function \code{createStudyPopulationCmSettings}.}
+\item{populationCmSettings}{A parameter object for the function \code{\link[CohortMethod]{createStudyPopulation}}.
+Can be generated from function \code{createStudyPopulationCmSettings}.}
 }
 \value{
 \code{NULL}. The results are all saved.

@@ -6,8 +6,7 @@
 \usage{
 prepareForPlpData(treatmentCohortId, comparatorCohortId, targetCohortId,
   cohortDatabaseSchema, cohortTable, resultsDatabaseSchema,
-  mergedCohortTable, attributeDefinitionTable, cohortAttributeTable,
-  connectionDetails)
+  mergedCohortTable, connectionDetails)
 }
 \arguments{
 \item{treatmentCohortId}{The treatment cohort id}
@@ -24,11 +23,9 @@ prepareForPlpData(treatmentCohortId, comparatorCohortId, targetCohortId,
 
 \item{mergedCohortTable}{The table that will contain the merged cohorts.}
 
-\item{attributeDefinitionTable}{The table that will contain the definition of the treatment variable.}
+\item{connectionDetails}{The connection details required to connect to a database.}
 
 \item{cohortAttributeTable}{The table that will contain the patients along with their new covariate values.}
-
-\item{connectionDetails}{The connection details required to connect to a database.}
 }
 \value{
 Creates the tables resultsDatabaseSchema.mergedCohortTable, resultsDatabaseSchema.attributeDefinitionTable and resultsDatabaseSchema.cohortAttributeTable

@@ -10,7 +10,8 @@ relativeRiskReduction(model)
 \item{model}{The model that was used to fit a cox regression model to the data.}
 }
 \value{
-A dataframe with hazard ratios for treatment effect across risk strata along with 95 percent confidence intervals
+A dataframe with hazard ratios for treatment effect across risk strata along with 95 percent
+                confidence intervals
 }
 \description{
 Calculates hazard ratios within risk strata.

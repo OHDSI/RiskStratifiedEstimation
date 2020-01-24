@@ -10,7 +10,8 @@ createIPW(ps, weightsType = "ATE", useStabilizedWeights = TRUE,
 \arguments{
 \item{ps}{A propensity score data frame as created from \code{\link[CohortMethod]{createPs}}}
 
-\item{weightsType}{The type of the weights to be used. Allowed options are 'ATE' for average treatment effect and 'ATT' for average treatment effect on the treated weights}
+\item{weightsType}{The type of the weights to be used. Allowed options are 'ATE' for average treatment
+effect and 'ATT' for average treatment effect on the treated weights}
 
 \item{useStabilizedWeights}{Should stabilized weights be used?}
 

@@ -118,24 +118,24 @@ createStudyPopulationCmArgs <-
 #'
 #' @export
 
-createRunPlpArgs <- function(minCovariateFraction = 0.001,
-                             normalizeData = TRUE,
-                             modelSettings = PatientLevelPrediction::setLassoLogisticRegression(),
-                             testSplit = "person",
-                             testFraction = 0.25,
-                             trainFraction = NULL,
-                             splitSeed = NULL,
-                             nfold = 3,
-                             indexes = NULL,
-                             savePlpData = FALSE,
-                             savePlpPlots = TRUE,
-                             saveEvaluation = TRUE,
-                             verbosity = "INFO",
-                             timeStamp = FALSE,
-                             analysisId = NULL) {
+createRunPlpSettingsArgs <- function(minCovariateFraction = 0.001,
+                                     normalizeData = TRUE,
+                                     modelSettings = PatientLevelPrediction::setLassoLogisticRegression(),
+                                     testSplit = "person",
+                                     testFraction = 0.25,
+                                     trainFraction = NULL,
+                                     splitSeed = NULL,
+                                     nfold = 3,
+                                     indexes = NULL,
+                                     savePlpData = FALSE,
+                                     savePlpPlots = TRUE,
+                                     saveEvaluation = TRUE,
+                                     verbosity = "INFO",
+                                     timeStamp = FALSE,
+                                     analysisId = NULL) {
   # First: get default values:
   analysis <- list()
-  for (name in names(formals(createRunPlpArgs))) {
+  for (name in names(formals(createRunPlpSettingsArgs))) {
     analysis[[name]] <- get(name)
   }
   # Second: overwrite defaults with actual values:
@@ -144,8 +144,8 @@ createRunPlpArgs <- function(minCovariateFraction = 0.001,
     if (name %in% names(analysis))
       analysis[[name]] <- values[[name]]
   }
-  attr(analysis, "fun") <- "createRunPlpArgs"
-  class(analysis) <- "runPlpArgs"
+  attr(analysis, "fun") <- "createRunPlpSettingsArgs"
+  class(analysis) <- "runPlpSettingsArgs"
   return(analysis)
 }
 
@@ -157,22 +157,22 @@ createRunPlpArgs <- function(minCovariateFraction = 0.001,
 #' Create the settings for running the analyses. The input consists of two parts: 1) the settings for running the
 #' prediction algorithms and 2) the settings for estimating treatment effects within strata of predicted risk.
 #'
-#' @param runPlpArgs         A parameterer object of type \code{runPlpArgs} defined using the function
-#'                           \code{\link[RiskStratifiedEstimation]{createRunPlpArgs}}.
-#' @param runCmArgs          A parameter object of type \dode{runCmArgs} defined using the function
-#'                           \code{\link[RiskStratifiedEstimation]{createRunCmArgs}}
+#' @param runPlpSettings         A parameterer object of type \code{runPlpSettingsArgs} defined using the function
+#'                           \code{\link[RiskStratifiedEstimation]{createRunPlpSettingsArgs}}.
+#' @param runCmSettings          A parameter object of type \code{runCmSettingsArgs} defined using the function
+#'                           \code{\link[RiskStratifiedEstimation]{createRunCmSettingsArgs}}
 #'
 #' @return                   An R object of type \code{runSettings}
 #' @export
 
-createRunSettings <- function(runPlpArgs =
-                                createRunPlpArgs(modelSettings =
-                                                   PatientLevelPrediction::setLassoLogisticRegression()),
-                              runCmArgs =
-                                createRunCmArgs()){
+createRunSettings <- function(runPlpSettings =
+                                createRunPlpSettingsArgs(modelSettings =
+                                                           PatientLevelPrediction::setLassoLogisticRegression()),
+                              runCmSettings =
+                                createRunCmSettingsArgs()){
 
-  res <- list(runPlpArgs = runPlpArgs,
-              runCmArgs = runCmArgs)
+  res <- list(runPlpSettings = runPlpSettings,
+              runCmSettings = runCmSettings)
   attr(res, "fun") <- "createRunSettings"
   class(res) <- "runSettings"
   return(res)
@@ -328,15 +328,15 @@ createPopulationCmSettingsArgs <- function(firstExposureOnly = FALSE,
                                            priorOutcomeLookback = 99999,
                                            minDaysAtRisk = 1,
                                            riskWindowStart = 0,
-                                           addExposureDaysToStart = NULL,
+                                           addExposureDaysToStart = FALSE,
                                            startAnchor = "cohort start",
                                            riskWindowEnd = 0,
-                                           addExposureDaysToEnd = NULL,
+                                           addExposureDaysToEnd = TRUE,
                                            endAnchor = "cohort end",
                                            censorAtNewRiskWindow = FALSE) {
   # First: get default values:
   analysis <- list()
-  for (name in names(formals(createCreateStudyPopulationArgs))) {
+  for (name in names(formals(createPopulationCmSettingsArgs))) {
     analysis[[name]] <- get(name)
   }
   # Second: overwrite defaults with actual values:
@@ -494,7 +494,7 @@ createCreatePsArgs <- function(excludeCovariateIds = c(),
 #'                                             selected \code{psMethod} to the estimation process. Can be created using
 #'                                             one of \code{\link[RiskStratifiedEstimation]{createCreateIPWArgs}}, when
 #'                                             \code{inversePtWeighted} is selected,
-#'                                             \code{\link[RiskStratifiedEstimation]{createStratifyByPs}} when
+#'                                             \code{\link[RiskStratifiedEstimation]{createStratifyByPsArgs}} when
 #'                                             \code{stratifyByPs} is selected or
 #'                                             \code{\link[RiskStratifiedEstimation]{createMatchOnPsArgs}} when
 #'                                             \code{matchOnPs} is selected.
@@ -510,14 +510,14 @@ createCreatePsArgs <- function(excludeCovariateIds = c(),
 #' @return                                     A parameter object for running the the estimation step.
 #' @export
 
-createRunCmArgs <- function(psMethod = "inversePtWeighted",
-                            effectEstimationSettings = createCreateIPWArgs(),
-                            psSettings = createCreatePsArgs(),
-                            createPsThreads = 1,
-                            fitOutcomeModelsThreads = 1,
-                            estimateOverallResults = FALSE,
-                            timePoint = 365,
-                            riskStrata = 4){
+createRunCmSettingsArgs <- function(psMethod = "inversePtWeighted",
+                                    effectEstimationSettings = createCreateIPWArgs(),
+                                    psSettings = createCreatePsArgs(),
+                                    createPsThreads = 1,
+                                    fitOutcomeModelsThreads = 1,
+                                    estimateOverallResults = FALSE,
+                                    timePoint = 365,
+                                    riskStrata = 4){
 
 
   res <- list(psMethod = psMethod,
@@ -526,7 +526,8 @@ createRunCmArgs <- function(psMethod = "inversePtWeighted",
               createPsThreads = createPsThreads,
               fitOutcomeModelsThreads = fitOutcomeModelsThreads,
               estimateOverallResults = estimateOverallResults,
-              riskStrata = riskStrata)
+              riskStrata = riskStrata,
+              timePoint = timePoint)
 
   class(res) <- "args"
 
@@ -659,7 +660,8 @@ createCreateIPWArgs <- function(weightsType = "ATE",
 #' @param comparatorCohortId       The cohort definition id of the comparator cohort in the cohortTable.
 #' @param outcomeIds               The cohort definition ids of the outcome cohorts in the outcomeTable.
 #' @param analysisMatrix           Boolean matrix defining the outcomes to be assessed (rows) within risk strata
-#'                                 (columns). Default is the diagonal matrix, which leads to the risk stratified
+#'                                 (columns). The order in columns should match the the order of \code{outcomeIds}.
+#'                                 Default is the diagonal matrix, which leads to the risk stratified
 #'                                 assessment of only the outcome for which the risk strata were defined.
 #' @param verbosity                Sets the level of the verbosity. If the log level is at or higher in priority than
 #'                                 the logger threshold, a message will print. The levels are:
@@ -765,14 +767,14 @@ createPopulationSettings <- function(populationPlpSettings = createPopulationPlp
 #' Create parameter object for database to be reached
 #'
 #' @param cdmVersion                     Define the OMOP CDM version
-#' @param cdmDatabaseschema              The name of the database schema that contains the OMOP CDM instance. Requires
+#' @param cdmDatabaseSchema              The name of the database schema that contains the OMOP CDM instance. Requires
 #'                                       read permissions to this database. On SQL Server, this should specify both
 #'                                       the database and the schema, so for example "cdm_instance.dbo"
 #' @param cohortDatabaseSchema           The name of the database schema that is the location where the cohort data
 #'                                       used to define the at risk cohort is available. If cohortTable = DRUG_ERA,
 #'                                       \code{cohortDatabaseSchema} is not used by assumed to be
 #'                                       \code{cdmDatabaseSchema}.
-#' @param outcomeDatabasesSchema         The name of the database schema that is the location where the data used to
+#' @param outcomeDatabaseSchema         The name of the database schema that is the location where the data used to
 #'                                       define the outcome cohorts is available. If cohortTable = CONDITION_ERA,
 #'                                       exposureDatabaseSchema is not used by assumed to be cdmSchema. Requires
 #'                                       read permissions to this database.
@@ -787,39 +789,38 @@ createPopulationSettings <- function(populationPlpSettings = createPopulationPlp
 #'                                       CONDITION_OCCURRENCE, then expectation is outcomeTable has format of
 #'                                       COHORT table: COHORT_DEFINITION_ID, SUBJECT_ID,
 #'                                       COHORT_START_DATE, COHORT_END_DATE.
+#' @param exposureTable                  The tablename that contains the exposure cohorts. If exposureTable <> DRUG_ERA,
+#'                                       then expectation is exposureTable has format of COHORT table:
+#'                                       cohort_concept_id, SUBJECT_ID, COHORT_START_DATE, COHORT_END_DATE.
 #' @param mergedCohortTable              The name of the table where the merged treatment and comparator cohorts will
 #'                                       be stored.
-#' @param attributeDefinitionTable       The table where the definition of the treatment covariate will be stored.
-#' @param cohortAttributeTable           The table where the covariate values with regard to treatment will be stored.
 #' @param targetCohortId                 The cohort definition id of of the merged cohort in the
 #'                                       \code{mergedCohortTable}.
 #'
 #' @export
 
 createDatabaseSettings <- function(cdmVersion = "5",
-                                   cdmDatabaseschema,
-                                   cohortDatabaseSchema = cdmDatabaseschema,
-                                   outcomeDatabasesSchema = cdmDatabaseschema,
-                                   resultsDatabaseSchema = cdmDatabaseschema,
-                                   exposureDatabaseSchema = cdmDatabaseschema,
+                                   cdmDatabaseSchema,
+                                   cohortDatabaseSchema = cdmDatabaseSchema,
+                                   outcomeDatabaseSchema = cdmDatabaseSchema,
+                                   resultsDatabaseSchema = cdmDatabaseSchema,
+                                   exposureDatabaseSchema = cdmDatabaseSchema,
                                    cohortTable,
                                    outcomeTable,
+                                   exposureTable = "drug_era",
                                    mergedCohortTable,
-                                   attributeDefinitionTable,
-                                   cohortAttributeTable,
                                    targetCohortId = 1){
 
   res <- list(cdmVersion = cdmVersion,
-              cdmDatabaseschema = cdmDatabaseschema,
+              cdmDatabaseSchema = cdmDatabaseSchema,
               cohortDatabaseSchema = cohortDatabaseSchema,
-              outcomeDatabasesSchema = outcomeDatabasesSchema,
+              outcomeDatabaseSchema = outcomeDatabaseSchema,
               resultsDatabaseSchema = resultsDatabaseSchema,
               exposureDatabaseSchema = exposureDatabaseSchema,
               cohortTable = cohortTable,
               outcomeTable = outcomeTable,
+              exposureTable = exposureTable,
               mergedCohortTable = mergedCohortTable,
-              attributeDefinitionTable = attributeDefinitionTable,
-              cohortAttributeTable = cohortAttributeTable,
               targetCohortId = targetCohortId)
 
 

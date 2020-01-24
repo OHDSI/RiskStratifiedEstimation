@@ -8,11 +8,14 @@ weightedKM(ps, calculateWeights = TRUE, weightsType = "ATE",
   useStabilizedWeights = TRUE, truncationLevels)
 }
 \arguments{
-\item{ps}{A data frame including the propensity scores as generated from \code{\link[CohortMethod]{createPs}}}
+\item{ps}{A data frame including the propensity scores as generated from
+\code{\link[CohortMethod]{createPs}}}
 
-\item{calculateWeights}{Whether to calculate the weights using \code{\link[RiskStratifiedEstimation]{createIPW}}}
+\item{calculateWeights}{Whether to calculate the weights using
+\code{\link[RiskStratifiedEstimation]{createIPW}}}
 
-\item{weightsType}{The type of the weights to be used. Allowed options are 'ATE' for average treatment effect and 'ATT' for average treatment effect on the treated weights}
+\item{weightsType}{The type of the weights to be used. Allowed options are 'ATE' for average treatment
+effect and 'ATT' for average treatment effect on the treated weights}
 
 \item{useStabilizedWeights}{Should stabilized weights be used?}
 
@@ -25,5 +28,7 @@ A data frame with the Kaplan-Meier estimates
 Calculates the weighted Kaplan-Meier estimates.
 }
 \references{
-Xie J, Liu C. Adjusted Kaplan-Meier estimator and log-rank test with inverse probability of treatment weighting for survival data. Statistics in Medicine 2005; 2:3089–3110.
+Xie J, Liu C. Adjusted Kaplan-Meier estimator and log-rank test with inverse
+                                  probability of treatment weighting for survival data. Statistics in Medicine 2005;
+                                  2:3089–3110.
 }
