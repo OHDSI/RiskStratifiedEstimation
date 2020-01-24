@@ -528,6 +528,7 @@ createRunCmSettingsArgs <- function(psMethod = "inversePtWeighted",
               effectEstimationSettings = effectEstimationSettings,
               createPsThreads = createPsThreads,
               fitOutcomeModelsThreads = fitOutcomeModelsThreads,
+              createPsThreadsNegativeControls = createPsThreadsNegativeControls,
               estimateOverallResults = estimateOverallResults,
               riskStrata = riskStrata,
               timePoint = timePoint)
