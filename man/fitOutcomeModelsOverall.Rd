@@ -11,26 +11,14 @@ fitOutcomeModelsOverall(outcomeId, analysisSettings, getDataSettings,
 \item{outcomeId}{The outcome of interest for which the esitmation is performed. That is the outcome for
 which risk stratification is performed.}
 
-\item{analysisPath}{The path to the \code{RSEE} analysis results.}
+\item{analysisSettings}{An R object of type \code{analysisSettings} created using the function
+\code{\link[RiskStratifiedEstimation]{createAnalysisSettings}}.}
 
-\item{cohortMethodDataFolder}{The directory where the \code{cohortMethodData} object is stored.}
+\item{getDataSettings}{An R object of type \code{getDataSettings} created using the function
+\code{\link[RiskStratifiedEstimation]{createGetDataSettings}}.}
 
-\item{timePoint}{The time point at which absolute risk differences will be calculated.}
-
-\item{psMethod}{Select the propensity score method for the estimation of treatment effects within risk
-strata. It can be "matchOnPs", "stratifyByPs" or "inversePtWeighted".}
-
-\item{weightsType}{Only required if \code{weightsType} is "inversePtWeighted". The type of weights for
-the balancing of covariates. Should be either 'ATE' or 'ATT'}
-
-\item{useStabilizedWeights}{Only required if \code{weightsType} is "inversePtWeighted". Should stabilized weights
-be used?}
-
-\item{truncationLevels}{Only required if \code{weightsType} is "inversePtWeighted". The level of truncation
-expressed in percentiles of the propensity score.}
-
-\item{populationCmSettings}{A parameter object for the function \code{\link[CohortMethod]{createStudyPopulation}}.
-Can be generated from function \code{createStudyPopulationCmSettings}.}
+\item{runCmSettings}{A parameter object of type \code{runCmSettingsArgs} defined using the function
+\code{\link[RiskStratifiedEstimation]{createRunCmSettingsArgs}}}
 }
 \value{
 \code{NULL}. The results are all saved.

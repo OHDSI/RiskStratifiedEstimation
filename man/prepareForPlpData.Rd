@@ -24,8 +24,6 @@ prepareForPlpData(treatmentCohortId, comparatorCohortId, targetCohortId,
 \item{mergedCohortTable}{The table that will contain the merged cohorts.}
 
 \item{connectionDetails}{The connection details required to connect to a database.}
-
-\item{cohortAttributeTable}{The table that will contain the patients along with their new covariate values.}
 }
 \value{
 Creates the tables resultsDatabaseSchema.mergedCohortTable, resultsDatabaseSchema.attributeDefinitionTable and resultsDatabaseSchema.cohortAttributeTable

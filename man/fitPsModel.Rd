@@ -8,32 +8,20 @@ fitPsModel(outcomeId, getDataSettings, populationSettings, runSettings,
   analysisSettings)
 }
 \arguments{
-\item{outcomeId}{The outcome of interest for which the risk stratification is performed.}
+\item{outcomeId}{The outcome of interest for which the esitmation is performed. That is the outcome for
+which risk stratification is performed.}
 
-\item{cohortMethodDataFolder}{The directory where the \code{cohortMethodData} object is stored.}
+\item{getDataSettings}{An R object of type \code{getDataSettings} created using the function
+\code{\link[RiskStratifiedEstimation]{createGetDataSettings}}.}
 
-\item{plpDataFolder}{The directory where the \code{plpData} object is stored.}
+\item{populationSettings}{An R object of type \code{populationSettings} created using the function
+\code{\link[RiskStratifiedEstimation]{createPopulationSettings}}.}
 
-\item{populationCmSettings}{A parameter object for the function
-\code{\link[CohortMethod]{createStudyPopulation}}.
-Can be generated from function \code{createStudyPopulationCmSettings}.}
+\item{runSettings}{An R object of type \code{runSettings} created using the function
+\code{\link[RiskStratifiedEstimation]{createRunSettings}}.}
 
-\item{populationPlpSettings}{A parameter object for the function
-\code{\link[PatientLevelPrediction]{createStudyPopulation}}.
-Can be generated from unction
-\code{\link[PatientLevelPrediction]{createStudyPopulationSettings}}.}
-
-\item{riskStrata}{The considered number of risk strata.}
-
-\item{analysisId}{The analysis ID of the prediction model used to stratify the population.}
-
-\item{analysisPath}{The directory where the propensity scores will be stored.}
-
-\item{psControl}{An object of the type \code{cyclopsControl} generated from
-\code{\link[Cyclops]{createControl}}.}
-
-\item{psPrior}{An object of the type \code{cyclopsPrior} generated from
-\code{\link[Cyclops]{createPrior}}.}
+\item{analysisSettings}{An R object of type \code{analysisSettings} created using the function
+\code{\link[RiskStratifiedEstimation]{createAnalysisSettings}}.}
 }
 \value{
 \code{NULL}. The results are all saved.

@@ -10,23 +10,17 @@ fitPsModelOverall(outcomeId, getDataSettings, populationCmSettings,
 \arguments{
 \item{outcomeId}{The outcome of interest for which the risk stratification is performed.}
 
-\item{populationCmSettings}{A parameter object for the function
-\code{\link[CohortMethod]{createStudyPopulation}}.
-Can be generated from function \code{createStudyPopulationCmSettings}.
-Can be generated from function
-\code{\link[PatientLevelPrediction]{createStudyPopulationSettings}}.}
+\item{getDataSettings}{An R object of type \code{getDataSettings} created using the function
+\code{\link[RiskStratifiedEstimation]{createGetDataSettings}}.}
 
-\item{cohortMethodDataFolder}{The directory where the \code{cohortMethodData} object is stored.}
+\item{populationCmSettings}{Parameter object for the definition of the \code{populationCm} object created from
+\code{\link[RiskStratifiedEstimation]{createPopulationCmSettingsArgs}}.}
 
-\item{analysisId}{The analysis ID of the prediction model used to stratify the population.}
+\item{analysisSettings}{An R object of type \code{analysisSettings} created using the function
+\code{\link[RiskStratifiedEstimation]{createAnalysisSettings}}.}
 
-\item{analysisPath}{The directory where the propensity scores will be stored.}
-
-\item{psControl}{An object of the type \code{cyclopsControl} generated from
-\code{\link[Cyclops]{createControl}}.}
-
-\item{psPrior}{An object of the type \code{cyclopsPrior} generated from
-\code{\link[Cyclops]{createPrior}}.}
+\item{runCmSettings}{A parameter object of type \code{runCmSettingsArgs} defined using the function
+\code{\link[RiskStratifiedEstimation]{createRunCmSettingsArgs}}}
 }
 \value{
 \code{NULL}. The results are all saved.

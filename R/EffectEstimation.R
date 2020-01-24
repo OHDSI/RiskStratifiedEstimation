@@ -5,21 +5,11 @@
 #'
 #' @param outcomeId               The outcome of interest for which the esitmation is performed. That is the outcome
 #'                                for which risk stratification is performed.
-#' @param analysisPath            The path to the \code{RSEE} analysis results.
-#' @param cohortMethodDataFolder  The directory where the \code{cohortMethodData} object is stored.
-#' @param compareOutcomes         The  outcomes for which risk stratified estimates need to be derived.
-#' @param timePoint               The time point at which absolute risk differences will be calculated.
-#' @param psMethod                Select the propensity score method for the estimation of treatment effects within
-#'                                risk strata. It can be "matchOnPs", "stratifyByPs" or "inversePtWeighted".
-#' @param weightsType             Only required if \code{weightsType} is "inversePtWeighted". The type of weights for
-#'                                the balancing of covariates. Should be either 'ATE' or 'ATT'
-#' @param useStabilizedWeights    Only required if \code{weightsType} is "inversePtWeighted". Should stabilized weights
-#'                                be used?
-#' @param truncationLevels        Only required if \code{weightsType} is "inversePtWeighted". The level of truncation
-#'                                expressed in percentiles of the propensity score.
-#' @param populationCmSettings    A parameter object for the function \code{\link[CohortMethod]{createStudyPopulation}}.
-#'                                Can be generated from function \code{createStudyPopulationCmSettings}.
-#'
+#' @param getDataSettings         An R object of type \code{getDataSettings} created using the function
+#'                                \code{\link[RiskStratifiedEstimation]{createGetDataSettings}}.
+#' @param pathToPs                The path to the \code{RSEE} analysis results.
+#' @param runSettings             An R object of type \code{runSettings} created using the function
+#'                                \code{\link[RiskStratifiedEstimation]{createRunSettings}}.
 #' @return                        \code{NULL}. The results are all saved.
 #'
 #' @importFrom dplyr %>%
@@ -56,10 +46,28 @@ fitOutcomeModels <- function(outcomeId,
   return(NULL)
 }
 
+
+
+#' Fits switched propensity score models
+#'
+#' Fits propensity score models where the population is stratified based on prediction model for a certain
+#' outcome of interest and estimation is focused on a different outcome
+#'
+#' @param predictOutcome             The outcome of the prediction step
+#' @param compareOutcome             The outcome of interest for the estimation step
+#' @param analysisSettings           An R object of type \code{analysisSettings} created using the function
+#'                                   \code{\link[RiskStratifiedEstimation]{createAnalysisSettings}}.
+#' @param getDataSettings            An R object of type \code{getDataSettings} created using the function
+#'                                   \code{\link[RiskStratifiedEstimation]{createGetDataSettings}}.
+#' @param populationSettings         An R object of type \code{populationSettings} created using the function
+#'                                   \code{\link[RiskStratifiedEstimation]{createPopulationSettings}}.
+#' @param runSettings                An R object of type \code{runSettings} created using the function
+#'                                   \code{\link[RiskStratifiedEstimation]{createRunSettings}}.
 #' @importFrom dplyr %>%
 #' @export
-fitPsModelSwitch <- function(compareOutcome,
-                             predictOutcome,
+
+fitPsModelSwitch <- function(predictOutcome,
+                             compareOutcome,
                              analysisSettings,
                              getDataSettings,
                              populationSettings,
@@ -764,21 +772,17 @@ estimateTreatmentEffect <- function(ps,
 #' Fits a large-scale regularized regression model to estimate propensity scores within predicted risk strata. Designed
 #' to be applied in a parallelized analysis.
 #'
-#' @param cohortMethodDataFolder               The directory where the \code{cohortMethodData} object is stored.
-#' @param outcomeId                            The outcome of interest for which the risk stratification is performed.
-#' @param populationCmSettings                 A parameter object for the function
-#'                                             \code{\link[CohortMethod]{createStudyPopulation}}.
-#'                                             Can be generated from function \code{createStudyPopulationCmSettings}.
-#'                                             Can be generated from function
-#'                                             \code{\link[PatientLevelPrediction]{createStudyPopulationSettings}}.
-#' @param analysisId                           The analysis ID of the prediction model used to stratify the population.
-#' @param analysisPath                         The directory where the propensity scores will be stored.
-#' @param psControl                            An object of the type \code{cyclopsControl} generated from
-#'                                             \code{\link[Cyclops]{createControl}}.
-#' @param psPrior                              An object of the type \code{cyclopsPrior} generated from
-#'                                             \code{\link[Cyclops]{createPrior}}.
+#' @param outcomeId                  The outcome of interest for which the risk stratification is performed.
+#' @param getDataSettings            An R object of type \code{getDataSettings} created using the function
+#'                                   \code{\link[RiskStratifiedEstimation]{createGetDataSettings}}.
+#' @param populationCmSettings       Parameter object for the definition of the \code{populationCm} object created from
+#'                                   \code{\link[RiskStratifiedEstimation]{createPopulationCmSettingsArgs}}.
+#' @param analysisSettings           An R object of type \code{analysisSettings} created using the function
+#'                                   \code{\link[RiskStratifiedEstimation]{createAnalysisSettings}}.
+#' @param runCmSettings              A parameter object of type \code{runCmSettingsArgs} defined using the function
+#'                                   \code{\link[RiskStratifiedEstimation]{createRunCmSettingsArgs}}
 #'
-#' @return                                     \code{NULL}. The results are all saved.
+#' @return                           \code{NULL}. The results are all saved.
 #'
 #' @export
 
@@ -836,22 +840,15 @@ fitPsModelOverall <- function(outcomeId,
 #' Fits outcome models within risk strata, estimating relative and absolute differences. Designed to be performed within
 #' a parellelized analysis.
 #'
-#' @param outcomeId               The outcome of interest for which the esitmation is performed. That is the outcome for
-#'                                which risk stratification is performed.
-#' @param analysisPath            The path to the \code{RSEE} analysis results.
-#' @param cohortMethodDataFolder  The directory where the \code{cohortMethodData} object is stored.
-#' @param timePoint               The time point at which absolute risk differences will be calculated.
-#' @param psMethod                Select the propensity score method for the estimation of treatment effects within risk
-#'                                strata. It can be "matchOnPs", "stratifyByPs" or "inversePtWeighted".
-#' @param weightsType             Only required if \code{weightsType} is "inversePtWeighted". The type of weights for
-#'                                the balancing of covariates. Should be either 'ATE' or 'ATT'
-#' @param useStabilizedWeights    Only required if \code{weightsType} is "inversePtWeighted". Should stabilized weights
-#'                                be used?
-#' @param truncationLevels        Only required if \code{weightsType} is "inversePtWeighted". The level of truncation
-#'                                expressed in percentiles of the propensity score.
-#' @param populationCmSettings    A parameter object for the function \code{\link[CohortMethod]{createStudyPopulation}}.
-#'                                Can be generated from function \code{createStudyPopulationCmSettings}.
-#'
+#' @param outcomeId                  The outcome of interest for which the esitmation is performed. That is the outcome for
+#'                                   which risk stratification is performed.
+#' @param analysisSettings           An R object of type \code{analysisSettings} created using the function
+#'                                   \code{\link[RiskStratifiedEstimation]{createAnalysisSettings}}.
+#' @param getDataSettings            An R object of type \code{getDataSettings} created using the function
+#'                                   \code{\link[RiskStratifiedEstimation]{createGetDataSettings}}.
+#' @param runCmSettings              A parameter object of type \code{runCmSettingsArgs} defined using the function
+#'                                   \code{\link[RiskStratifiedEstimation]{createRunCmSettingsArgs}}
+
 #' @return                        \code{NULL}. The results are all saved.
 #'
 #' @export
@@ -964,25 +961,18 @@ fitOutcomeModelsOverall <- function(outcomeId,
 #' Fits a large-scale regularized regression model to estimate propensity scores within predicted risk strata. Designed
 #' to be applied in a parallelized analysis.
 #'
-#' @param cohortMethodDataFolder               The directory where the \code{cohortMethodData} object is stored.
-#' @param plpDataFolder                        The directory where the \code{plpData} object is stored.
-#' @param outcomeId                            The outcome of interest for which the risk stratification is performed.
-#' @param populationCmSettings                 A parameter object for the function
-#'                                             \code{\link[CohortMethod]{createStudyPopulation}}.
-#'                                             Can be generated from function \code{createStudyPopulationCmSettings}.
-#' @param populationPlpSettings                A parameter object for the function
-#'                                             \code{\link[PatientLevelPrediction]{createStudyPopulation}}.
-#'                                             Can be generated from unction
-#'                                             \code{\link[PatientLevelPrediction]{createStudyPopulationSettings}}.
-#' @param riskStrata                           The considered number of risk strata.
-#' @param analysisId                           The analysis ID of the prediction model used to stratify the population.
-#' @param analysisPath                         The directory where the propensity scores will be stored.
-#' @param psControl                            An object of the type \code{cyclopsControl} generated from
-#'                                             \code{\link[Cyclops]{createControl}}.
-#' @param psPrior                              An object of the type \code{cyclopsPrior} generated from
-#'                                             \code{\link[Cyclops]{createPrior}}.
-#'
-#' @return                                     \code{NULL}. The results are all saved.
+#' @param outcomeId                  The outcome of interest for which the esitmation is performed. That is the outcome for
+#'                                   which risk stratification is performed.
+#' @param analysisSettings           An R object of type \code{analysisSettings} created using the function
+#'                                   \code{\link[RiskStratifiedEstimation]{createAnalysisSettings}}.
+#' @param getDataSettings            An R object of type \code{getDataSettings} created using the function
+#'                                   \code{\link[RiskStratifiedEstimation]{createGetDataSettings}}.
+#' @param populationSettings         An R object of type \code{populationSettings} created using the function
+#'                                   \code{\link[RiskStratifiedEstimation]{createPopulationSettings}}.
+#' @param runSettings                An R object of type \code{runSettings} created using the function
+#'                                   \code{\link[RiskStratifiedEstimation]{createRunSettings}}.
+
+#' @return                           \code{NULL}. The results are all saved.
 #'
 #' @export
 #'

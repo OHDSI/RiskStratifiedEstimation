@@ -9,7 +9,6 @@
 #' @param cohortTable The table that contains the treatment and comparator cohorts.
 #' @param resultsDatabaseSchema The name of the database schema to store the new tables. Need to have write access.
 #' @param mergedCohortTable The table that will contain the merged cohorts.
-#' @param cohortAttributeTable The table that will contain the patients along with their new covariate values.
 #' @param connectionDetails The connection details required to connect to a database.
 #'
 #' @return Creates the tables resultsDatabaseSchema.mergedCohortTable, resultsDatabaseSchema.attributeDefinitionTable and resultsDatabaseSchema.cohortAttributeTable
@@ -49,22 +48,6 @@ prepareForPlpData <- function(treatmentCohortId,
 }
 
 
-
-
-
-# Removes treatment from the plpData object
-
-removeTreatment <- function(plpData,
-                            treatmentCovariateId){
-
-  plpData$covariates <- ffbase::subset.ffdf(plpData$covariates,
-                                            covariateId != treatmentCovariateId)
-  plpData$covariateRef <- ffbase::subset.ffdf(plpData$covariateRef,
-                                              covariateId != treatmentCovariateId)
-
-  return(plpData)
-
-}
 
 addTable <- function(connectionDetails,
                      resultsDatabaseSchema,
