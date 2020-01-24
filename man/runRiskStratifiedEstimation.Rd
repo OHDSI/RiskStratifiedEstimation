@@ -35,6 +35,6 @@ The result.
 }
 \description{
 Runs a risk stratified analysis in two stages. It first runs a prediction algorithm using
-\code{PatientLevelPrediction} to derive baseline patient risks and then derives estimates within risk strata using
-\code{CohortMethod} package.
+\code{PatientLevelPrediction} to derive baseline patient risks and then derives estimates
+within risk strata incorporating functionality from \code{CohortMethod} package.
 }

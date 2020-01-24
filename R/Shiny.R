@@ -1,3 +1,12 @@
+#' Creates the server function of the shiny application
+#'
+#' @param analysisSettings        An R object of type \code{analysisSettings} created using the function
+#'                                \code{\link[RiskStratifiedEstimation]{createAnalysisSettings}}
+#'
+#' @return                        An R file containing the sever function
+#'
+#' @export
+
 createServer <- function(analysisSettings){
   serverText <- "library(dplyr)
   shiny::shinyServer(function(input, output, session){
@@ -80,6 +89,14 @@ createServer <- function(analysisSettings){
 }
 
 
+#' Creates the ui function of the shiny application
+#'
+#' @param analysisSettings        An R object of type \code{analysisSettings} created using the function
+#'                                \code{\link[RiskStratifiedEstimation]{createAnalysisSettings}}
+#'
+#' @return                        An R file containing the ui function
+#'
+#' @export
 
 createUI <- function(analysisSettings){
 
@@ -139,6 +156,17 @@ createUI <- function(analysisSettings){
 
 }
 
+
+#' Creates the global function of the shiny application
+#'
+#' Creates the global function that is executed at the launch of the application
+#'
+#' @param analysisSettings        An R object of type \code{analysisSettings} created using the function
+#'                                \code{\link[RiskStratifiedEstimation]{createAnalysisSettings}}
+#'
+#' @return                        An R file containing the global function
+#'
+#' @export
 
 createGlobal <- function(analysisSettings){
 
@@ -256,7 +284,17 @@ createGlobal <- function(analysisSettings){
                        "global.R"))
 }
 
+#' Launches the shiny application
+#'
+#' Launches the shiny application that enables the exploration of the risk stratified analysis
+#'
+#' @param analysisSettings        An R object of type \code{analysisSettings} created using the function
+#'                                \code{\link[RiskStratifiedEstimation]{createAnalysisSettings}}
+#'
+#' @return                        An R file containing the sever function
+#'
 #' @export
+
 runShiny <- function(analysisSettings){
 
   createUI(analysisSettings)
@@ -271,7 +309,13 @@ runShiny <- function(analysisSettings){
 }
 
 
-
+#' Merges the results of a risk stratified analysis
+#'
+#' @param analysisSettings        An R object of type \code{analysisSettings} created using the function
+#'                                \code{\link[RiskStratifiedEstimation]{createAnalysisSettings}}
+#'
+#' @return                        An R file containing the sever function
+#'
 #' @importFrom dplyr %>%
 #' @export
 

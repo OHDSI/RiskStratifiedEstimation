@@ -1,8 +1,8 @@
 #' Runs a risk stratified analysis
 #'
 #' Runs a risk stratified analysis in two stages. It first runs a prediction algorithm using
-#' \code{PatientLevelPrediction} to derive baseline patient risks and then derives estimates within risk strata using
-#' \code{CohortMethod} package.
+#' \code{PatientLevelPrediction} to derive baseline patient risks and then derives estimates
+#' within risk strata incorporating functionality from \code{CohortMethod} package.
 #'
 #' @param connectionDetails          An R object of type \code{connectionDetails} created using the function
 #'                                   \code{\link[DatabaseConnector]{createConnectionDetails}}.
@@ -364,7 +364,7 @@ runRiskStratifiedEstimation <- function(connectionDetails,
                             "Estimation")
   dummy <- ParallelLogger::clusterApply(cluster = cluster,
                                         x = predictOutcomes,
-                                        fun = fitOutcomeModels2,
+                                        fun = fitOutcomeModels,
                                         getDataSettings = getDataSettings,
                                         pathToPs = pathToPs,
                                         runSettings = runSettings)
@@ -394,7 +394,7 @@ runRiskStratifiedEstimation <- function(connectionDetails,
                             predictOutcome)
       dummy <- ParallelLogger::clusterApply(cluster = cluster,
                                             x = compareOutcomes,
-                                            fun = fitOutcomeModels2,
+                                            fun = fitOutcomeModels,
                                             getDataSettings = getDataSettings,
                                             pathToPs = pathToPs,
                                             runSettings = runSettings)
@@ -436,7 +436,7 @@ runRiskStratifiedEstimation <- function(connectionDetails,
 
       dummy <- ParallelLogger::clusterApply(cluster = cluster,
                                             x = negativeControlIds,
-                                            fun = fitOutcomeModels2,
+                                            fun = fitOutcomeModels,
                                             getDataSettings = getDataSettings,
                                             pathToPs = pathToPs,
                                             runSettings = runSettings)
