@@ -415,7 +415,7 @@ runRiskStratifiedEstimation <- function(connectionDetails,
 
 
     for(predictOutcome in predictOutcomes){
-      cluster <- ParallelLogger::makeCluster(runSettings$runCmSettings$createPsThreads)
+      cluster <- ParallelLogger::makeCluster(runSettings$runCmSettings$createPsThreadsNegativeControls)
       ParallelLogger::clusterRequire(cluster, c("RiskStratifiedEstimation", "CohortMethod"))
       pathToPs <- file.path(analysisSettings$saveDirectory,
                             analysisSettings$analysisId,

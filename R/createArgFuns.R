@@ -502,6 +502,8 @@ createCreatePsArgs <- function(excludeCovariateIds = c(),
 #' @param createPsThreads                      The number of parallel threads for the estimation of the propensity
 #'                                             scores. Default is 1.
 #' @param fitOutcomeModelsThreads              The number of parallel threads for the estimation of the outcome models
+#' @param createPsThreadsNegativeControls      The number of parallel threads for the estimation of the negative control
+#'                                             outcomes
 #' @param estimateOverallResults               Should overall results be estimated? Default is \code{FALSE}
 #' @param timePoint                            The time point after cohort start that absolute differences should be
 #'                                             estimated.
@@ -515,6 +517,7 @@ createRunCmSettingsArgs <- function(psMethod = "inversePtWeighted",
                                     psSettings = createCreatePsArgs(),
                                     createPsThreads = 1,
                                     fitOutcomeModelsThreads = 1,
+                                    createPsThreadsNegativeControls = 1,
                                     estimateOverallResults = FALSE,
                                     timePoint = 365,
                                     riskStrata = 4){

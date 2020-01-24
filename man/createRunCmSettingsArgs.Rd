@@ -7,8 +7,8 @@
 createRunCmSettingsArgs(psMethod = "inversePtWeighted",
   effectEstimationSettings = createCreateIPWArgs(),
   psSettings = createCreatePsArgs(), createPsThreads = 1,
-  fitOutcomeModelsThreads = 1, estimateOverallResults = FALSE,
-  timePoint = 365, riskStrata = 4)
+  fitOutcomeModelsThreads = 1, createPsThreadsNegativeControls = 1,
+  estimateOverallResults = FALSE, timePoint = 365, riskStrata = 4)
 }
 \arguments{
 \item{psMethod}{How should the propensity scores be used? Can be one of
@@ -29,6 +29,9 @@ one of \code{\link[RiskStratifiedEstimation]{createCreateIPWArgs}}, when
 scores. Default is 1.}
 
 \item{fitOutcomeModelsThreads}{The number of parallel threads for the estimation of the outcome models}
+
+\item{createPsThreadsNegativeControls}{The number of parallel threads for the estimation of the negative control
+outcomes}
 
 \item{estimateOverallResults}{Should overall results be estimated? Default is \code{FALSE}}
 
