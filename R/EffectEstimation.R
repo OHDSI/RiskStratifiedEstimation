@@ -603,7 +603,7 @@ estimateTreatmentEffect <- function(ps,
 
     models <- lapply(ps,
                      CohortMethod::fitOutcomeModel,
-                     stratified = TRUE,
+                     stratified = FALSE,
                      modelType = "cox")
 
     cases <- do.call(rbind,
@@ -881,7 +881,7 @@ fitOutcomeModelsOverall <- function(outcomeId,
                                              stratificationColumns)
 
     outcomeModel <- CohortMethod::fitOutcomeModel(matchedPop,
-                                                  stratified = TRUE,
+                                                  stratified = FALSE,
                                                   modelType = "cox")
 
     arr <- absoluteRiskReduction(matchedPop,
