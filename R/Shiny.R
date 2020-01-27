@@ -8,7 +8,9 @@
 #' @export
 
 createServer <- function(analysisSettings){
-  serverText <- "library(dplyr)
+  formatR::tidy_source(
+    text =
+      "library(dplyr)
   shiny::shinyServer(function(input, output, session){
 
   shiny::observe({
@@ -80,12 +82,13 @@ createServer <- function(analysisSettings){
   .45*session$clientData$output_combinedPlot_width
   })
   })
-  "
-  cat(serverText,
-      file = file.path(analysisSettings$saveDirectory,
-                       analysisSettings$analysisId,
-                       "shiny",
-                       "server.R"))
+  ",
+    output = TRUE,
+    file = file.path(analysisSettings$saveDirectory,
+                     analysisSettings$analysisId,
+                     "shiny",
+                     "server.R")
+  )
 }
 
 
@@ -100,7 +103,9 @@ createServer <- function(analysisSettings){
 
 createUI <- function(analysisSettings){
 
-  uiText <- "shiny::shinyUI(
+  formatR::tidy_source(
+    text =
+      "shiny::shinyUI(
   shinydashboard::dashboardPage(
   skin = \"black\",
   shinydashboard::dashboardHeader(
@@ -146,14 +151,13 @@ createUI <- function(analysisSettings){
   shiny::plotOutput(\"combinedPlot\", height = \"600px\")))
   )
   )
-  )"
-
-  cat(uiText,
-      file = file.path(analysisSettings$saveDirectory,
-                       analysisSettings$analysisId,
-                       "shiny",
-                       "ui.R"))
-
+  )",
+    output = TRUE,
+    file = file.path(analysisSettings$saveDirectory,
+                     analysisSettings$analysisId,
+                     "shiny",
+                     "ui.R")
+  )
 }
 
 
@@ -170,8 +174,9 @@ createUI <- function(analysisSettings){
 
 createGlobal <- function(analysisSettings){
 
-  globalText <-
-    "mapOutcomes <- readRDS(\"./data/mapOutcomes.rds\")
+  formatR::tidy_source(
+    text =
+      "mapOutcomes <- readRDS(\"./data/mapOutcomes.rds\")
   mapTreatments <- readRDS(\"./data/mapTreatments.rds\")
   mappedOverallAbsoluteResults <- readRDS(\"./data/mappedOverallAbsoluteResults.rds\")
   mappedOverallRelativeResults <- readRDS(\"./data/mappedOverallRelativeResults.rds\")
@@ -275,13 +280,13 @@ createGlobal <- function(analysisSettings){
   legend.title = ggplot2::element_blank())
 
   ggpubr::ggarrange(casesPlot, rrrPlot, arrPlot, nrow = 3, align = \"v\")
-  }"
-
-  cat(globalText,
-      file = file.path(analysisSettings$saveDirectory,
-                       analysisSettings$analysisId,
-                       "shiny",
-                       "global.R"))
+  }",
+    output = TRUE,
+    file = file.path(analysisSettings$saveDirectory,
+                     analysisSettings$analysisId,
+                     "shiny",
+                     "global.R")
+  )
 }
 
 #' Launches the shiny application
@@ -300,6 +305,9 @@ runShiny <- function(analysisSettings){
   createUI(analysisSettings)
   createServer(analysisSettings)
   createGlobal(analysisSettings)
+  formatR::tidy_dir(file.path(analysisSettings$saveDirectory,
+                              analysisSettings$analysisId,
+                              ))
 
   setwd(file.path(analysisSettings$saveDirectory,
                   analysisSettings$analysisId,

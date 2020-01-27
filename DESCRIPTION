@@ -28,6 +28,7 @@ Imports: PatientLevelPrediction,
          survival,
          tidyr,
          doSNOW,
+         formatR,
          ggpubr,
          survminer
 Suggests: knitr,
