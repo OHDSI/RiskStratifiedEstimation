@@ -28,18 +28,30 @@ fitOutcomeModels <- function(outcomeId,
   ParallelLogger::logInfo("Read PS and CohortMethod data")
   ParallelLogger::logInfo("Starting estimation of treatment effects")
 
-  treatmentEffects <- estimateTreatmentEffect(ps = ps,
-                                              runSettings = runSettings)
+  treatmentEffects <- tryCatch({
+    estimateTreatmentEffect(ps = ps,
+                            runSettings = runSettings)
+  },
+  error = function(e){
+    e$message
+  })
+
+
   ParallelLogger::logInfo("Done estimating treatment effects")
 
-  saveRDS(treatmentEffects$relativeRiskReduction,
-          file = file.path(analysisPath, 'relativeRiskReduction.rds'))
-  saveRDS(treatmentEffects$absoluteRiskReduction,
-          file = file.path(analysisPath, 'absoluteRiskReduction.rds'))
-  saveRDS(treatmentEffects$models,
-          file = file.path(analysisPath, 'models.rds'))
-  saveRDS(treatmentEffects$cases,
-          file = file.path(analysisPath, 'cases.rds'))
+  if(!is.character(treatmentEffects)){
+
+    saveRDS(treatmentEffects$relativeRiskReduction,
+            file = file.path(analysisPath, 'relativeRiskReduction.rds'))
+    saveRDS(treatmentEffects$absoluteRiskReduction,
+            file = file.path(analysisPath, 'absoluteRiskReduction.rds'))
+    saveRDS(treatmentEffects$models,
+            file = file.path(analysisPath, 'models.rds'))
+    saveRDS(treatmentEffects$cases,
+            file = file.path(analysisPath, 'cases.rds'))
+  }
+
+
 
   ParallelLogger::logInfo('Saved results')
 
