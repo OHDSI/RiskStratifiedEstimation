@@ -4,13 +4,17 @@
 \alias{createAnalysisSettings}
 \title{Create a parameter defining the performed risk stratified analysis}
 \usage{
-createAnalysisSettings(analysisId = NULL, treatmentCohortId,
-  comparatorCohortId, outcomeIds,
-  analysisMatrix = diag(length(outcomeIds)), verbosity = NULL,
+createAnalysisSettings(analysisId = NULL, databaseName,
+  treatmentCohortId, comparatorCohortId, outcomeIds,
+  negativeControlOutcomes = c(),
+  analysisMatrix = diag(length(outcomeIds)), mapTreatments,
+  mapNegativeControls = NULL, mapOutcomes, verbosity = NULL,
   saveDirectory = NULL)
 }
 \arguments{
 \item{analysisId}{The analysis ID.}
+
+\item{databaseName}{The name of the database.}
 
 \item{treatmentCohortId}{The cohort definition id of the treatment cohort in the cohortTable.}
 
@@ -18,23 +22,35 @@ createAnalysisSettings(analysisId = NULL, treatmentCohortId,
 
 \item{outcomeIds}{The cohort definition ids of the outcome cohorts in the outcomeTable.}
 
+\item{negativeControlOutcomes}{The ids of the negative control oucomes used to assess systematic
+error.}
+
 \item{analysisMatrix}{Boolean matrix defining the outcomes to be assessed (rows) within risk
 strata (columns). The order in columns should match the the order of
 \code{outcomeIds}. Default is the diagonal matrix, which leads to the
 risk stratified assessment of only the outcome for which the risk strata
 were defined.}
 
+\item{mapTreatments}{Dataframe containing 2 columns: *idNumber* with the id numbers of the
+treatment and comparator cohorts and *label* the cohort names.}
+
+\item{mapNegativeControls}{Dataframe containing 2 columns: *idNumber* with the id numbers of the
+negative control outcomes and *label* their names.}
+
+\item{mapOutcomes}{Dataframe containing 2 columns: *idNumber* with the cohort names of
+the outcomes of interest and *label* with their names.}
+
 \item{verbosity}{Sets the level of the verbosity. If the log level is at or higher in
-priority than the logger threshold, a message will print. The levels
-are:
-\itemize{
-  \item {DEBUG}{Highest verbosity showing all debug statements}
-  \item {TRACE}{Showing information about start and end of steps}
-  \item {INFO}{Show informative information (Default)}
-  \item {WARN}{Show warning messages}
-  \item {ERROR}{Show error messages}
-  \item {FATAL}{Be silent except for fatal errors}
-}
+      priority than the logger threshold, a message will print. The levels
+      are:
+      \itemize{
+        \item {DEBUG}{Highest verbosity showing all debug statements}
+        \item {TRACE}{Showing information about start and end of steps}
+        \item {INFO}{Show informative information (Default)}
+        \item {WARN}{Show warning messages}
+        \item {ERROR}{Show error messages}
+        \item {FATAL}{Be silent except for fatal errors}
+      }
 .}
 
 \item{saveDirectory}{The directory name where the results of the analyses will be stored.}
