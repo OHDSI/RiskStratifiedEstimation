@@ -1,88 +1,75 @@
-#' Creates the server function of the shiny application
-#'
-#' @param analysisSettings        An R object of type \code{analysisSettings} created using the function
-#'                                \code{\link[RiskStratifiedEstimation]{createAnalysisSettings}}
-#'
-#' @return                        An R file containing the sever function
-#'
-#' @export
-
 createServer <- function(analysisSettings){
   formatR::tidy_source(
-    text =
-      "library(dplyr)
-  shiny::shinyServer(function(input, output, session){
+    text = "library(dplyr)
+shiny::shinyServer(function(input, output, session) {
 
-  shiny::observe({
-  stratificationOutcome <- input$stratOutcome
-  filteredEstimationOutcomes <- readRDS(\"data/mappedOverallRelativeResults.rds\") %>%
-  dplyr::filter(stratOutcome == stratificationOutcome) %>%
-  dplyr::select(estOutcome)
+    shiny::observe({
+    stratificationOutcome <- input$stratOutcome
+    filteredEstimationOutcomes <- readRDS(\"data/mappedOverallRelativeResults.rds\") %>%
+    dplyr::filter(stratOutcome == stratificationOutcome) %>% dplyr::select(estOutcome)
 
 
-  shiny::updateSelectInput(session = session,
-  inputId = \"estOutcome\",
-  choices = unique(filteredEstimationOutcomes))
-  })
+    shiny::updateSelectInput(session = session, inputId = \"estOutcome\", choices = unique(filteredEstimationOutcomes))
+    })
 
-  resultSubset <- shiny::reactive({
+    resultSubset <- shiny::reactive({
 
-  results <- getResults(treat = input$treatment,
-  comp = input$comparator,
-  strat = input$stratOutcome,
-  est = input$estOutcome,
-  anal = input$analysis,
-  db = input$database)
+    results <- getResults(treat = input$treatment, comp = input$comparator,
+    strat = input$stratOutcome, est = input$estOutcome, anal = input$analysis,
+    db = input$database)
 
-  return(results)
+    return(results)
 
-  })
+    })
 
-  output$mainTableRelative <- DT::renderDataTable({
+    output$mainTableRelative <- DT::renderDataTable({
 
-  res <- resultSubset()
+    res <- resultSubset()
 
-  table <- res$relative %>%
-  dplyr::select(database, stratOutcome, estOutcome, riskStratum, estimate, lower, upper) %>%
-  DT::datatable() %>%
-  DT::formatRound(columns= c(\"estimate\", \"lower\", \"upper\"), digits=2)
+    table <- res$relative %>% dplyr::select(database, stratOutcome, estOutcome,
+    riskStratum, estimate, lower, upper) %>% DT::datatable() %>% DT::formatRound(columns = c(\"estimate\",
+    \"lower\", \"upper\"), digits = 2)
 
-  return(table)
+    return(table)
 
-  })
+    })
 
-  output$mainTableAbsolute <- DT::renderDataTable({
+    output$mainTableAbsolute <- DT::renderDataTable({
 
-  res <- resultSubset()
+    res <- resultSubset()
 
-  table <- res$absolute %>%
-  dplyr::select(database, stratOutcome, estOutcome, riskStratum, estimate, lower, upper) %>%
-  dplyr::mutate(estimate = 100*estimate,
-  lower = 100*lower,
-  upper = 100*upper) %>%
-  DT::datatable() %>%
-  DT::formatRound(columns= c(\"estimate\", \"lower\", \"upper\"), digits=2)
+    table <- res$absolute %>% dplyr::select(database, stratOutcome, estOutcome,
+    riskStratum, estimate, lower, upper) %>% dplyr::mutate(estimate = 100 *
+    estimate, lower = 100 * lower, upper = 100 * upper) %>% DT::datatable() %>%
+    DT::formatRound(columns = c(\"estimate\", \"lower\", \"upper\"), digits = 2)
 
-  return(table)
+    return(table)
 
   })
 
   output$combinedPlot <- shiny::renderPlot({
 
-  res <- resultSubset()
+    res <- resultSubset()
 
-  plot <- combinedPlot(cases = res$cases,
-  relative = res$relative,
-  absolute = res$absolute,
-  treatment = input$treatment,
-  comparator = input$comparator)
-  return(plot)
+    plot <- combinedPlot(cases = res$cases, relative = res$relative, absolute = res$absolute,
+                         treatment = input$treatment, comparator = input$comparator)
+    return(plot)
 
   }, height = function() {
-  .45*session$clientData$output_combinedPlot_width
+    0.45 * session$clientData$output_combinedPlot_width
   })
+
+  output$combinedPlotNegativeControls <- shiny::renderPlot({
+
+    res <- resultSubset()
+    nRiskStrata <- length(unique(res$negativeControls$riskStratum))
+    plot <- combinedPlotNegativeControls(res$negativeControls)
+    return(plot)
+
+  }, height = function() {
+    0.45 * session$clientData$output_combinedPlotNegativeControls_width
   })
-  ",
+})",
     output = TRUE,
     file = file.path(analysisSettings$saveDirectory,
                      analysisSettings$analysisId,
@@ -92,66 +79,59 @@ createServer <- function(analysisSettings){
 }
 
 
-#' Creates the ui function of the shiny application
-#'
-#' @param analysisSettings        An R object of type \code{analysisSettings} created using the function
-#'                                \code{\link[RiskStratifiedEstimation]{createAnalysisSettings}}
-#'
-#' @return                        An R file containing the ui function
-#'
-#' @export
 
 createUI <- function(analysisSettings){
-
   formatR::tidy_source(
     text =
       "shiny::shinyUI(
   shinydashboard::dashboardPage(
-  skin = \"black\",
-  shinydashboard::dashboardHeader(
-  title = \"RiskStratifiedEstimation\"
-  ),
-  shinydashboard::dashboardSidebar(
-  shinydashboard::sidebarMenu(
-  shiny::selectInput(\"treatment\",
-  \"Treatment\",
-  unique(mapTreatments$label),
-  selected = unique(mapTreatments$label)[1]),
-  shiny::selectInput(\"comparator\",
-  \"Comparator\",
-  unique(mapTreatments$label),
-  selected = unique(mapTreatments$label)[2]),
-  shiny::selectInput(\"stratOutcome\",
-  \"Stratification Outcome\",
-  unique(mapOutcomes$label),
-  \"Total cardiovascular disease\"),
-  shiny::selectInput(\"estOutcome\",
-  \"Estimation outcome (max: 6)\",
-  unique(mapOutcomes$label),
-  selected = unique(mapOutcomes$label)[1],
-  multiple = TRUE,
-  selectize = TRUE),
-  shiny::checkboxGroupInput(\"database\",
-  \"Database\",
-  unique(mappedOverallAbsoluteResults$database),
-  unique(mappedOverallAbsoluteResults$database)[1]),
-  shiny::checkboxGroupInput(\"analysis\",
-  \"Analysis\",
-  unique(mappedOverallAbsoluteResults$analysis),
-  \"stratifyByPs\")
+    skin = \"black\",
+    shinydashboard::dashboardHeader(
+      title = \"RiskStratifiedEstimation\"
+    ),
+    shinydashboard::dashboardSidebar(
+      shinydashboard::sidebarMenu(
+        shiny::selectInput(\"treatment\",
+                           \"Treatment\",
+                           unique(mapTreatments$label),
+                           selected = unique(mapTreatments$label)[1]),
+        shiny::selectInput(\"comparator\",
+                           \"Comparator\",
+                           unique(mapTreatments$label),
+                           selected = unique(mapTreatments$label)[2]),
+        shiny::selectInput(\"stratOutcome\",
+                           \"Stratification Outcome\",
+                           unique(mapOutcomes$label),
+                           \"Total cardiovascular disease\"),
+        shiny::selectInput(\"estOutcome\",
+                           \"Estimation outcome (max: 6)\",
+                           unique(mapOutcomes$label),
+                           selected = unique(mapOutcomes$label)[1],
+                           multiple = TRUE,
+                           selectize = TRUE),
+        shiny::checkboxGroupInput(\"database\",
+                                  \"Database\",
+                                  unique(mappedOverallAbsoluteResults$database),
+                                  unique(mappedOverallAbsoluteResults$database)[1]),
+        shiny::checkboxGroupInput(\"analysis\",
+                                  \"Analysis\",
+                                  unique(mappedOverallAbsoluteResults$analysis),
+                                  \"stratifyByPs\")
+      )
+    ),
+    shinydashboard::dashboardBody(
+      shiny::tabsetPanel(id = \"relativePanel\",
+                         shiny::tabPanel(\"Relative\",
+                                         DT::dataTableOutput(\"mainTableRelative\")),
+                         shiny::tabPanel(\"Absolute\",
+                                         DT::dataTableOutput(\"mainTableAbsolute\")),
+                         shiny::tabPanel(\"Plot\",
+                                         shiny::plotOutput(\"combinedPlot\", height = \"600px\")),
+                         shiny::tabPanel(\"Systematic error\",
+                                         shiny::plotOutput(\"combinedPlotNegativeControls\", height = \"600px\")))
+    )
   )
-  ),
-  shinydashboard::dashboardBody(
-  shiny::tabsetPanel(id = \"relativePanel\",
-  shiny::tabPanel(\"Relative\",
-  DT::dataTableOutput(\"mainTableRelative\")),
-  shiny::tabPanel(\"Absolute\",
-  DT::dataTableOutput(\"mainTableAbsolute\")),
-  shiny::tabPanel(\"Plot\",
-  shiny::plotOutput(\"combinedPlot\", height = \"600px\")))
-  )
-  )
-  )",
+)",
     output = TRUE,
     file = file.path(analysisSettings$saveDirectory,
                      analysisSettings$analysisId,
@@ -161,153 +141,118 @@ createUI <- function(analysisSettings){
 }
 
 
-#' Creates the global function of the shiny application
-#'
-#' Creates the global function that is executed at the launch of the application
-#'
-#' @param analysisSettings        An R object of type \code{analysisSettings} created using the function
-#'                                \code{\link[RiskStratifiedEstimation]{createAnalysisSettings}}
-#'
-#' @return                        An R file containing the global function
-#'
-#' @export
-
 createGlobal <- function(analysisSettings){
 
   formatR::tidy_source(
     text =
-      "mapOutcomes <- readRDS(\"./data/mapOutcomes.rds\")
-  mapTreatments <- readRDS(\"./data/mapTreatments.rds\")
-  mappedOverallAbsoluteResults <- readRDS(\"./data/mappedOverallAbsoluteResults.rds\")
-  mappedOverallRelativeResults <- readRDS(\"./data/mappedOverallRelativeResults.rds\")
-  mappedOverallCasesResults <- readRDS(\"./data/mappedOverallCasesResults.rds\")
+      "library(dplyr)
 
-  getResults <- function(treat,
-  comp,
-  strat,
-  est,
-  db,
-  anal){
+    mapOutcomes <- readRDS(\"./data/mapOutcomes.rds\")
+    mapTreatments <- readRDS(\"./data/mapTreatments.rds\")
+    mappedOverallAbsoluteResults <- readRDS(\"./data/mappedOverallAbsoluteResults.rds\")
+    mappedOverallRelativeResults <- readRDS(\"./data/mappedOverallRelativeResults.rds\")
+    mappedOverallCasesResults <- readRDS(\"./data/mappedOverallCasesResults.rds\")
+    mappedNegativeControlResults <- readRDS(\"./data/mappedNegativeControlResults.rds\")
 
-  res <- list()
+    getResults <- function(treat, comp, strat, est, db, anal) {
 
-  res$relative <- readRDS(\"./data/mappedOverallRelativeResults.rds\") %>%
-  filter(stratOutcome == strat & estOutcome %in% est & analysis == anal &
-  treatment == treat & comparator == comp & database == db)
-  res$absolute <- readRDS(\"./data/mappedOverallAbsoluteResults.rds\") %>%
-  filter(stratOutcome == strat & estOutcome %in% est & analysis == anal &
-  treatment == treat & comparator == comp & database == db)
-  res$cases <- readRDS(\"./data/mappedOverallCasesResults.rds\") %>%
-  filter(stratOutcome == strat & estOutcome %in% est & analysis == anal &
-  treatment == treat & comparator == comp & database == db)
+    res <- list()
 
-  return(res)
+    res$relative <- readRDS(\"./data/mappedOverallRelativeResults.rds\") %>%
+    filter(stratOutcome == strat & estOutcome %in% est & analysis == anal & treatment == treat & comparator == comp & database == db)
+    res$absolute <- readRDS(\"./data/mappedOverallAbsoluteResults.rds\") %>%
+    filter(stratOutcome == strat & estOutcome %in% est & analysis == anal & treatment == treat & comparator == comp & database == db)
+    res$cases <- readRDS(\"./data/mappedOverallCasesResults.rds\") %>%
+    filter(stratOutcome == strat & estOutcome %in% est & analysis == anal & treatment == treat & comparator == comp & database == db)
+    res$negativeControls <- readRDS(\"./data/mappedNegativeControlResults.rds\") %>%
+    filter(stratOutcome == strat & analysis == anal & treatment == treat & comparator == comp & database == db)
+
+    return(res)
 
 
-  }
+    }
 
 
 
-  combinedPlot <- function(cases,
-  relative,
-  absolute,
-  treatment,
-  comparator){
+    combinedPlot <- function(cases, relative, absolute, treatment, comparator) {
 
-  cases <-  reshape::melt(cases,
-  id.vars = c(\"riskStratum\", \"database\", \"estOutcome\"),
-  measure.vars = c(\"casesComparator\", \"casesTreatment\")) %>%
-  mutate(variable = ifelse(variable == \"casesComparator\", comparator, treatment))
+    cases <- reshape::melt(cases, id.vars = c(\"riskStratum\", \"database\", \"estOutcome\"),
+    measure.vars = c(\"casesComparator\", \"casesTreatment\")) %>%
+    mutate(variable = ifelse(variable == \"casesComparator\", comparator, treatment))
 
 
-  cases$test <- file.path(cases$database, cases$estOutcome, cases$variable)
+    cases$test <- file.path(cases$database, cases$estOutcome, cases$variable)
 
-  casesPlot <- ggplot2::ggplot(data = cases, ggplot2::aes(x = riskStratum, y = value*100)) +
-  ggplot2::geom_bar(stat = 'identity', position = ggplot2::position_dodge(), ggplot2::aes(fill = test), width = .5)+
-  ggplot2::xlab('Risk Stratum') +
-  ggplot2::ylab('Outcome Rate (%)') +
-  ggplot2::geom_hline(yintercept = 0, size = .8) +
-  # ggplot2::coord_cartesian(ylim = ylimCases) +
-  ggplot2::scale_fill_brewer(palette=\"Paired\") +
-  ggplot2::theme_minimal() +
-  ggplot2::theme(legend.title = ggplot2::element_blank(),
-  axis.title.x = ggplot2::element_blank(),
-  axis.text.x = ggplot2::element_blank(),
-  legend.direction = 'horizontal',
-  legend.position = 'top') +
-  ggplot2::scale_y_reverse()
+    casesPlot <- ggplot2::ggplot(data = cases, ggplot2::aes(x = riskStratum, y = value * 100)) +
+    ggplot2::geom_bar(stat = \"identity\", position = ggplot2::position_dodge(), ggplot2::aes(fill = test), width = 0.5) +
+    ggplot2::xlab(\"Risk Stratum\") +
+    ggplot2::ylab(\"Outcome Rate (%)\") +
+    ggplot2::geom_hline(yintercept = 0, size = 0.8) +
+    ggplot2::scale_fill_brewer(palette = \"Paired\") + ggplot2::theme_minimal() +
+    ggplot2::theme(legend.title = ggplot2::element_blank(), axis.title.x = ggplot2::element_blank(),
+    axis.text.x = ggplot2::element_blank(), legend.direction = \"horizontal\",
+    legend.position = \"top\") + ggplot2::scale_y_reverse()
 
-  relative$test <- file.path(relative$database, relative$estOutcome)
+    relative$test <- file.path(relative$database, relative$estOutcome)
 
-  rrrPlot <- ggplot2::ggplot(relative, ggplot2::aes(x = riskStratum,
-  y = estimate,
-  group = test,
-  color = test)) +
-  ggplot2::geom_point(size = 2.5,
-  position = ggplot2::position_dodge(w = .3)) +
-  ggplot2::geom_errorbar(ggplot2::aes(ymin = lower, ymax = upper),
-  width = 0,
-  position = ggplot2::position_dodge(w = .3)) +
-  ggplot2::geom_hline(yintercept = 1, linetype = 'dashed', size = .8) +
-  ggplot2::xlab('Risk Stratum') +
-  ggplot2::ylab('Hazard Ratio') +
-  ggplot2::theme_minimal() +
-  ggplot2::scale_color_manual(values=c(\"#0099FF\", \"#009933\", \"#CC0000\", \"#FF9933\", \"#663399\", \"#CC9966\")) +
-  ggplot2::theme(legend.title = ggplot2::element_blank(),
-  legend.position = 'none',
-  axis.title.x = ggplot2::element_blank(),
-  axis.text.x = ggplot2::element_blank())
+    rrrPlot <- ggplot2::ggplot(relative, ggplot2::aes(x = riskStratum, y = estimate,
+    group = test, color = test)) +
+    ggplot2::geom_point(size = 2.5, position = ggplot2::position_dodge(w = 0.3)) +
+    ggplot2::geom_errorbar(ggplot2::aes(ymin = lower, ymax = upper), width = 0,
+    position = ggplot2::position_dodge(w = 0.3)) +
+    ggplot2::geom_hline(yintercept = 1, linetype = \"dashed\", size = 0.8) +
+    ggplot2::xlab(\"Risk Stratum\") +
+    ggplot2::ylab(\"Hazard Ratio\") +
+    ggplot2::theme_minimal() +
+    ggplot2::scale_color_manual(values = c(\"#0099FF\", \"#009933\", \"#CC0000\", \"#FF9933\", \"#663399\", \"#CC9966\")) +
+    ggplot2::theme(legend.title = ggplot2::element_blank(), legend.position = \"none\", axis.title.x = ggplot2::element_blank(), axis.text.x = ggplot2::element_blank())
 
   absolute$test <- paste(absolute$database, absolute$estOutcome, sep = \"/\")
 
-
-  arrPlot <- ggplot2::ggplot(absolute, ggplot2::aes(x = riskStratum,
-  y = estimate*100,
-  group = test,
-  color = test)) +
-  ggplot2::geom_point(size = 2.5,
-  position = ggplot2::position_dodge(w = .3)) +
-  ggplot2::geom_errorbar(ggplot2::aes(ymin = lower*100, ymax = upper*100),
-  width = 0,
-  position = ggplot2::position_dodge(w = .3)) +
-  ggplot2::geom_hline(yintercept = 0, linetype = 'dashed', size = .8) +
-  ggplot2::xlab('Risk stratum') +
-  ggplot2::ylab('Absolute \n Risk Reduction (%)') +
-  ggplot2::theme_minimal() +
-  ggplot2::scale_color_manual(values=c(\"#0099FF\", \"#009933\", \"#CC0000\", \"#FF9933\", \"#663399\", \"#CC9966\")) +
-  ggplot2::theme(legend.direction = 'horizontal',
-  legend.position = 'bottom',
-  legend.title = ggplot2::element_blank())
+  arrPlot <- ggplot2::ggplot(absolute, ggplot2::aes(x = riskStratum, y = estimate *
+                                                      100, group = test, color = test)) +
+    ggplot2::geom_point(size = 2.5, position = ggplot2::position_dodge(w = 0.3)) +
+    ggplot2::geom_errorbar(ggplot2::aes(ymin = lower * 100, ymax = upper * 100),
+                           width = 0, position = ggplot2::position_dodge(w = 0.3)) +
+    ggplot2::geom_hline(yintercept = 0, linetype = \"dashed\", size = 0.8) +
+    ggplot2::xlab(\"Risk stratum\") +
+    ggplot2::ylab(\"Absolute Risk Reduction (%)\") +
+    ggplot2::theme_minimal() +
+    ggplot2::scale_color_manual(values = c(\"#0099FF\", \"#009933\", \"#CC0000\", \"#FF9933\", \"#663399\", \"#CC9966\")) +
+    ggplot2::theme(legend.direction = \"horizontal\", legend.position = \"bottom\", legend.title = ggplot2::element_blank())
 
   ggpubr::ggarrange(casesPlot, rrrPlot, arrPlot, nrow = 3, align = \"v\")
-  }",
-    output = TRUE,
-    file = file.path(analysisSettings$saveDirectory,
-                     analysisSettings$analysisId,
-                     "shiny",
-                     "global.R")
-  )
 }
 
-#' Launches the shiny application
-#'
-#' Launches the shiny application that enables the exploration of the risk stratified analysis
-#'
-#' @param analysisSettings        An R object of type \code{analysisSettings} created using the function
-#'                                \code{\link[RiskStratifiedEstimation]{createAnalysisSettings}}
-#'
-#' @return                        An R file containing the sever function
-#'
-#' @export
 
+
+
+combinedPlotNegativeControls <- function(negativeControls) {
+
+  plotList <- list()
+  for (j in 1:nRiskStrata) {
+    dat <- subset(negativeControls, riskStratum == paste0(\"Q\", j))
+    plotList[[j]] <- EmpiricalCalibration::plotCiCalibrationEffect(dat$logRr, dat$seLogRr,
+                                                                   rep(0, length(dat$logRr)), title = paste(\"Risk stratum\", j))
+
+  }
+
+  ggpubr::ggarrange(plotlist = plotList)
+
+}",
+output = T,
+file = file.path(analysisSettings$saveDirectory,
+                 analysisSettings$analysisId,
+                 "shiny",
+                 "global.R"))
+}
+
+#' @export
 runShiny <- function(analysisSettings){
 
   createUI(analysisSettings)
   createServer(analysisSettings)
   createGlobal(analysisSettings)
-  formatR::tidy_dir(file.path(analysisSettings$saveDirectory,
-                              analysisSettings$analysisId,
-                              ))
 
   setwd(file.path(analysisSettings$saveDirectory,
                   analysisSettings$analysisId,
@@ -317,20 +262,16 @@ runShiny <- function(analysisSettings){
 }
 
 
-#' Merges the results of a risk stratified analysis
-#'
-#' @param analysisSettings        An R object of type \code{analysisSettings} created using the function
-#'                                \code{\link[RiskStratifiedEstimation]{createAnalysisSettings}}
-#'
-#' @return                        An R file containing the sever function
-#'
+
 #' @importFrom dplyr %>%
 #' @export
 
-createOverallResults <- function(analysisSettings){
+createOverallResults <- function(analysisSettings,
+                                 runSettings){
 
   mapTreatments <- analysisSettings$mapTreatments
   mapOutcomes <- analysisSettings$mapOutcomes
+  mapNegativeControls <- analysisSettings$mapNegativeControls
 
   predictOutcomes <-
     analysisSettings$outcomeIds[which(colSums(analysisSettings$analysisMatrix) != 0)]
@@ -366,6 +307,17 @@ createOverallResults <- function(analysisSettings){
                       analysis = character(),
                       treatment = numeric(),
                       comparator = numeric())
+
+  negativeControls <- data.frame(logRr = numeric(),
+                                 seLogRr = numeric(),
+                                 riskStratum = character(),
+                                 stratOutcome = numeric(),
+                                 estOutcome = numeric(),
+                                 database = character(),
+                                 analysis = character(),
+                                 treatment = numeric(),
+                                 comparator = numeric())
+  negativeControlIds <- analysisSettings$negativeControlOutcomes
 
   for(predictOutcome in predictOutcomes){
     absoluteResult <- readRDS(file.path(pathToResults,
@@ -455,6 +407,59 @@ createOverallResults <- function(analysisSettings){
         cases <- rbind(cases, casesResult)
       }
     }
+    negativeControlDir <- file.path(pathToResults,
+                                    predictOutcome)
+    if(!is.null(negativeControlIds)){
+      for(negativeControlId in negativeControlIds){
+        if(file.exists(file.path(negativeControlDir,
+                                 negativeControlId,
+                                 "models.rds"))){
+          sumMod <- readRDS(file.path(negativeControlDir,
+                                      negativeControlId,
+                                      "models.rds"))
+          if(!is.null(sumMod)){
+            negativeControlResult <- data.frame(logRr = numeric(),
+                                                seLogRr = numeric(),
+                                                riskStratum = character(),
+                                                stratOutcome = numeric(),
+                                                estOutcome = numeric(),
+                                                database = character(),
+                                                analysis = character(),
+                                                treatment = numeric(),
+                                                comparator = numeric())
+            for(riskStratum in 1:length(sumMod)){
+              negativeControlResult <- rbind(negativeControlResult,
+                                             data.frame(logRr = sumMod[[riskStratum]]$outcomeModelTreatmentEstimate$logRr,
+                                                        seLogRr = sumMod[[riskStratum]]$outcomeModelTreatmentEstimate$seLogRr,
+                                                        riskStratum = paste0("Q", riskStratum),
+                                                        stratOutcome = predictOutcome,
+                                                        estOutcome = negativeControlId,
+                                                        database = analysisSettings$databaseName,
+                                                        analysis = runSettings$runCmSettings$psMethod,
+                                                        treatment = analysisSettings$treatmentCohortId,
+                                                        comparator = analysisSettings$comparatorCohortId))
+            }
+            negativeControls <- rbind(negativeControls,
+                                      negativeControlResult)
+          }
+        }
+      }
+    }
+    outputDir <- file.path(saveDir, "Prediction", predictOutcome)
+    if(!dir.exists(outputDir)){
+      dir.create(outputDir, recursive = T)
+    }
+
+    predictionEvaluationDir <- file.path(analysisSettings$saveDirectory,
+                                         analysisSettings$analysisId,
+                                         "Prediction",
+                                         predictOutcome,
+                                         analysisSettings$analysisId,
+                                         "evaluation")
+    listFiles <- list.files(predictionEvaluationDir)
+    file.copy(file.path(predictionEvaluationDir,
+                        listFiles),
+              outputDir)
   }
 
   saveDir <- file.path(analysisSettings$saveDirectory,
@@ -513,6 +518,21 @@ createOverallResults <- function(analysisSettings){
     dplyr::rename("estOutcome" = "label")%>%
     saveRDS(file.path(saveDir, "mappedOverallCasesResults.rds"))
 
+  negativeControls %>%
+    dplyr::left_join(mapTreatments, by = c( "treatment" = "idNumber")) %>%
+    dplyr::select(-treatment) %>%
+    dplyr::rename("treatment" = "label") %>%
+    dplyr::left_join(mapTreatments, by = c( "comparator" = "idNumber")) %>%
+    dplyr::select(-comparator) %>%
+    dplyr::rename("comparator" = "label") %>%
+    dplyr::left_join(mapOutcomes, by = c( "stratOutcome" = "idNumber")) %>%
+    dplyr::select(-stratOutcome) %>%
+    dplyr::rename("stratOutcome" = "label") %>%
+    dplyr::left_join(mapNegativeControls, by = c( "estOutcome" = "idNumber")) %>%
+    dplyr::select(-estOutcome) %>%
+    dplyr::rename("estOutcome" = "label") %>%
+    saveRDS(file.path(saveDir, "mappedNegativeControlResults.rds"))
+
   saveRDS(analysisSettings$mapOutcomes,
           file.path(saveDir,
                     "mapOutcomes.rds"))
@@ -522,3 +542,5 @@ createOverallResults <- function(analysisSettings){
 
   return(NULL)
 }
+
+
