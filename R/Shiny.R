@@ -230,6 +230,7 @@ createGlobal <- function(analysisSettings){
 combinedPlotNegativeControls <- function(negativeControls) {
 
   plotList <- list()
+  nRiskStrata <- length(unique(negativeControls$riskStratum))
   for (j in 1:nRiskStrata) {
     dat <- subset(negativeControls, riskStratum == paste0(\"Q\", j))
     plotList[[j]] <- EmpiricalCalibration::plotCiCalibrationEffect(dat$logRr, dat$seLogRr,
