@@ -446,7 +446,8 @@ runRiskStratifiedEstimation <- function(connectionDetails,
   }
 
 
-  createOverallResults(analysisSettings)
+  createOverallResults(analysisSettings,
+                       runSettings)
   saveRDS(analysisSettings,
           file.path(analysisSettings$saveDirectory,
                     analysisSettings$analysisId,
