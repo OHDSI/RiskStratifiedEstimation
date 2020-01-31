@@ -477,7 +477,6 @@ stratifiedKaplanMeier <- function(population, timePoint){
 #'
 #' @export
 
-#'@export
 estimateTreatmentEffect <- function(ps,
                                     runSettings){
 
