@@ -225,14 +225,6 @@ runRiskStratifiedEstimation <- function(connectionDetails,
 
   ParallelLogger::logInfo("Done")
   ParallelLogger::logInfo("Creating covariate settings")
-  covariateSettingsTreatment <-
-    FeatureExtraction::createCohortAttrCovariateSettings(attrDatabaseSchema = databaseSettings$
-                                                           resultsDatabaseSchema,
-                                                         attrDefinitionTable = databaseSettings$
-                                                           attributeDefinitionTable,
-                                                         cohortAttrTable = databaseSettings$
-                                                           cohortAttributeTable)
-
 
   ParallelLogger::registerLogger(logger)
 
