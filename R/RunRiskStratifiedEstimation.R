@@ -19,7 +19,8 @@
 #' @param runSettings                An R object of type \code{runSettings} created using the function
 #'                                   \code{\link[RiskStratifiedEstimation]{createRunSettings}}.
 #'
-#' @return                           The result.
+#' @return                           The function saves all results based on \code{analysisSettings}. No
+#'                                   results are returned.
 #'
 #'
 #' @export

@@ -31,7 +31,8 @@ runRiskStratifiedEstimation(connectionDetails, analysisSettings,
 \code{\link[RiskStratifiedEstimation]{createRunSettings}}.}
 }
 \value{
-The result.
+The function saves all results based on \code{analysisSettings}. No
+                                  results are returned.
 }
 \description{
 Runs a risk stratified analysis in two stages. It first runs a prediction algorithm using

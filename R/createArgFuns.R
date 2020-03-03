@@ -717,8 +717,10 @@ createCreateIPWArgs <- function(weightsType = "ATE",
 #'                                     \item {ERROR}{Show error messages}
 #'                                     \item {FATAL}{Be silent except for fatal errors}
 #'                                   }
-#'                             .
-#' @param saveDirectory              The directory name where the results of the analyses will be stored.
+#'
+#' @param saveDirectory             The directory name where the results of the analyses will be stored.
+#' @return                          An analysisSettings object providing the identification information
+#'                                  of the analysis.
 #'
 #' @export
 
