@@ -27,8 +27,6 @@ prepareForPlpData(treatmentCohortId, comparatorCohortId, targetCohortId,
 }
 \value{
 Creates the tables resultsDatabaseSchema.mergedCohortTable, resultsDatabaseSchema.attributeDefinitionTable and resultsDatabaseSchema.cohortAttributeTable
-
-A covariate settings object for the treatment covariate.
 }
 \description{
 Prepares for running the PatientLevelPrediction package by merging the treatment and comparator cohorts and defining a new covariate for treatment.

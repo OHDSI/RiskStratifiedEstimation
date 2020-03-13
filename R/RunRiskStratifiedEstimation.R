@@ -68,11 +68,6 @@ runRiskStratifiedEstimation <- function(connectionDetails,
   predictOutcomes <-
     analysisSettings$outcomeIds[which(colSums(analysisSettings$analysisMatrix) != 0)]
 
-  # compareOutcomesList <- list()
-  # for(i in 1:length(predictOutcomes)){
-  #   colNumber <- which(analysisSettings$outcomeIds == predictOutcomes[i])
-  #   compareOutcomesList[[i]] <- analysisSettings$outcomeIds[as.logical(analysisSettings$analysisMatrix[, colNumber])]
-  # }
 
   #######################
   # Overall results step

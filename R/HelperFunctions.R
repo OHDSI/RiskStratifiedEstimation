@@ -12,7 +12,6 @@
 #' @param connectionDetails The connection details required to connect to a database.
 #'
 #' @return Creates the tables resultsDatabaseSchema.mergedCohortTable, resultsDatabaseSchema.attributeDefinitionTable and resultsDatabaseSchema.cohortAttributeTable
-#' @return A covariate settings object for the treatment covariate.
 #'
 #' @export
 
@@ -76,7 +75,7 @@ switchOutcome <- function(ps,
   result <- ps %>%
     dplyr::select(subjectId, propensityScore) %>%
     dplyr::left_join(populationCm,
-                     by = "subjectId")%>%
+                     by = "subjectId") %>%
     dplyr::filter(!is.na(survivalTime))
   return(result)
 
