@@ -1,3 +1,14 @@
+#' Creates the server function of the shiny application.
+#'
+#' Creates the server function of the shiny application developed for the assessment of the final result
+#'
+#' @param analysisSettings           An R object of type \code{analysisSettings} created using the function
+#'                                   \code{\link[RiskStratifiedEstimation]{createAnalysisSettings}}.
+#'
+#'@return                            The ui.R script
+#'
+#'@export
+
 createServer <- function(analysisSettings){
   formatR::tidy_source(
     text = "library(dplyr)
@@ -80,6 +91,17 @@ shiny::shinyServer(function(input, output, session) {
 
 
 
+#' Creates the ui of the shiny application.
+#'
+#' Creates the ui of the shiny application developed for the assessment of the final result
+#'
+#' @param analysisSettings           An R object of type \code{analysisSettings} created using the function
+#'                                   \code{\link[RiskStratifiedEstimation]{createAnalysisSettings}}.
+#'
+#'@return                            The ui.R script
+#'
+#'@export
+
 createUI <- function(analysisSettings){
   formatR::tidy_source(
     text =
@@ -140,6 +162,20 @@ createUI <- function(analysisSettings){
   )
 }
 
+
+
+
+
+#' Creates the global function of the shiny application.
+#'
+#' Creates the global function of the shiny application developed for the assessment of the final result
+#'
+#' @param analysisSettings           An R object of type \code{analysisSettings} created using the function
+#'                                   \code{\link[RiskStratifiedEstimation]{createAnalysisSettings}}.
+#'
+#'@return                            The ui.R script
+#'
+#'@export
 
 createGlobal <- function(analysisSettings){
 
@@ -248,6 +284,18 @@ file = file.path(analysisSettings$saveDirectory,
                  "global.R"))
 }
 
+
+
+
+#' Launches the shiny application
+#'
+#' Launches the shin application for the assessment of the overall results
+#'
+#' @param analysisSettings           An R object of type \code{analysisSettings} created using the function
+#'                                   \code{\link[RiskStratifiedEstimation]{createAnalysisSettings}}.
+#'
+#'@return                            The shiny application
+
 #' @export
 runShiny <- function(analysisSettings){
 
@@ -263,6 +311,19 @@ runShiny <- function(analysisSettings){
 }
 
 
+
+
+
+
+#' Combines the overall results
+#'
+#' @param analysisSettings           An R object of type \code{analysisSettings} created using the function
+#'                                   \code{\link[RiskStratifiedEstimation]{createAnalysisSettings}}.
+#' @param runSettings                An R object of type \code{runSettings} created using the function
+#'                                   \code{\link[RiskStratifiedEstimation]{createRunSettings}}.
+#'
+#' @return                          Stores the overall results along with the required data to lauch the shiny
+#'                                   application in the `shiny` directory
 
 #' @importFrom dplyr %>%
 #' @export

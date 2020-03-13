@@ -41,19 +41,22 @@ negative control outcomes and *label* their names.}
 the outcomes of interest and *label* with their names.}
 
 \item{verbosity}{Sets the level of the verbosity. If the log level is at or higher in
-      priority than the logger threshold, a message will print. The levels
-      are:
-      \itemize{
-        \item {DEBUG}{Highest verbosity showing all debug statements}
-        \item {TRACE}{Showing information about start and end of steps}
-        \item {INFO}{Show informative information (Default)}
-        \item {WARN}{Show warning messages}
-        \item {ERROR}{Show error messages}
-        \item {FATAL}{Be silent except for fatal errors}
-      }
-.}
+priority than the logger threshold, a message will print. The levels
+are:
+\itemize{
+  \item {DEBUG}{Highest verbosity showing all debug statements}
+  \item {TRACE}{Showing information about start and end of steps}
+  \item {INFO}{Show informative information (Default)}
+  \item {WARN}{Show warning messages}
+  \item {ERROR}{Show error messages}
+  \item {FATAL}{Be silent except for fatal errors}
+}}
 
 \item{saveDirectory}{The directory name where the results of the analyses will be stored.}
+}
+\value{
+An analysisSettings object providing the identification information
+                                 of the analysis.
 }
 \description{
 Create a parameter defining the performed risk stratified analysis
