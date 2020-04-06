@@ -77,56 +77,35 @@ runRiskStratifiedEstimation <- function(connectionDetails,
 
 
   if(is.null(getDataSettings$plpDataFolder)){
-    prepareForPlpData(treatmentCohortId = analysisSettings$
-                        treatmentCohortId,
-                      comparatorCohortId = analysisSettings$
-                        comparatorCohortId,
-                      targetCohortId = databaseSettings$
-                        targetCohortId,
-                      cohortDatabaseSchema = databaseSettings$
-                        cohortDatabaseSchema,
-                      cohortTable = databaseSettings$
-                        cohortTable,
-                      resultsDatabaseSchema = databaseSettings$
-                        resultsDatabaseSchema,
-                      mergedCohortTable = databaseSettings$
-                        mergedCohortTable,
-                      connectionDetails = connectionDetails)
+
+    prepareForPlpData(
+      treatmentCohortId = analysisSettings$treatmentCohortId,
+      comparatorCohortId = analysisSettings$comparatorCohortId,
+      targetCohortId = databaseSettings$targetCohortId,
+      cohortDatabaseSchema = databaseSettings$cohortDatabaseSchema,
+      cohortTable = databaseSettings$cohortTable,
+      resultsDatabaseSchema = databaseSettings$resultsDatabaseSchema,
+      mergedCohortTable = databaseSettings$mergedCohortTable,
+      connectionDetails = connectionDetails)
+
     ParallelLogger::logInfo("Constructing the plpData object")
-    plpData <- PatientLevelPrediction::getPlpData(connectionDetails = connectionDetails,
-                                                  cdmDatabaseSchema = databaseSettings$
-                                                    cdmDatabaseSchema,
-                                                  cohortId = databaseSettings$
-                                                    targetCohortId,
-                                                  outcomeIds = predictOutcomes,
-                                                  cohortDatabaseSchema = databaseSettings$
-                                                    resultsDatabaseSchema,
-                                                  cohortTable = databaseSettings$
-                                                    mergedCohortTable,
-                                                  outcomeDatabaseSchema = databaseSettings$
-                                                    outcomeDatabaseSchema,
-                                                  outcomeTable = databaseSettings$
-                                                    outcomeTable,
-                                                  studyStartDate = getDataSettings$
-                                                    getPlpDataSettings$
-                                                    studyStartDate,
-                                                  studyEndDate = getDataSettings$
-                                                    getPlpDataSettings$
-                                                    studyEndDate,
-                                                  cdmVersion = databaseSettings$
-                                                    cdmVersion,
-                                                  firstExposureOnly =
-                                                    getDataSettings$
-                                                    getPlpDataSettings$
-                                                    firstExposureOnly,
-                                                  washoutPeriod = getDataSettings$
-                                                    getPlpDataSettings$
-                                                    washoutPeriod,
-                                                  excludeDrugsFromCovariates =getDataSettings$
-                                                    getPlpDataSettings$
-                                                    excludeDrugsFromCovariates,
-                                                  covariateSettings = covariateSettings$
-                                                    covariateSettingsPlp)
+    plpData <-
+      PatientLevelPrediction::getPlpData(
+        connectionDetails = connectionDetails,
+        cdmDatabaseSchema = databaseSettings$cdmDatabaseSchema,
+        cohortId = databaseSettings$targetCohortId,
+        outcomeIds = predictOutcomes,
+        cohortDatabaseSchema = databaseSettings$resultsDatabaseSchema,
+        cohortTable = databaseSettings$mergedCohortTable,
+        outcomeDatabaseSchema = databaseSettings$outcomeDatabaseSchema,
+        outcomeTable = databaseSettings$outcomeTable,
+        studyStartDate = getDataSettings$getPlpDataSettings$studyStartDate,
+        studyEndDate = getDataSettings$getPlpDataSettings$studyEndDate,
+        cdmVersion = databaseSettings$cdmVersion,
+        firstExposureOnly = getDataSettings$getPlpDataSettings$firstExposureOnly,
+        washoutPeriod = getDataSettings$getPlpDataSettings$washoutPeriod,
+        excludeDrugsFromCovariates =getDataSettings$getPlpDataSettings$excludeDrugsFromCovariates,
+        covariateSettings = covariateSettings$covariateSettingsPlp)
 
 
     PatientLevelPrediction::savePlpData(plpData, file = file.path(analysisPath, "Data", "plpData"))
@@ -140,49 +119,26 @@ runRiskStratifiedEstimation <- function(connectionDetails,
     cohortMethodDataOutcomes <- c(analysisSettings$outcomeIds,
                                   analysisSettings$negativeControlOutcomes)
     cohortMethodData <-
-      CohortMethod::getDbCohortMethodData(connectionDetails = connectionDetails,
-                                          cdmDatabaseSchema = databaseSettings$
-                                            cdmDatabaseSchema,
-                                          targetId = analysisSettings$
-                                            treatmentCohortId,
-                                          comparatorId = analysisSettings$
-                                            comparatorCohortId,
-                                          outcomeIds = cohortMethodDataOutcomes,
-                                          studyStartDate = getDataSettings$
-                                            getCmDataSettings$
-                                            studyStartDate,
-                                          studyEndDate = getDataSettings$
-                                            getCmDataSettings$
-                                            studyEndDate,
-                                          exposureDatabaseSchema = databaseSettings$
-                                            exposureDatabaseSchema,
-                                          exposureTable = databaseSettings$
-                                            exposureTable,
-                                          outcomeDatabaseSchema = databaseSettings$
-                                            outcomeDatabaseSchema,
-                                          outcomeTable = databaseSettings$
-                                            outcomeTable,
-                                          cdmVersion = databaseSettings$
-                                            cdmVersion,
-                                          excludeDrugsFromCovariates = getDataSettings$
-                                            getCmDataSettings$
-                                            excludeDrugsFromCovariates,
-                                          firstExposureOnly = getDataSettings$
-                                            getCmDataSettings$
-                                            firstExposureOnly,
-                                          removeDuplicateSubjects = getDataSettings$
-                                            getCmDataSettings$
-                                            removeDuplicateSubjects,
-                                          restrictToCommonPeriod = getDataSettings$
-                                            getCmDataSettings$
-                                            restrictToCommonPeriod,
-                                          washoutPeriod = getDataSettings$
-                                            getCmDataSettings$
-                                            washoutPeriod,
-                                          maxCohortSize = getDataSettings$
-                                            getCmDataSettings$
-                                            maxCohortSize,
-                                          covariateSettings = covariateSettings$covariateSettingsCm)
+      CohortMethod::getDbCohortMethodData(
+        connectionDetails = connectionDetails,
+        cdmDatabaseSchema = databaseSettings$cdmDatabaseSchema,
+        targetId = analysisSettings$treatmentCohortId,
+        comparatorId = analysisSettings$comparatorCohortId,
+        outcomeIds = cohortMethodDataOutcomes,
+        studyStartDate = getDataSettings$getCmDataSettings$studyStartDate,
+        studyEndDate = getDataSettings$getCmDataSettings$studyEndDate,
+        exposureDatabaseSchema = databaseSettings$exposureDatabaseSchema,
+        exposureTable = databaseSettings$exposureTable,
+        outcomeDatabaseSchema = databaseSettings$outcomeDatabaseSchema,
+        outcomeTable = databaseSettings$outcomeTable,
+        cdmVersion = databaseSettings$cdmVersion,
+        excludeDrugsFromCovariates = getDataSettings$getCmDataSettings$excludeDrugsFromCovariates,
+        firstExposureOnly = getDataSettings$getCmDataSettings$firstExposureOnly,
+        removeDuplicateSubjects = getDataSettings$getCmDataSettings$removeDuplicateSubjects,
+        restrictToCommonPeriod = getDataSettings$getCmDataSettings$restrictToCommonPeriod,
+        washoutPeriod = getDataSettings$getCmDataSettings$washoutPeriod,
+        maxCohortSize = getDataSettings$getCmDataSettings$maxCohortSize,
+        covariateSettings = covariateSettings$covariateSettingsCm)
 
     CohortMethod::saveCohortMethodData(cohortMethodData, file.path(analysisPath, "Data", "cmData"))
     getDataSettings$cohortMethodDataFolder <- file.path(analysisPath, "Data", "cmData")
@@ -197,15 +153,15 @@ runRiskStratifiedEstimation <- function(connectionDetails,
 
   cluster <- ParallelLogger::makeCluster(runSettings$runCmSettings$createPsThreads)
   ParallelLogger::clusterRequire(cluster, c("RiskStratifiedEstimation", "CohortMethod"))
-  dummy <- ParallelLogger::clusterApply(cluster = cluster,
-                                        x = predictOutcomes,
-                                        fun = fitPsModelOverall,
-                                        getDataSettings = getDataSettings,
-                                        populationCmSettings = populationSettings$
-                                          populationCmSettings,
-                                        analysisSettings = analysisSettings,
-                                        runCmSettings = runSettings$
-                                          runCmSettings)
+  dummy <-
+    ParallelLogger::clusterApply(
+      cluster = cluster,
+      x = predictOutcomes,
+      fun = fitPsModelOverall,
+      getDataSettings = getDataSettings,
+      populationCmSettings = populationSettings$populationCmSettings,
+      analysisSettings = analysisSettings,
+      runCmSettings = runSettings$runCmSettings)
 
   ParallelLogger::stopCluster(cluster)
 
