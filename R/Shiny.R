@@ -69,17 +69,6 @@ shiny::shinyServer(function(input, output, session) {
   }, height = function() {
     0.45 * session$clientData$output_combinedPlot_width
   })
-
-  output$combinedPlotNegativeControls <- shiny::renderPlot({
-
-    res <- resultSubset()
-    nRiskStrata <- length(unique(res$negativeControls$riskStratum))
-    plot <- combinedPlotNegativeControls(res$negativeControls)
-    return(plot)
-
-  }, height = function() {
-    0.45 * session$clientData$output_combinedPlotNegativeControls_width
-  })
 })",
     output = TRUE,
     file = file.path(analysisSettings$saveDirectory,
@@ -148,9 +137,7 @@ createUI <- function(analysisSettings){
                          shiny::tabPanel(\"Absolute\",
                                          DT::dataTableOutput(\"mainTableAbsolute\")),
                          shiny::tabPanel(\"Plot\",
-                                         shiny::plotOutput(\"combinedPlot\", height = \"600px\")),
-                         shiny::tabPanel(\"Systematic error\",
-                                         shiny::plotOutput(\"combinedPlotNegativeControls\", height = \"600px\")))
+                                         shiny::plotOutput(\"combinedPlot\", height = \"600px\")))
     )
   )
 )",
@@ -188,7 +175,6 @@ createGlobal <- function(analysisSettings){
     mappedOverallAbsoluteResults <- readRDS(\"./data/mappedOverallAbsoluteResults.rds\")
     mappedOverallRelativeResults <- readRDS(\"./data/mappedOverallRelativeResults.rds\")
     mappedOverallCasesResults <- readRDS(\"./data/mappedOverallCasesResults.rds\")
-    mappedNegativeControlResults <- readRDS(\"./data/mappedNegativeControlResults.rds\")
 
     getResults <- function(treat, comp, strat, est, db, anal) {
 
@@ -200,8 +186,6 @@ createGlobal <- function(analysisSettings){
     filter(stratOutcome == strat & estOutcome %in% est & analysis == anal & treatment == treat & comparator == comp & database == db)
     res$cases <- readRDS(\"./data/mappedOverallCasesResults.rds\") %>%
     filter(stratOutcome == strat & estOutcome %in% est & analysis == anal & treatment == treat & comparator == comp & database == db)
-    res$negativeControls <- readRDS(\"./data/mappedNegativeControlResults.rds\") %>%
-    filter(stratOutcome == strat & analysis == anal & treatment == treat & comparator == comp & database == db)
 
     return(res)
 
@@ -259,24 +243,7 @@ createGlobal <- function(analysisSettings){
 
   ggpubr::ggarrange(casesPlot, rrrPlot, arrPlot, nrow = 3, align = \"v\")
 }
-
-
-
-
-combinedPlotNegativeControls <- function(negativeControls) {
-
-  plotList <- list()
-  nRiskStrata <- length(unique(negativeControls$riskStratum))
-  for (j in 1:nRiskStrata) {
-    dat <- subset(negativeControls, riskStratum == paste0(\"Q\", j))
-    plotList[[j]] <- EmpiricalCalibration::plotCiCalibrationEffect(dat$logRr, dat$seLogRr,
-                                                                   rep(0, length(dat$logRr)), title = paste(\"Risk stratum\", j))
-
-  }
-
-  ggpubr::ggarrange(plotlist = plotList)
-
-}",
+",
 output = T,
 file = file.path(analysisSettings$saveDirectory,
                  analysisSettings$analysisId,
@@ -333,7 +300,6 @@ createOverallResults <- function(analysisSettings,
 
   mapTreatments <- analysisSettings$mapTreatments
   mapOutcomes <- analysisSettings$mapOutcomes
-  mapNegativeControls <- analysisSettings$mapNegativeControls
 
   predictOutcomes <-
     analysisSettings$outcomeIds[which(colSums(analysisSettings$analysisMatrix) != 0)]
@@ -370,16 +336,6 @@ createOverallResults <- function(analysisSettings,
                       treatment = numeric(),
                       comparator = numeric())
 
-  negativeControls <- data.frame(logRr = numeric(),
-                                 seLogRr = numeric(),
-                                 riskStratum = character(),
-                                 stratOutcome = numeric(),
-                                 estOutcome = numeric(),
-                                 database = character(),
-                                 analysis = character(),
-                                 treatment = numeric(),
-                                 comparator = numeric())
-  negativeControlIds <- analysisSettings$negativeControlOutcomes
 
   for(predictOutcome in predictOutcomes){
     absoluteResult <- readRDS(file.path(pathToResults,
@@ -469,44 +425,7 @@ createOverallResults <- function(analysisSettings,
         cases <- rbind(cases, casesResult)
       }
     }
-    negativeControlDir <- file.path(pathToResults,
-                                    predictOutcome)
-    if(!is.null(negativeControlIds)){
-      for(negativeControlId in negativeControlIds){
-        if(file.exists(file.path(negativeControlDir,
-                                 negativeControlId,
-                                 "models.rds"))){
-          sumMod <- readRDS(file.path(negativeControlDir,
-                                      negativeControlId,
-                                      "models.rds"))
-          if(!is.null(sumMod)){
-            negativeControlResult <- data.frame(logRr = numeric(),
-                                                seLogRr = numeric(),
-                                                riskStratum = character(),
-                                                stratOutcome = numeric(),
-                                                estOutcome = numeric(),
-                                                database = character(),
-                                                analysis = character(),
-                                                treatment = numeric(),
-                                                comparator = numeric())
-            for(riskStratum in 1:length(sumMod)){
-              negativeControlResult <- rbind(negativeControlResult,
-                                             data.frame(logRr = sumMod[[riskStratum]]$outcomeModelTreatmentEstimate$logRr,
-                                                        seLogRr = sumMod[[riskStratum]]$outcomeModelTreatmentEstimate$seLogRr,
-                                                        riskStratum = paste0("Q", riskStratum),
-                                                        stratOutcome = predictOutcome,
-                                                        estOutcome = negativeControlId,
-                                                        database = analysisSettings$databaseName,
-                                                        analysis = runSettings$runCmSettings$psMethod,
-                                                        treatment = analysisSettings$treatmentCohortId,
-                                                        comparator = analysisSettings$comparatorCohortId))
-            }
-            negativeControls <- rbind(negativeControls,
-                                      negativeControlResult)
-          }
-        }
-      }
-    }
+
     saveDir <- file.path(analysisSettings$saveDirectory,
                          analysisSettings$analysisId,
                          "shiny",
@@ -574,21 +493,6 @@ createOverallResults <- function(analysisSettings,
     dplyr::select(-estOutcome) %>%
     dplyr::rename("estOutcome" = "label")%>%
     saveRDS(file.path(saveDir, "mappedOverallCasesResults.rds"))
-
-  negativeControls %>%
-    dplyr::left_join(mapTreatments, by = c( "treatment" = "idNumber")) %>%
-    dplyr::select(-treatment) %>%
-    dplyr::rename("treatment" = "label") %>%
-    dplyr::left_join(mapTreatments, by = c( "comparator" = "idNumber")) %>%
-    dplyr::select(-comparator) %>%
-    dplyr::rename("comparator" = "label") %>%
-    dplyr::left_join(mapOutcomes, by = c( "stratOutcome" = "idNumber")) %>%
-    dplyr::select(-stratOutcome) %>%
-    dplyr::rename("stratOutcome" = "label") %>%
-    dplyr::left_join(mapNegativeControls, by = c( "estOutcome" = "idNumber")) %>%
-    dplyr::select(-estOutcome) %>%
-    dplyr::rename("estOutcome" = "label") %>%
-    saveRDS(file.path(saveDir, "mappedNegativeControlResults.rds"))
 
   saveRDS(analysisSettings$mapOutcomes,
           file.path(saveDir,
