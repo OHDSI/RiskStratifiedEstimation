@@ -197,49 +197,25 @@ runRiskStratifiedEstimation <- function(connectionDetails,
                                                     requireTimeAtRisk = TRUE)
 
     predictionResults <-
-      PatientLevelPrediction::runPlp(population = population,
-                                     plpData = plpData,
-                                     modelSettings = runSettings$
-                                       runPlpSettings$
-                                       modelSettings,
-                                     saveDirectory = file.path(analysisPath, "Prediction", id),
-                                     minCovariateFraction = runSettings$
-                                       runPlpSettings$
-                                       minCovariateFraction,
-                                     normalizeData = runSettings$
-                                       runPlpSettings$
-                                       normalizeData,
-                                     testSplit = runSettings$
-                                       runPlpSettings$
-                                       testSplit,
-                                     testFraction = runSettings$
-                                       runPlpSettings$
-                                       testFraction,
-                                     trainFraction = runSettings$
-                                       runPlpSettings$
-                                       trainFraction ,
-                                     nfold = runSettings$
-                                       runPlpSettings$
-                                       nfold,
-                                     indexes = runSettings$
-                                       runPlpSettings$
-                                       indexes ,
-                                     savePlpData = runSettings$
-                                       runPlpSettings$
-                                       savePlpData,
-                                     savePlpResult = TRUE,
-                                     savePlpPlots = F,
-                                     saveEvaluation = runSettings$
-                                       runPlpSettings$
-                                       saveEvaluation,
-                                     verbosity = runSettings$
-                                       runPlpSettings$
-                                       verbosity,
-                                     timeStamp = runSettings$
-                                       runPlpSettings$
-                                       timeStamp,
-                                     analysisId = analysisSettings$
-                                       analysisId)
+      PatientLevelPrediction::runPlp(
+        population = population,
+        plpData = plpData,
+        modelSettings = runSettings$runPlpSettings$modelSettings,
+        saveDirectory = file.path(analysisPath, "Prediction", id),
+        minCovariateFraction = runSettings$runPlpSettings$minCovariateFraction,
+        normalizeData = runSettings$runPlpSettings$normalizeData,
+        testSplit = runSettings$runPlpSettings$testSplit,
+        testFraction = runSettings$runPlpSettings$testFraction,
+        trainFraction = runSettings$runPlpSettings$trainFraction,
+        nfold = runSettings$runPlpSettings$nfold,
+        indexes = runSettings$runPlpSettings$indexes,
+        savePlpData = runSettings$runPlpSettings$savePlpData,
+        savePlpResult = TRUE,
+        savePlpPlots = FALSE,
+        saveEvaluation = runSettings$runPlpSettings$saveEvaluation,
+        verbosity = runSettings$runPlpSettings$verbosity,
+        timeStamp = runSettings$runPlpSettings$timeStamp,
+        analysisId = analysisSettings$analysisId)
   }
 
   ParallelLogger::logInfo("Estimated prediction models for all outcomes")
