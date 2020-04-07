@@ -326,3 +326,50 @@ plotSmoothCalibration <- function(analysisSettings,
 
   return(smooth_plot)
 }
+
+#' @importFrom dplyr %>%
+#' @export
+computeCovariateBalanceWeighted <- function(population,
+                                            cohortMethodData){
+
+  pops <- population %>%
+    dplyr::group_by(treatment) %>%
+    dplyr::summarise(n = n(),
+              nWeighted = sum(weights))
+
+  covariates <- cohortMethodData$covariates[]
+  tt <- covariates %>%
+    dplyr::filter(rowId %in% population$rowId) %>%
+    dplyr::left_join(population %>%
+                       select(c("rowId", "treatment", "weights")))
+
+  test = tt %>%
+    dplyr::group_by(treatment, covariateId) %>%
+    dplyr::summarise(covariateSum = sum(covariateValue)) %>%
+    dplyr::left_join(pops) %>%
+    dplyr::mutate(unweighted = covariateSum/n,
+                  weighted = covariateSum/nWeighted,
+                  sdWeighted = weighted*(1 - weighted)/2,
+                  sdUnweighted = unweighted*(1 - unweighted)/2) %>%
+    as.data.frame()
+
+  t1 <- test %>%
+    dplyr::mutate(treatment = ifelse(treatment == 1, 1, -1)) %>%
+    dplyr::group_by(covariateId) %>%
+    dplyr::summarise(beforeWeighting = 100*abs(sum(unweighted*treatment))/sqrt(sum(sdUnweighted))) %>%
+    as.data.frame()
+  t2 <- test %>%
+    dplyr::mutate(treatment = ifelse(treatment == 1, 1, -1)) %>%
+    dplyr::group_by(covariateId) %>%
+    dplyr::summarise(afterWeighting = 100*abs(sum(weighted*treatment))/sqrt(sum(sdWeighted))) %>%
+    as.data.frame()
+  t1 %>%
+    dplyr::left_join(t2) %>%
+    ggplot2::ggplot(ggplot2::aes(x = beforeWeighting, y = afterWeighting)) +
+    ggplot2::geom_point(size = .5) +
+    ggplot2::scale_y_continuous(limits = c(0, 100)) +
+    ggplot2::scale_x_continuous(limits = c(0, 100)) +
+    ggplot2::geom_hline(yintercept = 10, linetype = 2, color = "red") +
+    ggplot2::xlab(label = "Before weighting") +
+    ggplot2::ylab(label = "After weighting")
+}

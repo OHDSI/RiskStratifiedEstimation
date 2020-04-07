@@ -430,21 +430,25 @@ createOverallResults <- function(analysisSettings,
                          analysisSettings$analysisId,
                          "shiny",
                          "data")
-    outputDir <- file.path(saveDir, "Prediction", predictOutcome)
-    if(!dir.exists(outputDir)){
-      dir.create(outputDir, recursive = T)
-    }
 
-    predictionEvaluationDir <- file.path(analysisSettings$saveDirectory,
-                                         analysisSettings$analysisId,
-                                         "Prediction",
-                                         predictOutcome,
-                                         analysisSettings$analysisId,
-                                         "evaluation")
-    listFiles <- list.files(predictionEvaluationDir)
-    file.copy(file.path(predictionEvaluationDir,
-                        listFiles),
-              outputDir)
+
+    for(directory in c("Comparator", "Matched", "Treatment", "EntirePopulation")){
+
+      outputDir <- file.path(saveDir, "Prediction", predictOutcome, directory)
+      if(!dir.exists(outputDir)){
+        dir.create(outputDir, recursive = T)
+      }
+      predictionEvaluationDir <- file.path(analysisSettings$saveDirectory,
+                                           analysisSettings$analysisId,
+                                           "Prediction",
+                                           predictOutcome,
+                                           analysisSettings$analysisId,
+                                           directory)
+      listFiles <- list.files(predictionEvaluationDir)
+      file.copy(file.path(predictionEvaluationDir,
+                          listFiles),
+                outputDir)
+    }
   }
 
   absolute %>%
