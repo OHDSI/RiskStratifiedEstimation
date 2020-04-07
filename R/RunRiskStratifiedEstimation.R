@@ -41,10 +41,8 @@ runRiskStratifiedEstimation <- function(connectionDetails,
     }
   }
 
-  # log the start time:
   ExecutionDateTime <- Sys.time()
 
-  # create an analysisid and folder to save the results
   start.all <- Sys.time()
   if(is.null(analysisSettings$analysisId))
     analysisSettings$analysisId <- paste(gsub(':','',gsub('-','',gsub(' ','',start.all))))
