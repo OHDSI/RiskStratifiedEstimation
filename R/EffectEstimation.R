@@ -675,8 +675,8 @@ estimateTreatmentEffect <- function(ps,
 #' @param outcomeId                  The outcome of interest for which the risk stratification is performed.
 #' @param getDataSettings            An R object of type \code{getDataSettings} created using the function
 #'                                   \code{\link[RiskStratifiedEstimation]{createGetDataSettings}}.
-#' @param populationCmSettings       Parameter object for the definition of the \code{populationCm} object created from
-#'                                   \code{\link[RiskStratifiedEstimation]{createPopulationCmSettingsArgs}}.
+#' @param populationSettings         An R object of type \code{covariateSettings} created using the function
+#'                                   \code{\link[RiskStratifiedEstimation]{createPopulationSettings}}
 #' @param analysisSettings           An R object of type \code{analysisSettings} created using the function
 #'                                   \code{\link[RiskStratifiedEstimation]{createAnalysisSettings}}.
 #' @param runCmSettings              A parameter object of type \code{runCmSettingsArgs} defined using the function
@@ -688,31 +688,37 @@ estimateTreatmentEffect <- function(ps,
 
 fitPsModelOverall <- function(outcomeId,
                               getDataSettings,
-                              populationCmSettings,
+                              populationSettings,
                               analysisSettings,
                               runCmSettings){
 
   cohortMethodData <- CohortMethod::loadCohortMethodData(file = getDataSettings$cohortMethodDataFolder)
+  plpData <- PatientLevelPrediction::loadPlpData(file = getDataSettings$plpDataFolder)
 
-  populationCm <-
-    CohortMethod::createStudyPopulation(cohortMethodData = cohortMethodData,
-                                        outcomeId = outcomeId,
-                                        firstExposureOnly = populationCmSettings$firstExposureOnly,
-                                        restrictToCommonPeriod = populationCmSettings$restrictToCommonPeriod,
-                                        washoutPeriod = populationCmSettings$washoutPeriod,
-                                        removeDuplicateSubjects = populationCmSettings$removeDuplicateSubjects,
-                                        removeSubjectsWithPriorOutcome =
-                                          populationCmSettings$removeSubjectsWithPriorOutcome,
-                                        priorOutcomeLookback = populationCmSettings$priorOutcomeLookback,
-                                        minDaysAtRisk = populationCmSettings$minDaysAtRisk,
-                                        riskWindowStart = populationCmSettings$riskWindowStart,
-                                        addExposureDaysToStart = populationCmSettings$addExposureDaysToStart,
-                                        riskWindowEnd = populationCmSettings$riskWindowEnd,
-                                        addExposureDaysToEnd = populationCmSettings$addExposureDaysToEnd,
-                                        censorAtNewRiskWindow = populationCmSettings$censorAtNewRiskWindow)
+  populationPlp <-
+    PatientLevelPrediction::createStudyPopulation(
+      plpData = plpData,
+      outcomeId = outcomeId,
+      binary = populationSettings$populationPlpSettings$binary,
+      includeAllOutcomes = populationSettings$populationPlpSettings$includeAllOutcomes,
+      firstExposureOnly = populationSettings$populationPlpSettings$firstExposureOnly,
+      washoutPeriod = populationSettings$populationPlpSettings$washoutPeriod,
+      removeSubjectsWithPriorOutcome = populationSettings$populationPlpSettings$removeSubjectsWithPriorOutcome,
+      priorOutcomeLookback = populationSettings$populationPlpSettings$priorOutcomeLookback,
+      requireTimeAtRisk = populationSettings$populationPlpSettings$requireTimeAtRisk,
+      minTimeAtRisk = populationSettings$populationPlpSettings$minTimeAtRisk,
+      riskWindowStart = populationSettings$populationPlpSettings$riskWindowStart,
+      addExposureDaysToStart = populationSettings$populationPlpSettings$addExposureDaysToStart,
+      riskWindowEnd = populationSettings$populationPlpSettings$riskWindowEnd,
+      addExposureDaysToEnd = populationSettings$populationPlpSettings$addExposureDaysToEnd,
+      verbosity = populationSettings$populationPlpSettings$verbosity
+    )
+
+  populationSubset <- cohortMethodData$cohorts %>%
+    dplyr::filter(subjectId %in% populationPlp$subjectId)
 
   ps <- CohortMethod::createPs(cohortMethodData = cohortMethodData,
-                               population = populationCm,
+                               population = populationSubset,
                                includeCovariateIds = runCmSettings$psSettings$includeCovariateIds,
                                maxCohortSizeForFitting = runCmSettings$psSettings$maxCohortSizeForFitting,
                                errorOnHighCorrelation = runCmSettings$psSettings$errorOnHighCorrelation,

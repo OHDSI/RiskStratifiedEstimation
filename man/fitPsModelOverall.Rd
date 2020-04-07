@@ -4,7 +4,7 @@
 \alias{fitPsModelOverall}
 \title{Calculate propensity scores for a specific outcome}
 \usage{
-fitPsModelOverall(outcomeId, getDataSettings, populationCmSettings,
+fitPsModelOverall(outcomeId, getDataSettings, populationSettings,
   analysisSettings, runCmSettings)
 }
 \arguments{
@@ -13,8 +13,8 @@ fitPsModelOverall(outcomeId, getDataSettings, populationCmSettings,
 \item{getDataSettings}{An R object of type \code{getDataSettings} created using the function
 \code{\link[RiskStratifiedEstimation]{createGetDataSettings}}.}
 
-\item{populationCmSettings}{Parameter object for the definition of the \code{populationCm} object created from
-\code{\link[RiskStratifiedEstimation]{createPopulationCmSettingsArgs}}.}
+\item{populationSettings}{An R object of type \code{covariateSettings} created using the function
+\code{\link[RiskStratifiedEstimation]{createPopulationSettings}}}
 
 \item{analysisSettings}{An R object of type \code{analysisSettings} created using the function
 \code{\link[RiskStratifiedEstimation]{createAnalysisSettings}}.}
