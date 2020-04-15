@@ -3,55 +3,54 @@
 #' @details
 #' Create an object defining the parameter values.
 #'
-#' @param population                       If specified, this population will be used as the
-#'                                         startingpoint instead of the cohorts in the
-#'                                         cohortMethodDataobject.
-#' @param firstExposureOnly                Should only the first exposure per subject be included? Note
-#'                                         that this is typically done in thecreateStudyPopulation
+#' @param firstExposureOnly                Should only the first exposure per subject be included?
+#'                                         Notethat this is typically done in thecreateStudyPopulation
 #'                                         function,
 #' @param restrictToCommonPeriod           Restrict the analysis to the period when both exposures are
 #'                                         observed?
-#' @param washoutPeriod                    The mininum required continuous observation time prior to
-#'                                         index date for a person to be included in the cohort.
-#' @param removeDuplicateSubjects          Remove subjects that are in both the target and comparator
-#'                                         cohort? See details for allowed values.
-#' @param removeSubjectsWithPriorOutcome   Remove subjects that have the outcome prior to the risk
-#'                                         window start?
+#' @param washoutPeriod                    The mininum required continuous observation time prior
+#'                                         toindex date for a person to be included in the cohort.
+#' @param removeDuplicateSubjects          Remove subjects that are in both the target and
+#'                                         comparatorcohort? See details for allowed values.
+#' @param removeSubjectsWithPriorOutcome   Remove subjects that have the outcome prior to the
+#'                                         riskwindow start?
 #' @param priorOutcomeLookback             How many days should we look back when identifying
 #'                                         prioroutcomes?
 #' @param minDaysAtRisk                    The minimum required number of days at risk.
 #' @param riskWindowStart                  The start of the risk window (in days) relative to the
-#'                                         indexdate (+ days of exposure if theaddExposureDaysToStart
-#'                                         parameter is specified).
-#' @param addExposureDaysToStart           Add the length of exposure the start of the risk window?
-#' @param riskWindowEnd                    The end of the risk window (in days) relative to the index
-#'                                         data (+ days of exposure if the
-#'                                         addExposureDaysToEndparameter is specified).
-#' @param addExposureDaysToEnd             Add the length of exposure the risk window?
+#'                                         startAnchor.
+#' @param addExposureDaysToStart           DEPRECATED: Add the length of exposure the start of the risk
+#'                                         window?Use startAnchor instead.
+#' @param startAnchor                      The anchor point for the start of the risk window. Can be
+#'                                         "cohort start"or "cohort end".
+#' @param riskWindowEnd                    The end of the risk window (in days) relative to the
+#'                                         endAnchor.
+#' @param addExposureDaysToEnd             DEPRECATED: Add the length of exposure the risk window?Use
+#'                                         endAnchor instead.
+#' @param endAnchor                        The anchor point for the end of the risk window. Can be
+#'                                         "cohort start"or "cohort end".
 #' @param censorAtNewRiskWindow            If a subject is in multiple cohorts, should time-at-risk be
-#'                                         censored when the new time-at-risk starts to prevent
-#'                                         overlap?
+#'                                         censoredwhen the new time-at-risk starts to prevent overlap?
 #'
 #' @export
 
-createStudyPopulationCmArgs <- function(population = NULL,
-                                        firstExposureOnly = FALSE,
-                                        restrictToCommonPeriod = FALSE,
-                                        washoutPeriod = 0,
-                                        removeDuplicateSubjects = FALSE,
-                                        removeSubjectsWithPriorOutcome = TRUE,
-                                        priorOutcomeLookback = 99999,
-                                        minDaysAtRisk = 1,
-                                        riskWindowStart = 0,
-                                        addExposureDaysToStart = FALSE,
-                                        riskWindowEnd = 0,
-                                        addExposureDaysToEnd = TRUE,
-                                        censorAtNewRiskWindow = FALSE) {
-
-
+createPopulationCmSettingsArgs <- function(firstExposureOnly = FALSE,
+                                           restrictToCommonPeriod = FALSE,
+                                           washoutPeriod = 0,
+                                           removeDuplicateSubjects = FALSE,
+                                           removeSubjectsWithPriorOutcome = TRUE,
+                                           priorOutcomeLookback = 99999,
+                                           minDaysAtRisk = 1,
+                                           riskWindowStart = 0,
+                                           addExposureDaysToStart = NULL,
+                                           startAnchor = "cohort start",
+                                           riskWindowEnd = 0,
+                                           addExposureDaysToEnd = NULL,
+                                           endAnchor = "cohort end",
+                                           censorAtNewRiskWindow = FALSE) {
   # First: get default values:
   analysis <- list()
-  for (name in names(formals(createStudyPopulationCmSettings))) {
+  for (name in names(formals(createPopulationCmSettingsArgs))) {
     analysis[[name]] <- get(name)
   }
   # Second: overwrite defaults with actual values:
@@ -62,9 +61,57 @@ createStudyPopulationCmArgs <- function(population = NULL,
   }
   class(analysis) <- "args"
   return(analysis)
-
-
 }
+
+
+#' Create a parameter object for the function createStudyPopulation
+#'
+#' @details
+#' Create an object defining the parameter values.
+#'
+#' @param binary Forces the outcomeCount to be 0 or 1 (use for binary prediction problems)
+#' @param includeAllOutcomes (binary) indicating whether to include people with outcomes who are not observed for the whole at risk period
+#' @param firstExposureOnly Should only the first exposure per subject be included? Note thatthis is typically done in the createStudyPopulation function,
+#' @param washoutPeriod The mininum required continuous observation time prior to indexdate for a person to be included in the cohort.
+#' @param removeSubjectsWithPriorOutcome Remove subjects that have the outcome prior to the risk window start?
+#' @param priorOutcomeLookback How many days should we look back when identifying prior outcomes?
+#' @param requireTimeAtRisk Should subject without time at risk be removed?
+#' @param minTimeAtRisk The minimum number of days at risk required to be included
+#' @param riskWindowStart The start of the risk window (in days) relative to the startAnchor.
+#' @param startAnchor The anchor point for the start of the risk window. Can be "cohort start" or "cohort end".
+#' @param riskWindowEnd The end of the risk window (in days) relative to the endAnchor parameter
+#' @param endAnchor The anchor point for the end of the risk window. Can be "cohort start" or "cohort end".
+#' @param verbosity Sets the level of the verbosity. If the log level is at or higher in priority than the logger threshold, a message will print. The levels are:DEBUGHighest verbosity showing all debug statementsTRACEShowing information about start and end of stepsINFOShow informative information (Default)WARNShow warning messagesERRORShow error messagesFATALBe silent except for fatal errors
+#'
+#' @export
+createPopulationPlpSettingsArgs <- function(binary = T,
+                                            includeAllOutcomes = T,
+                                            firstExposureOnly = FALSE,
+                                            washoutPeriod = 0,
+                                            removeSubjectsWithPriorOutcome = TRUE,
+                                            priorOutcomeLookback = 99999,
+                                            requireTimeAtRisk = F,
+                                            minTimeAtRisk = 365,
+                                            riskWindowStart = 0,
+                                            startAnchor = "cohort start",
+                                            riskWindowEnd = 365,
+                                            endAnchor = "cohort start",
+                                            verbosity = "INFO") {
+  # First: get default values:
+  analysis <- list()
+  for (name in names(formals(createPopulationPlpSettingsArgs))) {
+    analysis[[name]] <- get(name)
+  }
+  # Second: overwrite defaults with actual values:
+  values <- lapply(as.list(match.call())[-1], function(x) eval(x, envir = sys.frame(-3)))
+  for (name in names(values)) {
+    if (name %in% names(analysis))
+      analysis[[name]] <- values[[name]]
+  }
+  class(analysis) <- "args"
+  return(analysis)
+}
+
 
 
 
@@ -290,157 +337,7 @@ createGetCmDataArgs <- function(studyStartDate = "",
 
 
 
-#' Create a parameter object for the function createStudyPopulation
-#'
-#' @details
-#' Create an object defining the parameter values.
-#'
-#' @param firstExposureOnly                Should only the first exposure per subject be included?
-#'                                         Notethat this is typically done in thecreateStudyPopulation
-#'                                         function,
-#' @param restrictToCommonPeriod           Restrict the analysis to the period when both exposures are
-#'                                         observed?
-#' @param washoutPeriod                    The mininum required continuous observation time prior
-#'                                         toindex date for a person to be included in the cohort.
-#' @param removeDuplicateSubjects          Remove subjects that are in both the target and
-#'                                         comparatorcohort? See details for allowed values.
-#' @param removeSubjectsWithPriorOutcome   Remove subjects that have the outcome prior to the
-#'                                         riskwindow start?
-#' @param priorOutcomeLookback             How many days should we look back when identifying
-#'                                         prioroutcomes?
-#' @param minDaysAtRisk                    The minimum required number of days at risk.
-#' @param riskWindowStart                  The start of the risk window (in days) relative to the
-#'                                         startAnchor.
-#' @param addExposureDaysToStart           DEPRECATED: Add the length of exposure the start of the risk
-#'                                         window?Use startAnchor instead.
-#' @param startAnchor                      The anchor point for the start of the risk window. Can be
-#'                                         "cohort start"or "cohort end".
-#' @param riskWindowEnd                    The end of the risk window (in days) relative to the
-#'                                         endAnchor.
-#' @param addExposureDaysToEnd             DEPRECATED: Add the length of exposure the risk window?Use
-#'                                         endAnchor instead.
-#' @param endAnchor                        The anchor point for the end of the risk window. Can be
-#'                                         "cohort start"or "cohort end".
-#' @param censorAtNewRiskWindow            If a subject is in multiple cohorts, should time-at-risk be
-#'                                         censoredwhen the new time-at-risk starts to prevent overlap?
-#'
-#' @return
-#' A parameter object containing all the information for defining the estimation step population
-#'
-#' @export
 
-createPopulationCmSettingsArgs <- function(firstExposureOnly = FALSE,
-                                           restrictToCommonPeriod = FALSE,
-                                           washoutPeriod = 0,
-                                           removeDuplicateSubjects = FALSE,
-                                           removeSubjectsWithPriorOutcome = TRUE,
-                                           priorOutcomeLookback = 99999,
-                                           minDaysAtRisk = 1,
-                                           riskWindowStart = 0,
-                                           addExposureDaysToStart = FALSE,
-                                           startAnchor = "cohort start",
-                                           riskWindowEnd = 0,
-                                           addExposureDaysToEnd = TRUE,
-                                           endAnchor = "cohort end",
-                                           censorAtNewRiskWindow = FALSE) {
-  # First: get default values:
-  analysis <- list()
-  for (name in names(formals(createPopulationCmSettingsArgs))) {
-    analysis[[name]] <- get(name)
-  }
-  # Second: overwrite defaults with actual values:
-  values <- lapply(as.list(match.call())[-1], function(x) eval(x, envir = sys.frame(-3)))
-  for (name in names(values)) {
-    if (name %in% names(analysis))
-      analysis[[name]] <- values[[name]]
-  }
-  attr(analysis, "fun") <- "createPopulationCmSettingsArgs"
-  class(analysis) <- "args"
-  return(analysis)
-}
-
-
-
-
-
-#' Create the population settings for the prediction step
-#' Takes as input the inputs to create study population
-#'
-#' @param binary                           Forces the outcomeCount to be 0 or 1 (use for binary
-#'                                         prediction problems)
-#' @param includeAllOutcomes               (binary) indicating whether to include people with outcomes
-#'                                         who are not observed for the whole at risk period
-#' @param firstExposureOnly                Should only the first exposure per subject be included? Note
-#'                                         that this is typically done in the
-#'                                         \code{createStudyPopulation} function,
-#' @param washoutPeriod                    The mininum required continuous observation time prior to
-#'                                         index date for a person to be included in the cohort.
-#' @param removeSubjectsWithPriorOutcome   Remove subjects that have the outcome prior to the risk
-#'                                         window start?
-#' @param priorOutcomeLookback             How many days should we look back when identifying prior
-#'                                         outcomes?
-#' @param requireTimeAtRisk                Should subject without time at risk be removed?
-#' @param minTimeAtRisk                    The minimum number of days at risk required to be included
-#' @param riskWindowStart                  The start of the risk window (in days) relative to the index
-#'                                         date (+ days of exposure if the
-#'                                         \code{addExposureDaysToStart} parameter is specified).
-#' @param addExposureDaysToStart           Add the length of exposure the start of the risk window?
-#' @param riskWindowEnd                    The end of the risk window (in days) relative to the index
-#'                                         data (+ days of exposure if the \code{addExposureDaysToEnd}
-#'                                         parameter is specified).
-#' @param addExposureDaysToEnd             Add the length of exposure the risk window?
-#' @param verbosity                        Sets the level of the verbosity. If the log level is at or
-#'                                         higher in priority than the logger threshold, a message will
-#'                                         print. The levels are:
-#'                                         \itemize{
-#'                                           \item {DEBUG}{Highest verbosity showing all debug
-#'                                                 statements}
-#'                                           \item {TRACE}{Showing information about start and end of
-#'                                                 steps}
-#'                                           \item {INFO}{Show informative information (Default)}
-#'                                           \item {WARN}{Show warning messages}
-#'                                           \item {ERROR}{Show error messages}
-#'                                           \item {FATAL}{Be silent except for fatal errors}
-#'                                         }
-#'
-#'
-#' @return
-#' A parameter object containing all the settings required for creating the prediction step population
-#' @export
-
-createPopulationPlpSettingsArgs <- function(binary = T,
-                                            includeAllOutcomes = T,
-                                            firstExposureOnly = FALSE,
-                                            washoutPeriod = 0,
-                                            removeSubjectsWithPriorOutcome = TRUE,
-                                            priorOutcomeLookback = 99999,
-                                            requireTimeAtRisk = T,
-                                            minTimeAtRisk = 364,
-                                            riskWindowStart = 1,
-                                            addExposureDaysToStart = FALSE,
-                                            riskWindowEnd = 365,
-                                            addExposureDaysToEnd = F,
-                                            verbosity = "INFO") {
-
-  result <- list(binary = binary,
-                 includeAllOutcomes = includeAllOutcomes,
-                 firstExposureOnly = firstExposureOnly,
-                 washoutPeriod = washoutPeriod,
-                 removeSubjectsWithPriorOutcome = removeSubjectsWithPriorOutcome,
-                 priorOutcomeLookback = priorOutcomeLookback,
-                 requireTimeAtRisk = requireTimeAtRisk,
-                 minTimeAtRisk = minTimeAtRisk,
-                 riskWindowStart = riskWindowStart,
-                 addExposureDaysToStart = addExposureDaysToStart,
-                 riskWindowEnd = riskWindowEnd,
-                 addExposureDaysToEnd = addExposureDaysToEnd,
-                 verbosity = verbosity)
-
-  attr(result, "fun") <- "createPopulationPlpSettingsArgs"
-  class(result) <- "args"
-  return(result)
-
-}
 
 
 

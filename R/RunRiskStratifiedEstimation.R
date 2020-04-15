@@ -188,11 +188,23 @@ runRiskStratifiedEstimation <- function(connectionDetails,
     population <- cohorts %>%
       dplyr::filter(subjectId %in% pop$subjectId)
     population <-
-      PatientLevelPrediction::createStudyPopulation(plpData = plpData,
-                                                    outcomeId = id,
-                                                    population = population,
-                                                    removeSubjectsWithPriorOutcome = FALSE,
-                                                    requireTimeAtRisk = TRUE)
+      PatientLevelPrediction::createStudyPopulation(
+        plpData = plpData,
+        outcomeId = id,
+        population = population,
+        binary = populationSettings$populationPlpSettings$binary,
+        includeAllOutcomes = populationSettings$populationPlpSettings$includeAllOutcomes,
+        firstExposureOnly = populationSettings$populationPlpSettings$firstExposureOnly,
+        washoutPeriod = populationSettings$populationPlpSettings$washoutPeriod,
+        removeSubjectsWithPriorOutcome = populationSettings$populationPlpSettings$removeSubjectsWithPriorOutcome,
+        priorOutcomeLookback = populationSettings$populationPlpSettings$priorOutcomeLookback,
+        requireTimeAtRisk = populationSettings$populationPlpSettings$requireTimeAtRisk,
+        minTimeAtRisk = populationSettings$populationPlpSettings$minTimeAtRisk,
+        riskWindowStart = populationSettings$populationPlpSettings$riskWindowStart,
+        startAnchor = populationSettings$populationPlpSettings$startAnchor,
+        riskWindowEnd = populationSettings$populationPlpSettings$riskWindowEnd,
+        endAnchor = populationSettings$populationPlpSettings$endAnchor,
+        verbosity = populationSettings$populationPlpSettings$verbosity)
 
     predictionResults <-
       PatientLevelPrediction::runPlp(

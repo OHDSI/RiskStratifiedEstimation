@@ -9,8 +9,8 @@ createPopulationCmSettingsArgs(firstExposureOnly = FALSE,
   removeDuplicateSubjects = FALSE,
   removeSubjectsWithPriorOutcome = TRUE, priorOutcomeLookback = 99999,
   minDaysAtRisk = 1, riskWindowStart = 0,
-  addExposureDaysToStart = FALSE, startAnchor = "cohort start",
-  riskWindowEnd = 0, addExposureDaysToEnd = TRUE,
+  addExposureDaysToStart = NULL, startAnchor = "cohort start",
+  riskWindowEnd = 0, addExposureDaysToEnd = NULL,
   endAnchor = "cohort end", censorAtNewRiskWindow = FALSE)
 }
 \arguments{
@@ -55,9 +55,6 @@ endAnchor instead.}
 
 \item{censorAtNewRiskWindow}{If a subject is in multiple cohorts, should time-at-risk be
 censoredwhen the new time-at-risk starts to prevent overlap?}
-}
-\value{
-A parameter object containing all the information for defining the estimation step population
 }
 \description{
 Create a parameter object for the function createStudyPopulation
