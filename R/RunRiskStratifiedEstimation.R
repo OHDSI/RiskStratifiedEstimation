@@ -157,7 +157,7 @@ runRiskStratifiedEstimation <- function(connectionDetails,
       x = predictOutcomes,
       fun = fitPsModelOverall,
       getDataSettings = getDataSettings,
-      populationCmSettings = populationSettings$populationCmSettings,
+      populationSettings = populationSettings,
       analysisSettings = analysisSettings,
       runCmSettings = runSettings$runCmSettings)
 

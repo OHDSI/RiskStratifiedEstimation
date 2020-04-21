@@ -1,24 +1,88 @@
 library(dplyr)
 
-mapOutcomes <- readRDS("./data/mapOutcomes.rds")
-mapTreatments <- readRDS("./data/mapTreatments.rds")
-mappedOverallAbsoluteResults <- readRDS("./data/mappedOverallAbsoluteResults.rds")
-mappedOverallRelativeResults <- readRDS("./data/mappedOverallRelativeResults.rds")
-mappedOverallCasesResults <- readRDS("./data/mappedOverallCasesResults.rds")
+analysisDir <- file.path(
+  analysisSettings$saveDirectory,
+  analysisSettings$analysisId,
+  "Shiny"
+)
+mapOutcomes <- readRDS(
+  file.path(
+    analysisDir,
+    "data",
+    "mapOutcomes.rds"
+  )
+)
+
+mapTreatments <- readRDS(
+  file.path(
+    analysisDir,
+    "data",
+    "mapTreatments.rds"
+  )
+)
+
+mappedOverallAbsoluteResults <- readRDS(
+  file.path(
+    analysisDir,
+    "data",
+    "mappedOverallAbsoluteResults.rds"
+  )
+)
+mappedOverallRelativeResults <- readRDS(
+  file.path(
+    analysisDir,
+    "data",
+    "mappedOverallRelativeResults.rds"
+  )
+)
+mappedOverallCasesResults <- readRDS(
+  file.path(
+    analysisDir,
+    "data",
+    "mappedOverallCasesResults.rds"
+  )
+)
+
+predictionOutcomes <- unique(mappedOverallAbsoluteResults$stratOutcome)
 
 getResults <- function(treat, comp, strat, est, db, anal) {
 
   res <- list()
 
-  res$relative <- readRDS("./data/mappedOverallRelativeResults.rds") %>% filter(stratOutcome ==
-                                                                                  strat & estOutcome %in% est & analysis == anal & treatment == treat & comparator ==
-                                                                                  comp & database == db)
-  res$absolute <- readRDS("./data/mappedOverallAbsoluteResults.rds") %>% filter(stratOutcome ==
-                                                                                  strat & estOutcome %in% est & analysis == anal & treatment == treat & comparator ==
-                                                                                  comp & database == db)
-  res$cases <- readRDS("./data/mappedOverallCasesResults.rds") %>% filter(stratOutcome ==
-                                                                            strat & estOutcome %in% est & analysis == anal & treatment == treat & comparator ==
-                                                                            comp & database == db)
+  res$relative <-
+    readRDS(
+      file.path(
+        analysisDir,
+        "data",
+        "mappedOverallRelativeResults.rds"
+      )
+    ) %>%
+    filter(
+      stratOutcome == strat & estOutcome %in% est & analysis == anal & treatment == treat & comparator == comp & database == db
+    )
+
+  res$absolute <-
+    readRDS(
+      file.path(
+        analysisDir,
+        "data",
+        "mappedOverallAbsoluteResults.rds"
+      )
+    ) %>%
+    filter(
+      stratOutcome == strat & estOutcome %in% est & analysis == anal & treatment == treat & comparator == comp & database == db
+    )
+
+  res$cases <- readRDS(
+    file.path(
+     analysisDir,
+     "data",
+     "mappedOverallCasesResults.rds"
+    )
+  ) %>%
+    filter(
+      stratOutcome == strat & estOutcome %in% est & analysis == anal & treatment == treat & comparator == comp & database == db
+    )
 
   return(res)
 

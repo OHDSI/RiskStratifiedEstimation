@@ -321,6 +321,7 @@ cohortMethodData <-
       )
       plotList <- plotCovariateBalanceOverall(
         ps,
+        cohortMethodData = cohortMethodData,
         analysisSettings = analysisSettings,
         runSettings = runSettings
       )

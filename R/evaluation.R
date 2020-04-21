@@ -2,16 +2,19 @@
 #' @export
 
 evaluatePrediction <- function(analysisSettings,
+                               getDataSettings,
+                               populationSettings,
                                predictionId){
 
   saveDir <- file.path(analysisSettings$saveDirectory,
                        analysisSettings$analysisId)
 
-  plpData <- PatientLevelPrediction::loadPlpData(
-    file.path(saveDir,
-              "Data",
-              "plpData")
-  )
+  plpData <-
+    PatientLevelPrediction::loadPlpData(getDataSettings$plpDataFolder)
+  cohortMethodData <-
+    CohortMethod::loadCohortMethodData(getDataSettings$cohortMethodDataFolder)
+
+
 
   plpResult <- PatientLevelPrediction::loadPlpResult(
     file.path(saveDir,
@@ -26,7 +29,30 @@ evaluatePrediction <- function(analysisSettings,
               "Estimation",
               predictionId,
               "psFull.rds")
+  )
+
+  startingPopulation <- plpData$cohorts %>%
+    dplyr::filter(subjectId %in% psFull$subjectId)
+
+  psFull <- PatientLevelPrediction::createStudyPopulation(
+    plpData = plpData,
+    population = startingPopulation,
+    outcomeId = predictionId,
+    binary = populationSettings$populationPlpSettings$binary,
+    includeAllOutcomes = populationSettings$populationPlpSettings$includeAllOutcomes,
+    firstExposureOnly = populationSettings$populationPlpSettings$firstExposureOnly,
+    washoutPeriod = populationSettings$populationPlpSettings$washoutPeriod,
+    removeSubjectsWithPriorOutcome = populationSettings$populationPlpSettings$removeSubjectsWithPriorOutcome,
+    priorOutcomeLookback = populationSettings$populationPlpSettings$priorOutcomeLookback,
+    requireTimeAtRisk = populationSettings$populationPlpSettings$requireTimeAtRisk,
+    minTimeAtRisk = populationSettings$populationPlpSettings$minTimeAtRisk,
+    riskWindowStart = populationSettings$populationPlpSettings$riskWindowStart,
+    startAnchor = populationSettings$populationPlpSettings$startAnchor,
+    riskWindowEnd = populationSettings$populationPlpSettings$riskWindowEnd,
+    endAnchor = populationSettings$populationPlpSettings$endAnchor,
+    verbosity = populationSettings$populationPlpSettings$verbosity
   ) %>%
+    dplyr::left_join(psFull) %>%
     dplyr::mutate(outcomeCount = ifelse(outcomeCount > 0, 1, 0))
 
   # Evaluate on matched set

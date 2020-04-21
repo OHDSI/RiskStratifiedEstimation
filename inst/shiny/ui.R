@@ -9,6 +9,7 @@ shiny::shinyUI(
         shinydashboard::menuItem(
           tabName = "analysis",
           "Analysis",
+          icon = icon("cogs"),
           shiny::selectInput(
             "treatment",
             "Treatment",
@@ -24,14 +25,14 @@ shiny::shinyUI(
           shiny::selectInput(
             "stratOutcome",
             "Stratification Outcome",
-            unique(mapOutcomes$label),
-            unique(mapOutcomes$label)[1]
+            unique(predictionOutcomes),
+            unique(predictionOutcomes)[1]
           ),
           shiny::selectInput(
             "estOutcome",
             "Estimation outcome (max: 6)",
             unique(mapOutcomes$label),
-            selected = unique(mapOutcomes$label)[1],
+            selected = unique(predictionOutcomes)[1],
             multiple = TRUE,
             selectize = TRUE
           ),
@@ -49,12 +50,9 @@ shiny::shinyUI(
           )
         ),
         shinydashboard::menuItem(
-          tabName = "prediction",
-          "Prediction"
-        ),
-        shinydashboard::menuItem(
           tabName = "estimation",
           "Estimation",
+          icon = icon("chart-bar"),
           shiny::selectInput(
             "evaluateEstimation",
             "Evaluate",
@@ -63,16 +61,24 @@ shiny::shinyUI(
             selected = "Propensity scores"
           ),
           shiny::selectInput(
-            "stratOutcomeEstimation",
-            "Stratification Outcome",
-            unique(mapOutcomes$label),
-            unique(mapOutcomes$label)[1]
-          ),
-          shiny::selectInput(
             "estOutcomeEstimation",
             "Estimation outcome",
             unique(mapOutcomes$label),
             selected = unique(mapOutcomes$label)[1]
+          )
+        ),
+        shinydashboard::menuItem(
+          tabName = "prediction",
+          "Prediction",
+          icon = icon("dice-six"),
+          shiny::selectInput(
+            "cohort",
+            "Cohort",
+            c("Comparator",
+              "Entire population",
+              "Matched",
+              "Treatment"),
+            selected = "Entire population"
           )
         )
 
@@ -93,6 +99,20 @@ shiny::shinyUI(
           "Plot",
           shiny::plotOutput("combinedPlot",
                             height = "600px")
+        ),
+        shiny::tabPanel(
+          "Estimation evaluation",
+          shiny::plotOutput(
+            "evaluationPlot",
+            height = "600px"
+          )
+        ),
+        shiny::tabPanel(
+          "Prediction evaluation",
+          shiny::plotOutput(
+            "calibrationPlot",
+            height = "600px"
+          )
         )
       )
     )
