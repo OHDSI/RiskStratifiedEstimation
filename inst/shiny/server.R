@@ -195,5 +195,64 @@ shiny::shinyServer(function(input, output, session) {
     return(plot)
   })
 
+  output$discriminationPlot <- shiny::renderPlot({
+    stratIdNumber <- mapOutcomes %>%
+      dplyr::filter(label == input$stratOutcome) %>%
+      dplyr::select(idNumber) %>%
+      unlist()
+
+    if (input$cohort == "Comparator") {
+      prediction <- readRDS(
+        file.path(
+          analysisDir,
+          "data",
+          "Prediction",
+          stratIdNumber,
+          "Comparator",
+          "prediction.rds"
+        )
+      )
+    } else if (input$cohort == "Treatment") {
+      prediction <- readRDS(
+        file.path(
+          analysisDir,
+          "data",
+          "Prediction",
+          stratIdNumber,
+          "Treatment",
+          "prediction.rds"
+        )
+      )
+    } else if (input$cohort == "Matched") {
+      prediction <- readRDS(
+        file.path(
+          analysisDir,
+          "data",
+          "Prediction",
+          stratIdNumber,
+          "Matched",
+          "prediction.rds"
+        )
+      )
+    } else {
+      prediction <- readRDS(
+        file.path(
+          analysisDir,
+          "data",
+          "Prediction",
+          stratIdNumber,
+          "Treatment",
+          "prediction.rds"
+        )
+      )
+    }
+
+    plot <- PatientLevelPrediction::plotRoc(
+      prediction = prediction
+    )
+    return(plot)
+
+  })
+
 
 })

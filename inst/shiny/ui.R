@@ -109,9 +109,23 @@ shiny::shinyUI(
         ),
         shiny::tabPanel(
           "Prediction evaluation",
-          shiny::plotOutput(
-            "calibrationPlot",
-            height = "600px"
+          shiny::fluidRow(
+            shinydashboard::box(
+              status = "info",
+              title = "Calibration",
+              shiny::plotOutput(
+                "calibrationPlot",
+                height = "600px"
+              )
+            ),
+            shinydashboard::box(
+              status = "info",
+              title = "Discrimination",
+              shiny::plotOutput(
+                "discriminationPlot",
+                height = "600px"
+              )
+            )
           )
         )
       )
