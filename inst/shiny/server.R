@@ -49,16 +49,25 @@ shiny::shinyServer(function(input, output, session) {
     res <- resultSubset()
 
     table <- res$absolute %>%
-      dplyr::select(database,
-                    stratOutcome,
-                    estOutcome,
-                    riskStratum,
-                    estimate,
-                    lower,
-                    upper) %>%
-      dplyr::mutate(estimate = 100 * estimate, lower = 100 * lower, upper = 100 * upper) %>%
+      dplyr::select(
+        database,
+        stratOutcome,
+        estOutcome,
+        riskStratum,
+        estimate,
+        lower,
+        upper
+      ) %>%
+      dplyr::mutate(
+        estimate = 100 * estimate,
+        lower = 100 * lower,
+        upper = 100 * upper
+      ) %>%
       DT::datatable() %>%
-      DT::formatRound(columns = c("estimate", "lower", "upper"), digits = 2)
+      DT::formatRound(
+        columns = c("estimate", "lower", "upper"),
+        digits = 2
+      )
 
     return(table)
 
@@ -68,11 +77,18 @@ shiny::shinyServer(function(input, output, session) {
 
     res <- resultSubset()
 
-    plot <- combinedPlot(cases = res$cases, relative = res$relative, absolute = res$absolute,
-                         treatment = input$treatment, comparator = input$comparator)
+    plot <-
+      combinedPlot(
+        cases = res$cases,
+        relative = res$relative,
+        absolute = res$absolute,
+        treatment = input$treatment,
+        comparator = input$comparator
+      )
     return(plot)
 
-  }, height = function() {
+  },
+  height = function() {
     0.45 * session$clientData$output_combinedPlot_width
   })
 
@@ -88,11 +104,15 @@ shiny::shinyServer(function(input, output, session) {
 
   output$evaluationPlot <- shiny::renderPlot({
     stratIdNumber <- mapOutcomes %>%
-      dplyr::filter(label == input$stratOutcome) %>%
+      dplyr::filter(
+        label == input$stratOutcome
+      ) %>%
       dplyr::select(idNumber) %>%
       unlist()
     estIdNumber <- mapOutcomes %>%
-      dplyr::filter(label == input$estOutcomeEstimation) %>%
+      dplyr::filter(
+        label == input$estOutcomeEstimation
+      ) %>%
       dplyr::select(idNumber) %>%
       unlist()
     if(input$evaluateEstimation == "Propensity scores"){
