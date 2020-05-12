@@ -14,11 +14,20 @@ shiny::shinyServer(function(input, output, session) {
   resultSubset <- shiny::reactive({
 
     results <- getResults(treat = input$treatment, comp = input$comparator, strat = input$stratOutcome,
-                          est = input$estOutcome, anal = input$analysis, db = input$database)
+                          est = input$estOutcome, anal = input$analysis, db = input$database,
+                          mappedOverallRelativeResults = mappedOverallRelativeResults,
+                          mappedOverallAbsoluteResults = mappedOverallAbsoluteResults,
+                          mappedOverallCasesResults = mappedOverallCasesResults)
 
     return(results)
 
   })
+
+  # balanceSubset <- shiny::reactive({
+  #   res <- getBalance(treat = input$treatment, comp = input$comparator, strat = input$stratOutcome,
+  #                     est = input$estOutcome, anal = input$analysis, db = input$database)
+  #   return(res)
+  # })
 
   output$mainTableRelative <- DT::renderDataTable({
 
@@ -132,9 +141,13 @@ shiny::shinyServer(function(input, output, session) {
           )
         )
       )
+      ggpubr::ggarrange(
+        plotlist = plotList
+      ) %>%
+        return()
     }
     else{
-      plotList <- readRDS(
+      readRDS(
         file.path(
           analysisDir,
           "data",
@@ -142,19 +155,24 @@ shiny::shinyServer(function(input, output, session) {
           stratIdNumber,
           paste0(
             paste(
-              "balancePlotList",
+              "covariateBalanceList",
               estIdNumber,
               sep = "_"
             ),
             ".rds"
           )
         )
-      )
+      ) %>%
+        ggplot2::ggplot(ggplot2::aes(x = beforeWeighting, y = afterWeighting)) +
+        ggplot2::geom_point(size = .5) +
+        ggplot2::scale_y_continuous(limits = c(0, 100)) +
+        ggplot2::scale_x_continuous(limits = c(0, 100)) +
+        ggplot2::geom_hline(yintercept = 10, linetype = 2, color = "red") +
+        ggplot2::xlab(label = "Before weighting") +
+        ggplot2::ylab(label = "After weighting") +
+        ggplot2::facet_grid(~riskStratum) %>%
+        return()
     }
-    plot <- ggpubr::ggarrange(
-      plotlist = plotList
-    )
-    return(plot)
   })
 
   output$calibrationPlot <- shiny::renderPlot({
@@ -273,6 +291,4 @@ shiny::shinyServer(function(input, output, session) {
     return(plot)
 
   })
-
-
 })

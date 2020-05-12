@@ -25,28 +25,28 @@ shiny::shinyUI(
           shiny::selectInput(
             "stratOutcome",
             "Stratification Outcome",
-            unique(predictionOutcomes),
-            unique(predictionOutcomes)[1]
+            unique(mapOutcomes$label),
+            unique(mapOutcomes$label)[1]
           ),
           shiny::selectInput(
             "estOutcome",
             "Estimation outcome (max: 6)",
             unique(mapOutcomes$label),
-            selected = unique(predictionOutcomes)[1],
+            selected = unique(mapOutcomes$label)[1],
             multiple = TRUE,
             selectize = TRUE
           ),
-          shiny::checkboxGroupInput(
+          shiny::selectizeInput(
             "database",
             "Database",
-            unique(mappedOverallAbsoluteResults$database),
-            unique(mappedOverallAbsoluteResults$database)[1]
+            unique(databaseOptions),
+            unique(databaseOptions)[1]
           ),
           shiny::checkboxGroupInput(
             "analysis",
             "Analysis",
-            unique(mappedOverallAbsoluteResults$analysis),
-            unique(mappedOverallAbsoluteResults$analysis)[1]
+            unique(analysisTypeOptions),
+            unique(analysisTypeOptions)[1]
           )
         ),
         shinydashboard::menuItem(
