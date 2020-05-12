@@ -23,12 +23,6 @@ shiny::shinyServer(function(input, output, session) {
 
   })
 
-  # balanceSubset <- shiny::reactive({
-  #   res <- getBalance(treat = input$treatment, comp = input$comparator, strat = input$stratOutcome,
-  #                     est = input$estOutcome, anal = input$analysis, db = input$database)
-  #   return(res)
-  # })
-
   output$mainTableRelative <- DT::renderDataTable({
 
     res <- resultSubset()
@@ -111,6 +105,13 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
 
+  balanceSubset <- shiny::reactive({
+    res <- getBalance(treat = input$treatment, comp = input$comparator, strat = input$stratOutcome,
+                      est = input$estOutcome, anal = input$analysis, db = input$database,
+                      balance = balance)
+    return(res)
+  })
+
   output$evaluationPlot <- shiny::renderPlot({
     stratIdNumber <- mapOutcomes %>%
       dplyr::filter(
@@ -147,22 +148,7 @@ shiny::shinyServer(function(input, output, session) {
         return()
     }
     else{
-      readRDS(
-        file.path(
-          analysisDir,
-          "data",
-          "Estimation",
-          stratIdNumber,
-          paste0(
-            paste(
-              "covariateBalanceList",
-              estIdNumber,
-              sep = "_"
-            ),
-            ".rds"
-          )
-        )
-      ) %>%
+      balanceSubset() %>%
         ggplot2::ggplot(ggplot2::aes(x = beforeWeighting, y = afterWeighting)) +
         ggplot2::geom_point(size = .5) +
         ggplot2::scale_y_continuous(limits = c(0, 100)) +

@@ -96,7 +96,7 @@ shiny::shinyUI(
           DT::dataTableOutput("mainTableAbsolute")
         ),
         shiny::tabPanel(
-          "Plot",
+          "Risk stratified analysis",
           shiny::plotOutput("combinedPlot",
                             height = "600px")
         ),
