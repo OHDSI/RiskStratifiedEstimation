@@ -44,7 +44,6 @@ prepareMultipleRseeViewer <- function(analysisSettingsList,
             analysisSettings$saveDirectory,
             analysisSettings$analysisId,
             "shiny",
-            "data",
             file
         )
         return(res)

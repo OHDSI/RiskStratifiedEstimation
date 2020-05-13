@@ -39,7 +39,7 @@ fitOutcomeModels <- function(outcomeId,
 
   ParallelLogger::logInfo("Done estimating treatment effects")
 
-  if(!is.character(treatmentEffects)){
+  if (!is.character(treatmentEffects)) {
 
     saveRDS(treatmentEffects$relativeRiskReduction,
             file = file.path(analysisPath, 'relativeRiskReduction.rds'))
@@ -49,6 +49,8 @@ fitOutcomeModels <- function(outcomeId,
             file = file.path(analysisPath, 'models.rds'))
     saveRDS(treatmentEffects$cases,
             file = file.path(analysisPath, 'cases.rds'))
+    saveRDS(treatmentEffects$ps,
+            file = file.path(analysisPath, 'ps.rds'))
   }
 
 
@@ -661,7 +663,8 @@ estimateTreatmentEffect <- function(ps,
   return(list(relativeRiskReduction = rrr,
               absoluteRiskReduction = arr,
               cases = cases,
-              models = models))
+              models = models,
+              ps = ps))
 
 }
 

@@ -230,10 +230,10 @@ createOverallResults <- function(analysisSettings){
 
     saveDir <- file.path(analysisSettings$saveDirectory,
                          analysisSettings$analysisId,
-                         "shiny",
-                         "data")
+                         "shiny")
+
     outputDir <- file.path(saveDir, "Prediction", predictOutcome)
-    if(!dir.exists(outputDir)){
+    if (!dir.exists(outputDir)) {
       dir.create(outputDir, recursive = T)
     }
 
