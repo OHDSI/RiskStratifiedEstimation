@@ -90,7 +90,20 @@ computeCovariateBalanceCombined <- function(outcomeId,
                                             analysisSettings,
                                             runSettings,
                                             getDataSettings,
-                                            plotSecondaryOutcomes = FALSE){
+                                            secondaryOutcomes = FALSE){
+
+  saveDir <- file.path(
+    analysisSettings$saveDirectory,
+    analysisSettings$analysisId,
+    "shiny"
+  )
+
+  if (!dir.exists(saveDir)) {
+    dir.create(
+      saveDir,
+      recursive = TRUE
+    )
+  }
 
   cohortMethodData <-
     CohortMethod::loadCohortMethodData(
@@ -109,7 +122,6 @@ computeCovariateBalanceCombined <- function(outcomeId,
     )
   )
 
-  covariateBalanceList <-
     computeCovariateBalanceOverall(
       ps,
       cohortMethodData = cohortMethodData,
@@ -124,9 +136,26 @@ computeCovariateBalanceCombined <- function(outcomeId,
       treatmentId = analysisSettings$treatmentCohortId,
       comparatorId = analysisSettings$comparatorCohortId,
       analysisType = analysisSettings$analysisType
-    )
+    ) %>%
+      saveRDS(
+        file.path(
+          saveDir,
+          paste0(
+            paste(
+              "balance",
+              analysisSettings$analysisId,
+              analysisSettings$treatmentCohortId,
+              analysisSettings$comparatorCohortId,
+              outcomeId,
+              outcomeId,
+              sep = "_"
+            ),
+            ".rds"
+          )
+        )
+      )
 
-  if (plotSecondaryOutcomes) {
+  if (secondaryOutcomes) {
     predLoc <- which(analysisSettings$outcomeIds == outcomeId)
     compLoc <- analysisSettings$analysisMatrix[, predLoc]
     compareOutcomes <- analysisSettings$outcomeIds[as.logical(compLoc)]
@@ -146,7 +175,7 @@ computeCovariateBalanceCombined <- function(outcomeId,
         )
       )
 
-      covariateBalanceList <- computeCovariateBalanceOverall(
+      computeCovariateBalanceOverall(
         ps,
         cohortMethodData = cohortMethodData,
         analysisSettings = analysisSettings,
@@ -161,10 +190,26 @@ computeCovariateBalanceCombined <- function(outcomeId,
           comparatorId = analysisSettings$comparatorCohortId,
           analysisType = analysisSettings$analysisType
         ) %>%
-        dplyr::bind_rows(covariateBalanceList)
+        saveRDS(
+          file.path(
+            saveDir,
+            paste0(
+              paste(
+                "balance",
+                analysisSettings$analysisId,
+                analysisSettings$treatmentCohortId,
+                analysisSettings$comparatorCohortId,
+                outcomeId,
+                compareOutcome,
+                sep = "_"
+              ),
+              ".rds"
+            )
+          )
+        )
     }
   }
-  return(covariateBalanceList)
+    return(NULL)
 }
 
 
@@ -173,7 +218,7 @@ computeCovariateBalanceCombined <- function(outcomeId,
 computeCovariateBalanceAnalysis <- function(analysisSettings,
                                             runSettings,
                                             getDataSettings,
-                                            plotSecondaryOutcomes = FALSE,
+                                            secondaryOutcomes = FALSE,
                                             threads = 1){
   predictOutcomes <-
     analysisSettings$outcomeIds[which(colSums(analysisSettings$analysisMatrix) != 0)]
@@ -182,33 +227,16 @@ computeCovariateBalanceAnalysis <- function(analysisSettings,
   ParallelLogger::clusterRequire(cluster, c("RiskStratifiedEstimation"))
 
 
-  res <- ParallelLogger::clusterApply(cluster = cluster,
+  dummy <- ParallelLogger::clusterApply(cluster = cluster,
                                       x = predictOutcomes,
                                       fun = computeCovariateBalanceCombined,
                                       analysisSettings = analysisSettings,
                                       runSettings = runSettings,
                                       getDataSettings = getDataSettings,
-                                      plotSecondaryOutcomes = plotSecondaryOutcomes)
+                                      secondaryOutcomes = secondaryOutcomes)
 
   ParallelLogger::stopCluster(cluster)
 
-  analysisPath <-  file.path(
-    analysisSettings$saveDirectory,
-    analysisSettings$analysisId,
-    "shiny"
-  )
-
-  if (!dir.exists(analysisPath)) {
-    dir.create(analysisPath, recursive = T)
-  }
-
-  do.call(dplyr::bind_rows, res) %>%
-    saveRDS(
-      file.path(
-        analysisPath,
-        "balance.rds"
-      )
-    )
   return(NULL)
 }
 
@@ -236,6 +264,19 @@ psDensityCombined <- function(outcomeId,
                               analysisSettings,
                               secondaryOutcomes = FALSE){
 
+  saveDir <- file.path(
+    analysisSettings$saveDirectory,
+    analysisSettings$analysisId,
+    "shiny"
+  )
+
+  if (!dir.exists(saveDir)) {
+    dir.create(
+      saveDir,
+      recursive = TRUE
+    )
+  }
+
   analysisPath <- file.path(
     analysisSettings$saveDirectory,
     analysisSettings$analysisId
@@ -250,7 +291,7 @@ psDensityCombined <- function(outcomeId,
     )
   )
 
-  psDensityList <- psDensityOverall(ps) %>%
+  psDensityOverall(ps) %>%
     dplyr::mutate(
       database = analysisSettings$databaseName,
       analysisId = analysisSettings$analysisId,
@@ -264,6 +305,23 @@ psDensityCombined <- function(outcomeId,
       treatmentId = analysisSettings$treatmentCohortId,
       comparatorId = analysisSettings$comparatorCohortId,
       analysisType = analysisSettings$analysisType
+    ) %>%
+    saveRDS(
+      file.path(
+        saveDir,
+        paste0(
+          paste(
+            "psDensity",
+            analysisSettings$analysisId,
+            analysisSettings$treatmentCohortId,
+            analysisSettings$comparatorCohortId,
+            outcomeId,
+            outcomeId,
+            sep = "_"
+          ),
+          ".rds"
+        )
+      )
     )
 
   if (secondaryOutcomes) {
@@ -286,7 +344,7 @@ psDensityCombined <- function(outcomeId,
         )
       )
 
-      psDensityList <- psDensityOverall(ps) %>%
+      psDensityOverall(ps) %>%
         dplyr::mutate(
           database = analysisSettings$databaseName,
           analysisId = analysisSettings$analysisId,
@@ -301,10 +359,26 @@ psDensityCombined <- function(outcomeId,
           comparatorId = analysisSettings$comparatorCohortId,
           analysisType = analysisSettings$analysisType
         ) %>%
-        dplyr::bind_rows(psDensityList)
+        saveRDS(
+          file.path(
+            saveDir,
+            paste0(
+              paste(
+                "psDensity",
+                analysisSettings$analysisId,
+                analysisSettings$treatmentCohortId,
+                analysisSettings$comparatorCohortId,
+                outcomeId,
+                compareOutcome,
+                sep = "_"
+              ),
+              ".rds"
+            )
+          )
+        )
     }
   }
-  return(psDensityList)
+  return(NULL)
 }
 
 #' @export
@@ -318,7 +392,7 @@ psDensityAnalysis <- function(analysisSettings,
   ParallelLogger::clusterRequire(cluster, c("RiskStratifiedEstimation"))
 
 
-  res <- ParallelLogger::clusterApply(cluster = cluster,
+  dummy <- ParallelLogger::clusterApply(cluster = cluster,
                                         x = predictOutcomes,
                                         fun = psDensityCombined,
                                         analysisSettings = analysisSettings,
@@ -326,22 +400,6 @@ psDensityAnalysis <- function(analysisSettings,
 
   ParallelLogger::stopCluster(cluster)
 
-  analysisPath <-  file.path(
-    analysisSettings$saveDirectory,
-    analysisSettings$analysisId,
-    "shiny"
-  )
-
-  if (!dir.exists(analysisPath)) {
-    dir.create(analysisPath, recursive = T)
-  }
-  do.call(dplyr::bind_rows, res) %>%
-    saveRDS(
-      file.path(
-        analysisPath,
-        "psDensity.rds"
-      )
-    )
   return(NULL)
 }
 
@@ -595,7 +653,19 @@ computeCovariateBalanceCohortMethod <- function(population,
 
 
 
-
-# ggplot(data = pp, aes(x = x, y = y), fill = 1) +
-#   geom_line() +
-#   geom_area(mapping=aes(x = x), fill="#9898fb", alpha=1.)
+# pp %>%
+#   left_join(mapExposures, by = c("treatment" = "exposure_id")) %>%
+#   ggplot(aes(x = x, y = y)) +
+#   geom_density(stat = "identity", aes(color = exposure_name, group = exposure_name, fill = exposure_name)) +
+#   facet_grid(~riskStratum) +
+#   ggplot2::ylab("Density") +
+#   ggplot2::xlab("Preference score") +
+#   ggplot2::scale_fill_manual(values = c(rgb(0.8, 0, 0, alpha = 0.5),
+#                                         rgb(0, 0, 0.8, alpha = 0.5))) +
+#   ggplot2::scale_color_manual(values = c(rgb(0.8, 0, 0, alpha = 0.5),
+#                                          rgb(0, 0, 0.8, alpha = 0.5))) +
+#   ggplot2::theme(legend.title = ggplot2::element_blank(),
+#                  legend.position = "top",
+#                  legend.text = ggplot2::element_text(margin = ggplot2::margin(0, 0.5, 0, 0.1, "cm")))
+#
+#

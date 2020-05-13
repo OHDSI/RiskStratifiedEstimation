@@ -106,176 +106,167 @@ shiny::shinyServer(function(input, output, session) {
   })
 
   balanceSubset <- shiny::reactive({
-    res <- getBalance(treat = input$treatment, comp = input$comparator, strat = input$stratOutcome,
-                      anal = input$analysis, est = input$estOutcome, db = input$database, balance = balance)
+    res <- getBalance(
+      treat = input$treatment,
+      comp = input$comparator,
+      strat = input$stratOutcome,
+      anal = input$analysis,
+      est = input$estOutcomeEstimation,
+      db = input$database,
+      analyses = analyses,
+      mapExposures = mapExposures,
+      mapOutcomes = mapOutcomes,
+      analysisPath = analysisPath)
+    return(res)
+  })
+
+  psDensitySubset <- shiny::reactive({
+    res <- getPsDensity(
+      treat = input$treatment,
+      comp = input$comparator,
+      strat = input$stratOutcome,
+      anal = input$analysis,
+      est = input$estOutcomeEstimation,
+      db = input$database,
+      analyses = analyses,
+      mapExposures = mapExposures,
+      mapOutcomes = mapOutcomes,
+      analysisPath = analysisPath)
     return(res)
   })
 
   output$evaluationPlot <- shiny::renderPlot({
     stratIdNumber <- mapOutcomes %>%
       dplyr::filter(
-        label == input$stratOutcome
+        outcome_name == input$stratOutcome
       ) %>%
-      dplyr::select(idNumber) %>%
+      dplyr::select(outcome_id) %>%
       unlist()
     estIdNumber <- mapOutcomes %>%
       dplyr::filter(
-        label == input$estOutcomeEstimation
+        outcome_name == input$estOutcomeEstimation
       ) %>%
-      dplyr::select(idNumber) %>%
+      dplyr::select(outcome_id) %>%
       unlist()
-    if(input$evaluateEstimation == "Propensity scores"){
-      plotList <- readRDS(
-        file.path(
-          analysisDir,
-          "data",
-          "Estimation",
-          stratIdNumber,
-          paste0(
-            paste(
-              "psPlotList",
-              estIdNumber,
-              sep = "_"
-            ),
-            ".rds"
+    if (input$evaluateEstimation == "Propensity scores") {
+      psDensitySubset() %>%
+        dplyr::left_join(
+          mapExposures,
+          by = c("treatment" = "exposure_id")
+        ) %>%
+        ggplot2::ggplot(
+          ggplot2::aes(
+            x = x,
+            y = y
           )
-        )
-      )
-      ggpubr::ggarrange(
-        plotlist = plotList
-      ) %>%
+        ) +
+        ggplot2::geom_density(
+          stat = "identity",
+          ggplot2::aes(
+            color = exposure_name,
+            group = exposure_name,
+            fill = exposure_name
+          )
+        ) +
+        ggplot2::facet_grid(~riskStratum) +
+        ggplot2::ylab("Density") +
+        ggplot2::xlab("Preference score") +
+        ggplot2::scale_fill_manual(
+          values = c(
+            rgb(0.8, 0, 0, alpha = 0.5),
+            rgb(0, 0, 0.8, alpha = 0.5)
+          )
+        ) +
+        ggplot2::scale_color_manual(
+          values = c(
+            rgb(0.8, 0, 0, alpha = 0.5),
+            rgb(0, 0, 0.8, alpha = 0.5)
+          )
+        ) +
+        ggplot2::theme(
+          legend.title = ggplot2::element_blank(),
+          legend.position = "top",
+          legend.text = ggplot2::element_text(
+            margin = ggplot2::margin(0, 0.5, 0, 0.1, "cm")
+          )
+        ) %>%
         return()
     }
-    else{
+    else {
       balanceSubset() %>%
-        # ggplot2::ggplot(ggplot2::aes(x = beforeWeighting, y = afterWeighting)) +
-        # ggplot2::geom_point(size = .5) +
-        # ggplot2::scale_y_continuous(limits = c(0, 100)) +
-        # ggplot2::scale_x_continuous(limits = c(0, 100)) +
-        # ggplot2::geom_hline(yintercept = 10, linetype = 2, color = "red") +
-        # ggplot2::xlab(label = "Before weighting") +
-        # ggplot2::ylab(label = "After weighting") +
-        # ggplot2::facet_grid(~riskStratum) %>%
         CohortMethod::plotCovariateBalanceScatterPlot() +
         ggplot2::facet_grid(~riskStratum) %>%
         return()
     }
   })
 
-  output$calibrationPlot <- shiny::renderPlot({
-    stratIdNumber <- mapOutcomes %>%
-      dplyr::filter(label == input$stratOutcome) %>%
-      dplyr::select(idNumber) %>%
-      unlist()
-    if (input$cohort == "Comparator") {
-      evaluation <- readRDS(
-        file.path(
-          analysisDir,
-          "data",
-          "Prediction",
-          stratIdNumber,
-          "Comparator",
-          "performanceEvaluation.rds"
-        )
-      )
-    } else if (input$cohort == "Treatment") {
-      evaluation <- readRDS(
-        file.path(
-          analysisDir,
-          "data",
-          "Prediction",
-          stratIdNumber,
-          "Treatment",
-          "performanceEvaluation.rds"
-        )
-      )
-    } else if (input$cohort == "Matched") {
-      evaluation <- readRDS(
-        file.path(
-          analysisDir,
-          "data",
-          "Prediction",
-          stratIdNumber,
-          "Matched",
-          "performanceEvaluation.rds"
-        )
-      )
-    } else {
-      evaluation <- readRDS(
-        file.path(
-          analysisDir,
-          "data",
-          "Prediction",
-          stratIdNumber,
-          "Treatment",
-          "performanceEvaluation.rds"
-        )
-      )
-    }
+  calibrationSubset <- shiny::reactive({
+    res <- getCalibration(
+      treat = input$treatment,
+      comp = input$comparator,
+      strat = input$stratOutcome,
+      db = input$database,
+      anal = input$analysis,
+      predictionPopulation = input$predictionPopulation,
+      analyses = analyses,
+      mapExposures = mapExposures,
+      mapOutcomes = mapOutcomes,
+      analysisPath = analysisPath)
+    return(res)
+  })
 
-    plot <- PatientLevelPrediction::plotSparseCalibration2(
-      evaluation = evaluation,
-      type = "validation"
-    )
-    return(plot)
+  output$calibrationPlot <- shiny::renderPlot({
+    calibrationSubset() %>%
+      ggplot2::ggplot(
+        ggplot2::aes(
+          x = averagePredictedProbability,
+          y = observedIncidence,
+          ymin = lower,
+          ymax = upper
+        )
+      ) +
+      ggplot2::geom_point(
+        size = 2,
+        color = "black"
+      ) +
+      ggplot2::geom_errorbar() +
+      ggplot2::geom_line(
+        colour = 'darkgrey'
+      ) +
+      ggplot2::geom_abline(
+        intercept = 0,
+        slope = 1,
+        linetype = 5,
+        size = 0.4,
+        show.legend = TRUE
+      ) +
+      ggplot2::scale_x_continuous("Average Predicted Probability") +
+      ggplot2::scale_y_continuous("Observed Fraction With Outcome")
+
+  })
+
+  aucSubset <- shiny::reactive({
+    res <- getAuc(
+      treat = input$treatment,
+      comp = input$comparator,
+      strat = input$stratOutcome,
+      db = input$database,
+      anal = input$analysis,
+      predictionPopulation = input$predictionPopulation,
+      analyses = analyses,
+      mapExposures = mapExposures,
+      mapOutcomes = mapOutcomes,
+      analysisPath = analysisPath)
+    return(res)
   })
 
   output$discriminationPlot <- shiny::renderPlot({
-    stratIdNumber <- mapOutcomes %>%
-      dplyr::filter(label == input$stratOutcome) %>%
-      dplyr::select(idNumber) %>%
-      unlist()
-
-    if (input$cohort == "Comparator") {
-      prediction <- readRDS(
-        file.path(
-          analysisDir,
-          "data",
-          "Prediction",
-          stratIdNumber,
-          "Comparator",
-          "prediction.rds"
-        )
-      )
-    } else if (input$cohort == "Treatment") {
-      prediction <- readRDS(
-        file.path(
-          analysisDir,
-          "data",
-          "Prediction",
-          stratIdNumber,
-          "Treatment",
-          "prediction.rds"
-        )
-      )
-    } else if (input$cohort == "Matched") {
-      prediction <- readRDS(
-        file.path(
-          analysisDir,
-          "data",
-          "Prediction",
-          stratIdNumber,
-          "Matched",
-          "prediction.rds"
-        )
-      )
-    } else {
-      prediction <- readRDS(
-        file.path(
-          analysisDir,
-          "data",
-          "Prediction",
-          stratIdNumber,
-          "Treatment",
-          "prediction.rds"
-        )
-      )
-    }
-
-    plot <- PatientLevelPrediction::plotRoc(
-      prediction = prediction
-    )
-    return(plot)
-
+    aucSubset() %>%
+      ggplot2::ggplot(ggplot2::aes(x = fpRate, y = sens)) +
+      ggplot2::geom_abline(intercept = 0, slope = 1) +
+      ggplot2::geom_area(color = grDevices::rgb(0, 0, 0.8, alpha = 0.8),
+                         fill = grDevices::rgb(0, 0, 0.8, alpha = 0.4)) +
+      ggplot2::scale_x_continuous("1 - specificity") +
+      ggplot2::scale_y_continuous("Sensitivity")
   })
 })

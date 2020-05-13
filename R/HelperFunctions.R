@@ -106,6 +106,18 @@ createOverallResults <- function(analysisSettings){
                              analysisSettings$analysisId,
                              "Estimation")
 
+  pathToPrediction <- file.path(analysisSettings$saveDirectory,
+                                analysisSettings$analysisId,
+                                "Prediction")
+
+  saveDir <- file.path(analysisSettings$saveDirectory,
+                       analysisSettings$analysisId,
+                       "shiny")
+
+  if (!dir.exists(saveDir)) {
+    dir.create(saveDir, recursive = T)
+  }
+
   absolute <- data.frame(estimate = numeric(),
                          lower = numeric(),
                          upper = numeric(),
@@ -134,8 +146,116 @@ createOverallResults <- function(analysisSettings){
                       treatment = numeric(),
                       comparator = numeric())
 
+  predictonPopulations <- c("EntirePopulation",
+                            "Matched",
+                            "Treatment",
+                            "Comparator")
 
-  for(predictOutcome in predictOutcomes){
+  for (predictOutcome in predictOutcomes) {
+
+    for (predictionPopulation in predictonPopulations) {
+
+      prediction <- readRDS(
+        file.path(
+          pathToPrediction,
+          predictOutcome,
+          analysisSettings$analysisId,
+          predictionPopulation,
+          "prediction.rds"
+        )
+      )
+
+      prediction <- prediction[order(-prediction$value), c("value", "outcomeCount")]
+      prediction$sens <- cumsum(prediction$outcomeCount) / sum(prediction$outcomeCount)
+      prediction$fpRate <- cumsum(prediction$outcomeCount == 0) / sum(prediction$outcomeCount == 0)
+      data <- stats::aggregate(fpRate ~ sens, data = prediction, min)
+      data <- stats::aggregate(sens ~ fpRate, data = data, min)
+      data <- rbind(data, data.frame(fpRate = 1, sens = 1)) %>%
+        dplyr::mutate(
+          database = analysisSettings$databaseName,
+          analysisId = analysisSettings$analysisId,
+          stratOutcome = predictOutcome,
+          treatmentId = analysisSettings$treatmentCohortId,
+          comparatorId = analysisSettings$comparatorCohortId,
+          analysisType = analysisSettings$analysisType
+        )
+
+      saveRDS(
+        data,
+        file.path(
+          saveDir,
+         paste0(
+           paste(
+             "auc",
+             predictionPopulation,
+             analysisSettings$analysisId,
+             analysisSettings$treatmentCohortId,
+             analysisSettings$comparatorCohortId,
+             predictOutcome,
+             sep = "_"
+           ),
+           ".rds"
+         )
+        )
+      )
+
+      calibration <- readRDS(
+        file.path(
+          pathToPrediction,
+          predictOutcome,
+          analysisSettings$analysisId,
+          predictionPopulation,
+          "performanceEvaluation.rds"
+        )
+      )
+
+      calibration$calibrationSummary %>%
+        dplyr::select(
+          averagePredictedProbability,
+          observedIncidence,
+          PersonCountAtRisk
+        ) %>%
+        dplyr::rowwise() %>%
+        dplyr::mutate(
+          lower = binom.test(
+            x = observedIncidence*PersonCountAtRisk,
+            PersonCountAtRisk
+          )$conf.int[1],
+          upper = binom.test(
+            x = observedIncidence*PersonCountAtRisk,
+            PersonCountAtRisk
+          )$conf.int[2]
+        ) %>%
+        dplyr::mutate(
+          database = analysisSettings$databaseName,
+          analysisId = analysisSettings$analysisId,
+          stratOutcome = predictOutcome,
+          treatmentId = analysisSettings$treatmentCohortId,
+          comparatorId = analysisSettings$comparatorCohortId,
+          analysisType = analysisSettings$analysisType
+        ) %>%
+        as.data.frame() %>%
+        saveRDS(
+          file.path(
+            saveDir,
+            paste0(
+              paste(
+                "calibration",
+                predictionPopulation,
+                analysisSettings$analysisId,
+                analysisSettings$treatmentCohortId,
+                analysisSettings$comparatorCohortId,
+                predictOutcome,
+                sep = "_"
+              ),
+              ".rds"
+            )
+          )
+        )
+
+
+    }
+
     absoluteResult <- readRDS(file.path(pathToResults,
                                         predictOutcome,
                                         "absoluteRiskReduction.rds")) %>%
@@ -181,8 +301,8 @@ createOverallResults <- function(analysisSettings){
     compareOutcomes <- analysisSettings$outcomeIds[as.logical(compLoc)]
     compareOutcomes <- compareOutcomes[compareOutcomes != predictOutcome]
 
-    if(length(compareOutcomes) != 0){
-      for(compareOutcome in compareOutcomes){
+    if (length(compareOutcomes) != 0) {
+      for (compareOutcome in compareOutcomes) {
         absoluteResult <- readRDS(file.path(pathToResults,
                                             predictOutcome,
                                             compareOutcome,
@@ -228,25 +348,23 @@ createOverallResults <- function(analysisSettings){
       }
     }
 
-    saveDir <- file.path(analysisSettings$saveDirectory,
-                         analysisSettings$analysisId,
-                         "shiny")
 
-    outputDir <- file.path(saveDir, "Prediction", predictOutcome)
-    if (!dir.exists(outputDir)) {
-      dir.create(outputDir, recursive = T)
-    }
 
-    predictionEvaluationDir <- file.path(analysisSettings$saveDirectory,
-                                         analysisSettings$analysisId,
-                                         "Prediction",
-                                         predictOutcome,
-                                         analysisSettings$analysisId,
-                                         "evaluation")
-    listFiles <- list.files(predictionEvaluationDir)
-    file.copy(file.path(predictionEvaluationDir,
-                        listFiles),
-              outputDir)
+    # outputDir <- file.path(saveDir, "Prediction", predictOutcome)
+    # if (!dir.exists(outputDir)) {
+    #   dir.create(outputDir, recursive = T)
+    # }
+    #
+    # predictionEvaluationDir <- file.path(analysisSettings$saveDirectory,
+    #                                      analysisSettings$analysisId,
+    #                                      "Prediction",
+    #                                      predictOutcome,
+    #                                      analysisSettings$analysisId,
+    #                                      "evaluation")
+    # listFiles <- list.files(predictionEvaluationDir)
+    # file.copy(file.path(predictionEvaluationDir,
+    #                     listFiles),
+    #           outputDir)
   }
 
   absolute %>%
@@ -258,12 +376,44 @@ createOverallResults <- function(analysisSettings){
   cases %>%
     saveRDS(file.path(saveDir, "mappedOverallCasesResults.rds"))
 
-  saveRDS(analysisSettings$mapOutcomes,
-          file.path(saveDir,
-                    "mapOutcomes.rds"))
-  saveRDS(analysisSettings$mapTreatments,
-          file.path(saveDir,
-                    "mapTreatments.rds"))
+  analysisSettings$mapOutcomes %>%
+    dplyr::rename(
+      "outcome_id" = "idNumber",
+      "outcome_name" = "label"
+    ) %>%
+    saveRDS(
+      file.path(
+        saveDir,
+        "map_outcomes.rds"
+      )
+    )
+
+  analysisSettings$mapTreatments %>%
+    dplyr::rename(
+      "exposure_id" = "idNumber",
+      "exposure_name" = "label"
+    ) %>%
+    saveRDS(
+      file.path(
+        saveDir,
+        "map_exposures.rds"
+      )
+    )
+
+  data.frame(
+    analysis_id = analysisSettings$analysisId,
+    description = analysisSettings$description,
+    database = analysisSettings$databaseName,
+    analysis_type = analysisSettings$analysisType,
+    treatment_id = analysisSettings$treatmentCohortId,
+    comparator_id = analysisSettings$comparatorCohortId
+  ) %>%
+    saveRDS(
+      file.path(
+        saveDir,
+        "analyses.rds"
+      )
+    )
 
   return(NULL)
 }

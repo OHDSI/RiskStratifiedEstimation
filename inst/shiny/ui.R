@@ -13,26 +13,26 @@ shiny::shinyUI(
           shiny::selectInput(
             "treatment",
             "Treatment",
-            unique(mapTreatments$label),
-            selected = unique(mapTreatments$label)[1]
+            unique(mapExposures$exposure_name),
+            selected = unique(mapExposures$exposure_name)[1]
           ),
           shiny::selectInput(
             "comparator",
             "Comparator",
-            unique(mapTreatments$label),
-            selected = unique(mapTreatments$label)[2]
+            unique(mapExposures$exposure_name),
+            selected = unique(mapExposures$exposure_name)[2]
           ),
           shiny::selectInput(
             "stratOutcome",
             "Stratification Outcome",
-            unique(mapOutcomes$label),
-            unique(mapOutcomes$label)[1]
+            unique(mapOutcomes$outcome_name),
+            unique(mapOutcomes$outcome_name)[1]
           ),
           shiny::selectInput(
             "estOutcome",
             "Estimation outcome (max: 6)",
-            unique(mapOutcomes$label),
-            selected = unique(mapOutcomes$label)[1],
+            unique(mapOutcomes$outcome_name),
+            selected = unique(mapOutcomes$outcome_name)[1],
             multiple = TRUE,
             selectize = TRUE
           ),
@@ -63,8 +63,8 @@ shiny::shinyUI(
           shiny::selectInput(
             "estOutcomeEstimation",
             "Estimation outcome",
-            unique(mapOutcomes$label),
-            selected = unique(mapOutcomes$label)[1]
+            unique(mapOutcomes$outcome_name),
+            selected = unique(mapOutcomes$outcome_name)[1]
           )
         ),
         shinydashboard::menuItem(
@@ -72,13 +72,13 @@ shiny::shinyUI(
           "Prediction",
           icon = icon("dice-six"),
           shiny::selectInput(
-            "cohort",
+            "predictionPopulation",
             "Cohort",
             c("Comparator",
-              "Entire population",
+              "EntirePopulation",
               "Matched",
               "Treatment"),
-            selected = "Entire population"
+            selected = "EntirePopulation"
           )
         )
 
