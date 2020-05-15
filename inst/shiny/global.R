@@ -27,19 +27,42 @@ analyses <- readRDS(
   )
 )
 
-# balance <- readRDS(
-#   file.path(
-#     analysisPath,
-#     "balance.rds"
-#   )
-# )
+incidence <-
+  readRDS(
+    file.path(
+      analysisPath,
+      "incidence.rds"
+    )
+  ) %>%
+  left_join(mapOutcomes, by = c("estOutcome" = "outcome_id")) %>%
+  select(-estOutcome) %>%
+  rename("estOutcome" = "outcome_name") %>%
+  left_join(mapOutcomes, by = c("stratOutcome" = "outcome_id")) %>%
+  select(-stratOutcome) %>%
+  rename("stratOutcome" = "outcome_name") %>%
+  left_join(mapExposures, by = c("treatmentId" = "exposure_id")) %>%
+  select(-treatmentId) %>%
+  rename("treatment" = "exposure_name") %>%
+  left_join(mapExposures, by = c("comparatorId" = "exposure_id")) %>%
+  select(-comparatorId) %>%
+  rename("comparator" = "exposure_name")
 
-# psDensity <- readRDS(
-#   file.path(
-#     analysisPath,
-#     "psDensity.rds"
-#   )
-# )
+predictionPerformance <-
+  readRDS(
+    file.path(
+      analysisPath,
+      "predictionPerformance.rds"
+    )
+  ) %>%
+  left_join(mapOutcomes, by = c("stratOutcome" = "outcome_id")) %>%
+  select(-stratOutcome) %>%
+  rename("stratOutcome" = "outcome_name") %>%
+  left_join(mapExposures, by = c("treatmentId" = "exposure_id")) %>%
+  select(-treatmentId) %>%
+  rename("treatment" = "exposure_name") %>%
+  left_join(mapExposures, by = c("comparatorId" = "exposure_id")) %>%
+  select(-comparatorId) %>%
+  rename("comparator" = "exposure_name")
 
 mappedOverallAbsoluteResults <-
   readRDS(
@@ -110,6 +133,10 @@ analysisTypeOptions <- unique(
   mappedOverallAbsoluteResults$analysisType
 )
 
+stratOptions <- unique(
+  mappedOverallAbsoluteResults$stratOutcome
+)
+
 
 getResults <- function(treat, comp, strat, est, db, anal,
                        mappedOverallRelativeResults,
@@ -138,6 +165,37 @@ getResults <- function(treat, comp, strat, est, db, anal,
 
   return(result)
 
+
+}
+
+
+getIncidence <- function(treat,
+                         comp,
+                         strat,
+                         est,
+                         db,
+                         anal,
+                         incidence) {
+  incidence %>%
+    filter(
+      stratOutcome %in% strat & estOutcome %in% est & treatment %in% treat & comparator %in% comp & database %in% db & analysisType %in% anal
+    ) %>%
+    return()
+}
+
+
+getPredictionPerformance <- function(treat,
+                                     comp,
+                                     strat,
+                                     coh,
+                                     db,
+                                     predictionPerformance) {
+
+  predictionPerformance %>%
+    filter(
+      stratOutcome %in% strat & cohort %in% coh & treatment %in% treat & comparator %in% comp & database %in% db
+    ) %>%
+    return()
 
 }
 

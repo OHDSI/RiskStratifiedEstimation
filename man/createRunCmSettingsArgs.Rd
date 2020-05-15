@@ -6,11 +6,17 @@
 Create a parameter object for running the estimation step. This function is used to create part of
 the input of \code{\link[RiskStratifiedEstimation]{createRunSettings}}.}
 \usage{
-createRunCmSettingsArgs(psMethod = "inversePtWeighted",
+createRunCmSettingsArgs(
+  psMethod = "inversePtWeighted",
   effectEstimationSettings = createCreateIPWArgs(),
-  psSettings = createCreatePsArgs(), createPsThreads = 1,
-  fitOutcomeModelsThreads = 1, createPsThreadsNegativeControls = 1,
-  estimateOverallResults = FALSE, timePoint = 365, riskStrata = 4)
+  psSettings = createCreatePsArgs(),
+  createPsThreads = 1,
+  fitOutcomeModelsThreads = 1,
+  createPsThreadsNegativeControls = 1,
+  estimateOverallResults = FALSE,
+  timePoint = 365,
+  riskStrata = 4
+)
 }
 \arguments{
 \item{psMethod}{How should the propensity scores be used? Can be one of

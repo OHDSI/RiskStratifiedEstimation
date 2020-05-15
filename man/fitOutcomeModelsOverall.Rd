@@ -4,8 +4,12 @@
 \alias{fitOutcomeModelsOverall}
 \title{Fit overall outcome model}
 \usage{
-fitOutcomeModelsOverall(outcomeId, analysisSettings, getDataSettings,
-  runCmSettings)
+fitOutcomeModelsOverall(
+  outcomeId,
+  analysisSettings,
+  getDataSettings,
+  runCmSettings
+)
 }
 \arguments{
 \item{outcomeId}{The outcome of interest for which the esitmation is performed. That is the outcome for

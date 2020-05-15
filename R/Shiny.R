@@ -281,6 +281,42 @@ prepareMultipleRseeViewer2 <- function(pathList,
     analysisDirs <- sapply(
         pathList,
         createAnlysisPath,
+        file = "incidence.rds"
+    )
+
+    lapply(
+        analysisDirs,
+        readRDS
+    ) %>%
+        dplyr::bind_rows() %>%
+        saveRDS(
+            file.path(
+                saveDir,
+                "incidence.rds"
+            )
+        )
+
+    analysisDirs <- sapply(
+        pathList,
+        createAnlysisPath,
+        file = "predictionPerformance.rds"
+    )
+
+    lapply(
+        analysisDirs,
+        readRDS
+    ) %>%
+        dplyr::bind_rows() %>%
+        saveRDS(
+            file.path(
+                saveDir,
+                "predictionPerformance.rds"
+            )
+        )
+
+    analysisDirs <- sapply(
+        pathList,
+        createAnlysisPath,
         file = "mappedOverallAbsoluteResults.rds"
     )
 

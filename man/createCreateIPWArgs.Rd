@@ -5,8 +5,11 @@
 \title{Create a parameter object for the function createIPW
 Create an object defining the parameter values.}
 \usage{
-createCreateIPWArgs(weightsType = "ATE", useStabilizedWeights = TRUE,
-  truncationLevels = c(0.01, 0.99))
+createCreateIPWArgs(
+  weightsType = "ATE",
+  useStabilizedWeights = TRUE,
+  truncationLevels = c(0.01, 0.99)
+)
 }
 \arguments{
 \item{weightsType}{The type of the weights to be used. Allowed options are 'ATE' for

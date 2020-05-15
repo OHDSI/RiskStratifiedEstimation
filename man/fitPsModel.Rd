@@ -4,8 +4,13 @@
 \alias{fitPsModel}
 \title{Calculate propensity scores for a specific outcome}
 \usage{
-fitPsModel(outcomeId, getDataSettings, populationSettings, runSettings,
-  analysisSettings)
+fitPsModel(
+  outcomeId,
+  getDataSettings,
+  populationSettings,
+  runSettings,
+  analysisSettings
+)
 }
 \arguments{
 \item{outcomeId}{The outcome of interest for which the esitmation is performed. That is the outcome for

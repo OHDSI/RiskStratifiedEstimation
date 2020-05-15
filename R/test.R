@@ -650,8 +650,387 @@ computeCovariateBalanceCohortMethod <- function(population,
 
 
 
+#' @importFrom dplyr %>%
+#' @export
+
+computeIncidence <- function(population,
+                             alpha = .05,
+                             power = .8,
+                             twoSided = TRUE,
+                             modelType = "cox"){
+
+  population <- population %>%
+    dplyr::mutate(
+      outcomeCount = ifelse(
+        outcomeCount > 0,
+        1,
+        0
+      )
+    )
+
+  res <-  population %>%
+    CohortMethod::computeMdrr() %>%
+    dplyr::select(
+      -c(
+        "targetExposures",
+        "comparatorExposures",
+        "se"
+      )
+    )  %>%
+    dplyr::rename(
+      "treatmentPersons" = "targetPersons",
+      "treatmentDays" = "targetDays"
+    )
+
+  treatmentArmOutcomes <- population %>%
+    dplyr::group_by(
+      treatment
+    ) %>%
+    dplyr::summarise(
+      outcomes = sum(
+        outcomeCount
+      )
+    )
+
+  res %>%
+    dplyr::mutate(
+      treatmentOutcomes = treatmentArmOutcomes %>%
+        dplyr::filter(treatment == 1) %>%
+        dplyr::select(outcomes) %>%
+        unlist(),
+      comparatorOutcomes = treatmentArmOutcomes %>%
+        dplyr::filter(treatment == 0) %>%
+        dplyr::select(outcomes) %>%
+        unlist()
+    ) %>%
+    return()
+
+}
 
 
+
+
+
+
+#' @importFrom dplyr %>%
+#' @export
+computeIncidenceOverall <- function(ps,
+                                    alpha = 0.05,
+                                    power = 0.8,
+                                    twoSided = TRUE,
+                                    modelType = "cox") {
+
+  lapply(
+    ps,
+    computeIncidence,
+    alpha = alpha,
+    power = power,
+    twoSided = twoSided,
+    modelType = modelType
+  ) %>%
+    dplyr::bind_rows(
+      .id = "riskStratum"
+    ) %>%
+    dplyr::mutate(
+      riskStratum = paste0(
+        "Q",
+        riskStratum
+      )
+    ) %>%
+    return()
+
+}
+
+
+#' @importFrom dplyr %>%
+#' @export
+computeIncidenceCombined <- function(outcomeId,
+                                     analysisSettings,
+                                     alpha = 0.05,
+                                     power = 0.8,
+                                     twoSided = TRUE,
+                                     modelType = "cox",
+                                     secondaryOutcomes = FALSE) {
+
+  saveDir <- file.path(
+    analysisSettings$saveDirectory,
+    analysisSettings$analysisId,
+    "shiny"
+  )
+
+  if (!dir.exists(saveDir)) {
+    dir.create(
+      saveDir,
+      recursive = TRUE
+    )
+  }
+
+  analysisPath <- file.path(
+    analysisSettings$saveDirectory,
+    analysisSettings$analysisId
+  )
+
+  ps <- readRDS(
+    file.path(
+      analysisPath,
+      "Estimation",
+      outcomeId,
+      "ps.rds"
+    )
+  )
+
+  incidence <-
+    computeIncidenceOverall(
+      ps,
+      alpha = alpha,
+      power = power,
+      twoSided = twoSided,
+      modelType = modelType
+    ) %>%
+    dplyr::mutate(
+      database = analysisSettings$databaseName,
+      analysisId = analysisSettings$analysisId,
+      stratOutcome = outcomeId,
+      estOutcome = outcomeId,
+      treatmentId = analysisSettings$treatmentCohortId,
+      comparatorId = analysisSettings$comparatorCohortId,
+      analysisType = analysisSettings$analysisType
+    )
+
+  if (secondaryOutcomes) {
+
+    predLoc <- which(analysisSettings$outcomeIds == outcomeId)
+    compLoc <- analysisSettings$analysisMatrix[, predLoc]
+    compareOutcomes <- analysisSettings$outcomeIds[as.logical(compLoc)]
+    compareOutcomes <- compareOutcomes[compareOutcomes != outcomeId]
+
+    for (compareOutcome in compareOutcomes) {
+      dir <- file.path(
+        analysisPath,
+        "Estimation",
+        outcomeId,
+        compareOutcome
+      )
+      ps <- readRDS(
+        file.path(
+          dir,
+          "ps.rds"
+        )
+      )
+
+      incidence <-
+        computeIncidenceOverall(ps) %>%
+        dplyr::mutate(
+          database = analysisSettings$databaseName,
+          analysisId = analysisSettings$analysisId,
+          stratOutcome = outcomeId,
+          estOutcome = compareOutcome,
+          treatmentId = analysisSettings$treatmentCohortId,
+          comparatorId = analysisSettings$comparatorCohortId,
+          analysisType = analysisSettings$analysisType
+        ) %>%
+        dplyr::bind_rows(
+          incidence
+        )
+
+    }
+  }
+
+  return(incidence)
+}
+
+
+#' @importFrom dplyr %>%
+#' @export
+computeIncidenceAnalysis <- function(analysisSettings,
+                                     secondaryOutcomes = FALSE,
+                                     threads = 1,
+                                     alpha = 0.05,
+                                     power = 0.8,
+                                     twoSided = TRUE,
+                                     modelType = "cox"){
+  predictOutcomes <-
+    analysisSettings$outcomeIds[which(colSums(analysisSettings$analysisMatrix) != 0)]
+
+  cluster <- ParallelLogger::makeCluster(threads)
+  ParallelLogger::clusterRequire(cluster, c("RiskStratifiedEstimation", "dplyr"))
+
+
+  res <- ParallelLogger::clusterApply(cluster = cluster,
+                                      x = predictOutcomes,
+                                      fun = computeIncidenceCombined,
+                                      analysisSettings = analysisSettings,
+                                      alpha = alpha,
+                                      power = power,
+                                      twoSided = twoSided,
+                                      modelType = modelType,
+                                      secondaryOutcomes = secondaryOutcomes)
+
+  ParallelLogger::stopCluster(cluster)
+
+  saveDir <- file.path(
+    analysisSettings$saveDirectory,
+    analysisSettings$analysisId,
+    "shiny"
+  )
+
+  if (!dir.exists(saveDir)) {
+    dir.create(
+      saveDir,
+      recursive = TRUE
+    )
+  }
+
+  res %>%
+    dplyr::bind_rows() %>%
+    saveRDS(
+      file.path(
+        saveDir,
+        "incidence.rds"
+      )
+    )
+}
+
+
+
+#' @importFrom dplyr %>%
+#' @export
+
+predictionPerformance <- function(outcomeId,
+                                  analysisSettings) {
+
+  recoverEvaluation <- function(cohort,
+                                outcomeId,
+                                analysisSettings) {
+
+    analysisPath <- file.path(
+      analysisSettings$saveDirectory,
+      analysisSettings$analysisId,
+      "Prediction",
+      outcomeId,
+      analysisSettings$analysisId,
+      cohort
+    )
+
+    performance <- readRDS(
+      file.path(
+        analysisPath,
+        "performanceEvaluation.rds"
+      )
+    )$evaluationStatistics
+
+    performance <- as.data.frame(performance)
+    rownames(performance) <- NULL
+
+    performance %>%
+      dplyr::mutate(
+        Value = as.numeric(
+          as.character(
+            Value
+          )
+        )
+      ) %>%
+      dplyr::filter(
+        Metric %in% c(
+          "AUC.auc",
+          "AUC.auc_lb95ci",
+          "AUC.auc_ub95ci",
+          "AUPRC",
+          "BrierScore",
+          "BrierScaled",
+          "CalibrationIntercept.Intercept",
+          "CalibrationSlope.Gradient"
+        )
+      ) %>%
+      dplyr::mutate(
+        metric = c(
+          "auc",
+          "aucLower",
+          "aucUpper",
+          "auprc",
+          "brierScore",
+          "brierScaled",
+          "calibrationIntercept",
+          "calibrationSlope"
+        )
+      ) %>%
+      dplyr::select(
+        metric,
+        Value
+      ) %>%
+      tidyr::spread(metric, Value) %>%
+      dplyr::mutate(
+        cohort = cohort,
+        analysisId = analysisSettings$analysisId,
+        stratOutcome = outcomeId,
+        treatmentId = analysisSettings$treatmentCohortId,
+        comparatorId = analysisSettings$comparatorCohortId,
+        database = analysisSettings$databaseName
+      ) %>%
+      return()
+
+
+  }
+
+  cohorts <- c(
+    "Comparator",
+    "EntirePopulation",
+    "Matched",
+    "Treatment"
+  )
+
+  lapply(
+    cohorts,
+    recoverEvaluation,
+    analysisSettings = analysisSettings,
+    outcomeId = outcomeId
+  ) %>%
+    dplyr::bind_rows() %>%
+    return()
+
+
+}
+
+
+#' @importFrom dplyr %>%
+#' @export
+
+predictionPerformanceAnalysis <- function(analysisSettings,
+                                          save = TRUE) {
+
+  predictOutcomes <-
+    analysisSettings$outcomeIds[which(colSums(analysisSettings$analysisMatrix) != 0)]
+
+  performance <- lapply(predictOutcomes,
+                        predictionPerformance,
+                        analysisSettings) %>%
+    dplyr::bind_rows()
+
+  if (save) {
+
+    saveDir <- file.path(
+      analysisSettings$saveDirectory,
+      analysisSettings$analysisId,
+      "shiny"
+    )
+
+    if (!dir.exists(saveDir)) {
+      dir.create(
+        saveDir,
+        recursive = TRUE
+      )
+    }
+
+    saveRDS(performance,
+            file.path(
+              saveDir,
+              "predictionPerformance.rds"
+            )
+    )
+  }
+
+  return(performance)
+}
 
 # pp %>%
 #   left_join(mapExposures, by = c("treatment" = "exposure_id")) %>%

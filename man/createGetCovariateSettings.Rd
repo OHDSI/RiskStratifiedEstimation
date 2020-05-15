@@ -6,9 +6,10 @@
 Contains the arguments for the extraction of both the covariates related to the prediction step and
 the estimation step.}
 \usage{
-
-  createGetCovariateSettings(covariateSettingsCm = FeatureExtraction::createCovariateSettings(),
-  covariateSettingsPlp = FeatureExtraction::createCovariateSettings())
+createGetCovariateSettings(
+  covariateSettingsCm = FeatureExtraction::createCovariateSettings(),
+  covariateSettingsPlp = FeatureExtraction::createCovariateSettings()
+)
 }
 \arguments{
 \item{covariateSettingsCm}{The covariate settings object related to the estimation step created

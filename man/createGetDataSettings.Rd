@@ -4,9 +4,12 @@
 \alias{createGetDataSettings}
 \title{Create parameter object for extracting the data}
 \usage{
-createGetDataSettings(getPlpDataSettings = createGetPlpDataArgs(),
-  getCmDataSettings = createGetCmDataArgs(), plpDataFolder = NULL,
-  cohortMethodDataFolder = NULL)
+createGetDataSettings(
+  getPlpDataSettings = createGetPlpDataArgs(),
+  getCmDataSettings = createGetCmDataArgs(),
+  plpDataFolder = NULL,
+  cohortMethodDataFolder = NULL
+)
 }
 \arguments{
 \item{getPlpDataSettings}{Parameter object for the extraction of the \code{plpData} object

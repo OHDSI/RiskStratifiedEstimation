@@ -4,8 +4,13 @@
 \alias{fitPsModelOverall}
 \title{Calculate propensity scores for a specific outcome}
 \usage{
-fitPsModelOverall(outcomeId, getDataSettings, populationSettings,
-  analysisSettings, runCmSettings)
+fitPsModelOverall(
+  outcomeId,
+  getDataSettings,
+  populationSettings,
+  analysisSettings,
+  runCmSettings
+)
 }
 \arguments{
 \item{outcomeId}{The outcome of interest for which the risk stratification is performed.}

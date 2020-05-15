@@ -4,14 +4,22 @@
 \alias{createPopulationCmSettingsArgs}
 \title{Create a parameter object for the function createStudyPopulation}
 \usage{
-createPopulationCmSettingsArgs(firstExposureOnly = FALSE,
-  restrictToCommonPeriod = FALSE, washoutPeriod = 0,
+createPopulationCmSettingsArgs(
+  firstExposureOnly = FALSE,
+  restrictToCommonPeriod = FALSE,
+  washoutPeriod = 0,
   removeDuplicateSubjects = FALSE,
-  removeSubjectsWithPriorOutcome = TRUE, priorOutcomeLookback = 99999,
-  minDaysAtRisk = 1, riskWindowStart = 0,
-  addExposureDaysToStart = NULL, startAnchor = "cohort start",
-  riskWindowEnd = 0, addExposureDaysToEnd = NULL,
-  endAnchor = "cohort end", censorAtNewRiskWindow = FALSE)
+  removeSubjectsWithPriorOutcome = TRUE,
+  priorOutcomeLookback = 99999,
+  minDaysAtRisk = 1,
+  riskWindowStart = 0,
+  addExposureDaysToStart = NULL,
+  startAnchor = "cohort start",
+  riskWindowEnd = 0,
+  addExposureDaysToEnd = NULL,
+  endAnchor = "cohort end",
+  censorAtNewRiskWindow = FALSE
+)
 }
 \arguments{
 \item{firstExposureOnly}{Should only the first exposure per subject be included?

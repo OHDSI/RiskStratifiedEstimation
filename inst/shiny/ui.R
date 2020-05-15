@@ -1,3 +1,13 @@
+addInfo <- function(item, infoId) {
+  infoTag <- tags$small(class = "badge pull-right action-button",
+                        style = "padding: 1px 6px 2px 6px; background-color: steelblue;",
+                        type = "button",
+                        id = infoId,
+                        "i")
+  item$children[[1]]$children <- append(item$children[[1]]$children, list(infoTag))
+  return(item)
+}
+
 shiny::shinyUI(
   shinydashboard::dashboardPage(
     skin = "black",
@@ -25,8 +35,8 @@ shiny::shinyUI(
           shiny::selectInput(
             "stratOutcome",
             "Stratification Outcome",
-            unique(mapOutcomes$outcome_name),
-            unique(mapOutcomes$outcome_name)[1]
+            stratOptions,
+            stratOptions[1]
           ),
           shiny::selectInput(
             "estOutcome",
@@ -36,11 +46,14 @@ shiny::shinyUI(
             multiple = TRUE,
             selectize = TRUE
           ),
-          shiny::selectizeInput(
-            "database",
-            "Database",
-            unique(databaseOptions),
-            unique(databaseOptions)[1]
+          addInfo(
+            item = shiny::selectizeInput(
+              "database",
+              "Database",
+              unique(databaseOptions),
+              unique(databaseOptions)[1]
+            ),
+            infoId = "testInfo"
           ),
           shiny::checkboxGroupInput(
             "analysis",
@@ -87,6 +100,10 @@ shiny::shinyUI(
     shinydashboard::dashboardBody(
       shiny::tabsetPanel(
         id = "relativePanel",
+        shiny::tabPanel(
+          "Incidence",
+          DT::dataTableOutput("mainTableIncidence")
+        ),
         shiny::tabPanel(
           "Relative",
           DT::dataTableOutput("mainTableRelative")

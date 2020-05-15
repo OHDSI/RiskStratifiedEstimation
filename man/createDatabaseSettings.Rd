@@ -4,12 +4,19 @@
 \alias{createDatabaseSettings}
 \title{Create parameter object for database to be reached}
 \usage{
-createDatabaseSettings(cdmVersion = "5", cdmDatabaseSchema,
+createDatabaseSettings(
+  cdmVersion = "5",
+  cdmDatabaseSchema,
   cohortDatabaseSchema = cdmDatabaseSchema,
   outcomeDatabaseSchema = cdmDatabaseSchema,
   resultsDatabaseSchema = cdmDatabaseSchema,
-  exposureDatabaseSchema = cdmDatabaseSchema, cohortTable, outcomeTable,
-  exposureTable = "drug_era", mergedCohortTable, targetCohortId = 1)
+  exposureDatabaseSchema = cdmDatabaseSchema,
+  cohortTable,
+  outcomeTable,
+  exposureTable = "drug_era",
+  mergedCohortTable,
+  targetCohortId = 1
+)
 }
 \arguments{
 \item{cdmVersion}{Define the OMOP CDM version}

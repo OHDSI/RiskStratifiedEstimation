@@ -4,8 +4,12 @@
 \alias{createIPW}
 \title{Creates Inverse Probability Weights}
 \usage{
-createIPW(ps, weightsType = "ATE", useStabilizedWeights = TRUE,
-  truncationLevels = c(0.01, 0.99))
+createIPW(
+  ps,
+  weightsType = "ATE",
+  useStabilizedWeights = TRUE,
+  truncationLevels = c(0.01, 0.99)
+)
 }
 \arguments{
 \item{ps}{A propensity score data frame as created from \code{\link[CohortMethod]{createPs}}}

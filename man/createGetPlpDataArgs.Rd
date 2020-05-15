@@ -4,9 +4,13 @@
 \alias{createGetPlpDataArgs}
 \title{Create a parameter object for the function getPlpData}
 \usage{
-createGetPlpDataArgs(studyStartDate = "", studyEndDate = "",
-  firstExposureOnly = FALSE, washoutPeriod = 0,
-  excludeDrugsFromCovariates = FALSE)
+createGetPlpDataArgs(
+  studyStartDate = "",
+  studyEndDate = "",
+  firstExposureOnly = FALSE,
+  washoutPeriod = 0,
+  excludeDrugsFromCovariates = FALSE
+)
 }
 \arguments{
 \item{studyStartDate}{A calendar date specifying the minimum date that a cohort index

@@ -6,9 +6,10 @@
 Contains the settings for defining both the \code{populationPlp} and the \code{populationCm}
 objects.}
 \usage{
-
-  createPopulationSettings(populationPlpSettings = createPopulationPlpSettingsArgs(),
-  populationCmSettings = createPopulationCmSettingsArgs())
+createPopulationSettings(
+  populationPlpSettings = createPopulationPlpSettingsArgs(),
+  populationCmSettings = createPopulationCmSettingsArgs()
+)
 }
 \arguments{
 \item{populationPlpSettings}{Parameter object for the definition of the \code{populationPlp}

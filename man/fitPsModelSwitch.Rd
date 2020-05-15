@@ -4,8 +4,14 @@
 \alias{fitPsModelSwitch}
 \title{Fits switched propensity score models}
 \usage{
-fitPsModelSwitch(predictOutcome, compareOutcome, analysisSettings,
-  getDataSettings, populationSettings, runSettings)
+fitPsModelSwitch(
+  predictOutcome,
+  compareOutcome,
+  analysisSettings,
+  getDataSettings,
+  populationSettings,
+  runSettings
+)
 }
 \arguments{
 \item{predictOutcome}{The outcome of the prediction step}

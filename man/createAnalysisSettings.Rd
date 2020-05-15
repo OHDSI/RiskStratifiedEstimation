@@ -4,12 +4,20 @@
 \alias{createAnalysisSettings}
 \title{Create a parameter defining the performed risk stratified analysis}
 \usage{
-createAnalysisSettings(analysisId = NULL, databaseName,
-  treatmentCohortId, comparatorCohortId, outcomeIds,
+createAnalysisSettings(
+  analysisId = NULL,
+  databaseName,
+  treatmentCohortId,
+  comparatorCohortId,
+  outcomeIds,
   negativeControlOutcomes = c(),
-  analysisMatrix = diag(length(outcomeIds)), mapTreatments,
-  mapNegativeControls = NULL, mapOutcomes, verbosity = NULL,
-  saveDirectory = NULL)
+  analysisMatrix = diag(length(outcomeIds)),
+  mapTreatments,
+  mapNegativeControls = NULL,
+  mapOutcomes,
+  verbosity = NULL,
+  saveDirectory = NULL
+)
 }
 \arguments{
 \item{analysisId}{The analysis ID.}

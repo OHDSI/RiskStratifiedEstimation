@@ -4,12 +4,21 @@
 \alias{createPopulationPlpSettingsArgs}
 \title{Create a parameter object for the function createStudyPopulation}
 \usage{
-createPopulationPlpSettingsArgs(binary = T, includeAllOutcomes = T,
-  firstExposureOnly = FALSE, washoutPeriod = 0,
-  removeSubjectsWithPriorOutcome = TRUE, priorOutcomeLookback = 99999,
-  requireTimeAtRisk = F, minTimeAtRisk = 365, riskWindowStart = 0,
-  startAnchor = "cohort start", riskWindowEnd = 365,
-  endAnchor = "cohort start", verbosity = "INFO")
+createPopulationPlpSettingsArgs(
+  binary = T,
+  includeAllOutcomes = T,
+  firstExposureOnly = FALSE,
+  washoutPeriod = 0,
+  removeSubjectsWithPriorOutcome = TRUE,
+  priorOutcomeLookback = 99999,
+  requireTimeAtRisk = F,
+  minTimeAtRisk = 365,
+  riskWindowStart = 0,
+  startAnchor = "cohort start",
+  riskWindowEnd = 365,
+  endAnchor = "cohort start",
+  verbosity = "INFO"
+)
 }
 \arguments{
 \item{binary}{Forces the outcomeCount to be 0 or 1 (use for binary prediction problems)}

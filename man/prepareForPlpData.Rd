@@ -4,9 +4,16 @@
 \alias{prepareForPlpData}
 \title{Prepares for the running the PatientLevelPrediction package}
 \usage{
-prepareForPlpData(treatmentCohortId, comparatorCohortId, targetCohortId,
-  cohortDatabaseSchema, cohortTable, resultsDatabaseSchema,
-  mergedCohortTable, connectionDetails)
+prepareForPlpData(
+  treatmentCohortId,
+  comparatorCohortId,
+  targetCohortId,
+  cohortDatabaseSchema,
+  cohortTable,
+  resultsDatabaseSchema,
+  mergedCohortTable,
+  connectionDetails
+)
 }
 \arguments{
 \item{treatmentCohortId}{The treatment cohort id}

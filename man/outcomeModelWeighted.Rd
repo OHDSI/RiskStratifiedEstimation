@@ -4,8 +4,13 @@
 \alias{outcomeModelWeighted}
 \title{Fits a weighted cox regression model}
 \usage{
-outcomeModelWeighted(ps, calculateWeights = TRUE, weightsType = "ATE",
-  useStabilizedWeights = TRUE, truncationLevels)
+outcomeModelWeighted(
+  ps,
+  calculateWeights = TRUE,
+  weightsType = "ATE",
+  useStabilizedWeights = TRUE,
+  truncationLevels
+)
 }
 \arguments{
 \item{ps}{A dataframe wiht propensity scores as generated from

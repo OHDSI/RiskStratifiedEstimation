@@ -7,10 +7,11 @@ Create the settings for running the analyses. The input consists of two parts: 1
 running the prediction algorithms and 2) the settings for estimating treatment effects within
 strata of predicted risk.}
 \usage{
-
-  createRunSettings(runPlpSettings = createRunPlpSettingsArgs(modelSettings
-  = PatientLevelPrediction::setLassoLogisticRegression()),
-  runCmSettings = createRunCmSettingsArgs())
+createRunSettings(
+  runPlpSettings = createRunPlpSettingsArgs(modelSettings =
+    PatientLevelPrediction::setLassoLogisticRegression()),
+  runCmSettings = createRunCmSettingsArgs()
+)
 }
 \arguments{
 \item{runPlpSettings}{A parameterer object of type \code{runPlpSettingsArgs} defined using the

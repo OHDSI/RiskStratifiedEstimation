@@ -4,13 +4,23 @@
 \alias{createRunPlpSettingsArgs}
 \title{Create a parameter object for the function runPlp}
 \usage{
-createRunPlpSettingsArgs(minCovariateFraction = 0.001,
+createRunPlpSettingsArgs(
+  minCovariateFraction = 0.001,
   normalizeData = TRUE,
   modelSettings = PatientLevelPrediction::setLassoLogisticRegression(),
-  testSplit = "person", testFraction = 0.25, trainFraction = NULL,
-  splitSeed = NULL, nfold = 3, indexes = NULL, savePlpData = FALSE,
-  savePlpPlots = TRUE, saveEvaluation = TRUE, verbosity = "INFO",
-  timeStamp = FALSE, analysisId = NULL)
+  testSplit = "person",
+  testFraction = 0.25,
+  trainFraction = NULL,
+  splitSeed = NULL,
+  nfold = 3,
+  indexes = NULL,
+  savePlpData = FALSE,
+  savePlpPlots = TRUE,
+  saveEvaluation = TRUE,
+  verbosity = "INFO",
+  timeStamp = FALSE,
+  analysisId = NULL
+)
 }
 \arguments{
 \item{minCovariateFraction}{The minimum fraction of target population who must have a covariate

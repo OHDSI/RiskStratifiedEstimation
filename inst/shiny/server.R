@@ -23,25 +23,126 @@ shiny::shinyServer(function(input, output, session) {
 
   })
 
+  incidenceSubset <- shiny::reactive({
+
+    res <- getIncidence(
+      treat = input$treatment, comp = input$comparator, strat = input$stratOutcome,
+      est = input$estOutcome, anal = input$analysis, db = input$database,
+      incidence = incidence
+    )
+
+    return(res)
+
+  })
+
+  output$mainTableIncidence <- DT::renderDataTable({
+
+    res <- incidenceSubset()
+
+    table <- res %>%
+      dplyr::select(
+        estOutcome,
+        riskStratum,
+        treatmentPersons,
+        treatmentDays,
+        treatmentOutcomes,
+        comparatorPersons,
+        comparatorDays,
+        comparatorOutcomes
+      ) %>%
+      dplyr::mutate(
+        treatmentDays = treatmentDays / 365.25,
+        comparatorDays = comparatorDays / 365.25
+      )
+
+    table <-
+      DT::datatable(
+        table,
+        colnames = c(
+          "Outcome",
+          "Risk stratum",
+          "Treatment subjects",
+          "Treatment years",
+          "Treatment events",
+          "Comparator subjects",
+          "Comparator years",
+          "Comparator events"
+        )
+      ) %>%
+      DT::formatCurrency(
+        columns =  "treatmentPersons",
+        currency = "",
+        interval = 3,
+        mark = ",",
+        digits = 0
+      ) %>%
+      DT::formatCurrency(
+        "comparatorPersons",
+        currency = "",
+        interval = 3,
+        mark = ",",
+        digits = 0
+      ) %>%
+      DT::formatCurrency(
+        "treatmentDays",
+        currency = "",
+        interval = 3,
+        mark = ",",
+        digits = 0
+      ) %>%
+      DT::formatCurrency(
+        "comparatorDays",
+        currency = "",
+        interval = 3,
+        mark = ",",
+        digits = 0
+      ) %>%
+      DT::formatCurrency(
+        "treatmentOutcomes",
+        currency = "",
+        interval = 3,
+        mark = ",",
+        digits = 0
+      ) %>%
+      DT::formatCurrency(
+        "comparatorOutcomes",
+        currency = "",
+        interval = 3,
+        mark = ",",
+        digits = 0
+      )
+
+      return(table)
+
+  })
+
   output$mainTableRelative <- DT::renderDataTable({
 
     res <- resultSubset()
 
     table <- res$relative %>%
-      dplyr::select(
-        database,
-        stratOutcome,
-        estOutcome,
-        riskStratum,
-        estimate,
-        lower,
-        upper
+      dplyr::mutate(
+        combined = paste(
+          round(estimate, 2),
+          paste0(
+            "(",
+            round(lower, 2),
+            ", ",
+            round(upper, 2),
+            ")"
+          )
+        )
       ) %>%
-      DT::datatable() %>%
-      DT::formatRound(
-        columns = c("estimate","lower", "upper"),
-        digits = 2
-      )
+          dplyr::rename(
+            Outcome = estOutcome
+          ) %>%
+          dplyr::select(
+            Outcome,
+            riskStratum,
+            combined
+          ) %>%
+          tidyr::spread(riskStratum, combined) %>%
+          DT::datatable()
 
     return(table)
 
@@ -51,26 +152,31 @@ shiny::shinyServer(function(input, output, session) {
 
     res <- resultSubset()
 
-    table <- res$absolute %>%
-      dplyr::select(
-        database,
-        stratOutcome,
-        estOutcome,
-        riskStratum,
-        estimate,
-        lower,
-        upper
-      ) %>%
+    table <-
+      res$absolute %>%
       dplyr::mutate(
-        estimate = 100 * estimate,
-        lower = 100 * lower,
-        upper = 100 * upper
+        combined = paste(
+          round(100*estimate, 2),
+          paste0(
+            "(",
+            round(100*lower, 2),
+            ", ",
+            round(100*upper, 2),
+            ")"
+          )
+        )
       ) %>%
-      DT::datatable() %>%
-      DT::formatRound(
-        columns = c("estimate", "lower", "upper"),
-        digits = 2
-      )
+      dplyr::rename(
+        Outcome = estOutcome
+      ) %>%
+      dplyr::select(
+        Outcome,
+        riskStratum,
+        combined
+      ) %>%
+      tidyr::spread(riskStratum, combined) %>%
+      DT::datatable()
+
 
     return(table)
 
@@ -260,13 +366,83 @@ shiny::shinyServer(function(input, output, session) {
     return(res)
   })
 
+  predictionPerformanceSubset <- shiny::reactive({
+    res <- getPredictionPerformance(
+      treat = input$treatment,
+      comp = input$comparator,
+      strat = input$stratOutcome,
+      coh = input$predictionPopulation,
+      db = input$database,
+      predictionPerformance = predictionPerformance
+    )
+    return(res)
+  })
+
   output$discriminationPlot <- shiny::renderPlot({
-    aucSubset() %>%
+    plot <-
+      aucSubset() %>%
       ggplot2::ggplot(ggplot2::aes(x = fpRate, y = sens)) +
       ggplot2::geom_abline(intercept = 0, slope = 1) +
       ggplot2::geom_area(color = grDevices::rgb(0, 0, 0.8, alpha = 0.8),
                          fill = grDevices::rgb(0, 0, 0.8, alpha = 0.4)) +
       ggplot2::scale_x_continuous("1 - specificity") +
       ggplot2::scale_y_continuous("Sensitivity")
+
+    labels <- predictionPerformanceSubset() %>%
+      dplyr::select(auc) %>%
+      dplyr::mutate(
+        auc = paste(
+          "AUC:",
+          paste0(
+            round(
+              100*auc,
+              digits = 2
+            ),
+            "%"
+          )
+        )
+      )
+
+    plot <- plot +
+      ggplot2::geom_label(data = labels,
+                          x = .78,
+                          y = .05,
+                          hjust = "left",
+                          vjust = "top",
+                          alpha = 0.8,
+                          ggplot2::aes(
+                            label = auc
+                          ),
+                          size = 5.5
+      )
+
+    return(plot)
+
   })
+
+  showInfoBox <- function(title, htmlFileName) {
+    showModal(modalDialog(
+      title = title,
+      easyClose = TRUE,
+      footer = NULL,
+      size = "l",
+      HTML(readChar(htmlFileName, file.info(htmlFileName)$size) )
+    ))
+  }
+
+  observeEvent(input$testInfo, {
+    showInfoBox(
+      "Database information",
+      file.path(
+        analysisPath,
+        "html",
+        paste(
+          input$database,
+          "html",
+          sep = "."
+        )
+      )
+    )
+  })
+
 })
