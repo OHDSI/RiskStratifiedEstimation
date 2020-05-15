@@ -182,12 +182,12 @@ shiny::shinyServer(function(input, output, session) {
 
   })
 
-  output$combinedPlot <- shiny::renderPlot({
+  output$combinedPlot <- plotly::renderPlotly({
 
     res <- resultSubset()
 
     plot <-
-      combinedPlot(
+      combinedPlot2(
         cases = res$cases,
         relative = res$relative,
         absolute = res$absolute,
@@ -196,9 +196,6 @@ shiny::shinyServer(function(input, output, session) {
       )
     return(plot)
 
-  },
-  height = function() {
-    0.45 * session$clientData$output_combinedPlot_width
   })
 
   shiny::observe({

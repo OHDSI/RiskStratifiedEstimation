@@ -114,8 +114,8 @@ shiny::shinyUI(
         ),
         shiny::tabPanel(
           "Risk stratified analysis",
-          shiny::plotOutput("combinedPlot",
-                            height = "600px")
+          plotly::plotlyOutput("combinedPlot",
+                               height = "600px")
         ),
         shiny::tabPanel(
           "Estimation evaluation",

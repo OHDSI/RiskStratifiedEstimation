@@ -1,4 +1,10 @@
 library(dplyr)
+library(plotly)
+library(RColorBrewer)
+
+sPalette <- c("Blues", "Greens", "Reds", "Purples", "Greys") %>%
+  sapply(., function(x) brewer.pal(8, name = x)) %>%
+  as.vector
 
 if (is.null(.GlobalEnv$shinySettings)) {
   analysisSettingsList <- NULL
@@ -585,3 +591,187 @@ combinedPlot <- function(cases, relative, absolute, treatment, comparator) {
   ggpubr::ggarrange(casesPlot, rrrPlot, arrPlot, nrow = 3, align = "v")
 }
 
+
+
+
+combinedPlot2 <- function(cases, relative, absolute, treatment, comparator) {
+
+
+  customColors <- c(
+    "#0099FF",
+    "#009933",
+    "#CC0000",
+    "#FF9933",
+    "#663399",
+    "#CC9966"
+  )
+
+  nOutcomes <- length(
+    unique(
+      cases$estOutcome
+    )
+  )
+
+  m <- 0
+
+  if ( nOutcomes == 2) {
+    m <- c(-.15, .15)
+  } else if (nOutcomes == 3) {
+    m <- c(-.15, 0, .15)
+  } else if (nOutcomes == 4) {
+    m <- c(-.15, -.05, .05, .15)
+  } else if (nOutcomes == 5) {
+    m <- c(-.15, -.075, 0, .075, .15)
+  }
+
+  relative <- relative %>%
+    mutate(
+      estOutcome = factor(
+        estOutcome,
+        levels = sort(
+          unique(
+            estOutcome
+          )
+        )
+      )
+    )
+
+  absolute <- absolute %>%
+    mutate(
+      estOutcome = factor(
+        estOutcome,
+        levels = sort(
+          unique(
+            estOutcome
+          )
+        )
+      )
+    )
+
+  quickMap <- data.frame(
+    estOutcome = levels(relative$estOutcome),
+    m = m
+  )
+
+  cases <-
+    reshape::melt(
+      cases,
+      id.vars = c("riskStratum", "database", "estOutcome"),
+      measure.vars = c("casesComparator", "casesTreatment")
+    ) %>%
+    mutate(
+      variable = ifelse(
+        variable == "casesComparator",
+        comparator,
+        treatment
+      ),
+      g = paste(
+        estOutcome,
+        variable,
+        sep = "/"
+      ),
+      value = 100*value,
+      riskStratum = as.numeric(
+        as.factor(
+          riskStratum
+        )
+      )
+    )
+
+
+  p1   <-
+    plot_ly(
+      data = cases,
+      x = ~riskStratum,
+      y = ~value,
+      color = ~g,
+      colors = "Paired",
+      type = 'bar'
+    ) %>%
+    plotly::layout(
+      yaxis = list(
+        title = 'Observed events (%)',
+        autorange = "reversed"
+      ),
+      barmode = 'group'
+    )
+
+  relative <-
+    relative %>%
+    left_join(quickMap) %>%
+    mutate(
+      risk = as.numeric(
+        as.factor(
+          riskStratum
+        )
+      )
+    )
+
+  p2 <-
+    relative %>%
+    group_by(estOutcome) %>%
+    plot_ly(
+      mode = "markers",
+      x = ~risk + m,
+      y = ~estimate,
+      color = ~estOutcome,
+      colors = customColors[1:nOutcomes],
+      type = "scatter",
+      error_y = list(
+        type = "data",
+        array = relative$upper - relative$estimate,
+        arrayminus = relative$estimate - relative$lower
+      )
+    ) %>%
+    layout(
+      yaxis = list(
+        title = "Hazard ratio"
+      ),
+      xaxis = list(
+        tickformat = ',d'
+      )
+    )
+
+  absolute <-
+    absolute %>%
+    left_join(quickMap) %>%
+    mutate(
+      estimate = 100*estimate,
+      lower = 100*lower,
+      upper = 100*upper,
+      risk = as.numeric(
+        as.factor(
+          riskStratum
+        )
+      )
+    )
+
+  p3 <-
+    absolute %>%
+    # group_by(estOutcome) %>%
+    plot_ly(
+      mode = "markers",
+      x = ~risk + m,
+      y = ~estimate,
+      color = ~estOutcome,
+      colors = customColors[1:nOutcomes],
+      type = "scatter",
+      error_y = list(
+        type = "data",
+        array = absolute$upper - absolute$estimate,
+        arrayminus = absolute$estimate - absolute$lower
+      )
+    ) %>%
+    layout(
+      yaxis = list(
+        title = "Absolute risk reduction (%)"
+      ),
+      xaxis = list(
+        tickformat = ',d'
+      )
+    )
+
+  subplot(p1, p2, p3, shareX = TRUE, nrows = 3, titleY = T)
+
+
+}
