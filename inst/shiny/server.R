@@ -187,7 +187,7 @@ shiny::shinyServer(function(input, output, session) {
     res <- resultSubset()
 
     plot <-
-      combinedPlot2(
+      combinedPlot(
         cases = res$cases,
         relative = res$relative,
         absolute = res$absolute,

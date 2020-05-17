@@ -2,10 +2,6 @@ library(dplyr)
 library(plotly)
 library(RColorBrewer)
 
-sPalette <- c("Blues", "Greens", "Reds", "Purples", "Greys") %>%
-  sapply(., function(x) brewer.pal(8, name = x)) %>%
-  as.vector
-
 if (is.null(.GlobalEnv$shinySettings)) {
   analysisSettingsList <- NULL
 } else {
@@ -40,16 +36,28 @@ incidence <-
       "incidence.rds"
     )
   ) %>%
-  left_join(mapOutcomes, by = c("estOutcome" = "outcome_id")) %>%
+  left_join(
+    mapOutcomes,
+    by = c("estOutcome" = "outcome_id")
+  ) %>%
   select(-estOutcome) %>%
   rename("estOutcome" = "outcome_name") %>%
-  left_join(mapOutcomes, by = c("stratOutcome" = "outcome_id")) %>%
+  left_join(
+    mapOutcomes,
+    by = c("stratOutcome" = "outcome_id")
+  ) %>%
   select(-stratOutcome) %>%
   rename("stratOutcome" = "outcome_name") %>%
-  left_join(mapExposures, by = c("treatmentId" = "exposure_id")) %>%
+  left_join(
+    mapExposures,
+    by = c("treatmentId" = "exposure_id")
+  ) %>%
   select(-treatmentId) %>%
   rename("treatment" = "exposure_name") %>%
-  left_join(mapExposures, by = c("comparatorId" = "exposure_id")) %>%
+  left_join(
+    mapExposures,
+    by = c("comparatorId" = "exposure_id")
+  ) %>%
   select(-comparatorId) %>%
   rename("comparator" = "exposure_name")
 
@@ -60,13 +68,22 @@ predictionPerformance <-
       "predictionPerformance.rds"
     )
   ) %>%
-  left_join(mapOutcomes, by = c("stratOutcome" = "outcome_id")) %>%
+  left_join(
+    mapOutcomes,
+    by = c("stratOutcome" = "outcome_id")
+  ) %>%
   select(-stratOutcome) %>%
   rename("stratOutcome" = "outcome_name") %>%
-  left_join(mapExposures, by = c("treatmentId" = "exposure_id")) %>%
+  left_join(
+    mapExposures,
+    by = c("treatmentId" = "exposure_id")
+  ) %>%
   select(-treatmentId) %>%
   rename("treatment" = "exposure_name") %>%
-  left_join(mapExposures, by = c("comparatorId" = "exposure_id")) %>%
+  left_join(
+    mapExposures,
+    by = c("comparatorId" = "exposure_id")
+  ) %>%
   select(-comparatorId) %>%
   rename("comparator" = "exposure_name")
 
@@ -77,16 +94,28 @@ mappedOverallAbsoluteResults <-
       "mappedOverallAbsoluteResults.rds"
     )
   ) %>%
-  left_join(mapOutcomes, by = c("estOutcome" = "outcome_id")) %>%
+  left_join(
+    mapOutcomes,
+    by = c("estOutcome" = "outcome_id")
+  ) %>%
   select(-estOutcome) %>%
   rename("estOutcome" = "outcome_name") %>%
-  left_join(mapOutcomes, by = c("stratOutcome" = "outcome_id")) %>%
+  left_join(
+    mapOutcomes,
+    by = c("stratOutcome" = "outcome_id")
+  ) %>%
   select(-stratOutcome) %>%
   rename("stratOutcome" = "outcome_name") %>%
-  left_join(mapExposures, by = c("treatment" = "exposure_id")) %>%
+  left_join(
+    mapExposures,
+    by = c("treatment" = "exposure_id")
+  ) %>%
   select(-treatment) %>%
   rename("treatment" = "exposure_name") %>%
-  left_join(mapExposures, by = c("comparator" = "exposure_id")) %>%
+  left_join(
+    mapExposures,
+    by = c("comparator" = "exposure_id")
+  ) %>%
   select(-comparator) %>%
   rename("comparator" = "exposure_name")
 
@@ -97,16 +126,28 @@ mappedOverallRelativeResults <-
       "mappedOverallRelativeResults.rds"
     )
   ) %>%
-  left_join(mapOutcomes, by = c("estOutcome" = "outcome_id")) %>%
+  left_join(
+    mapOutcomes,
+    by = c("estOutcome" = "outcome_id")
+  ) %>%
   select(-estOutcome) %>%
   rename("estOutcome" = "outcome_name") %>%
-  left_join(mapOutcomes, by = c("stratOutcome" = "outcome_id")) %>%
+  left_join(
+    mapOutcomes,
+    by = c("stratOutcome" = "outcome_id")
+  ) %>%
   select(-stratOutcome) %>%
   rename("stratOutcome" = "outcome_name") %>%
-  left_join(mapExposures, by = c("treatment" = "exposure_id")) %>%
+  left_join(
+    mapExposures,
+    by = c("treatment" = "exposure_id")
+  ) %>%
   select(-treatment) %>%
   rename("treatment" = "exposure_name") %>%
-  left_join(mapExposures, by = c("comparator" = "exposure_id")) %>%
+  left_join(
+    mapExposures,
+    by = c("comparator" = "exposure_id")
+  ) %>%
   select(-comparator) %>%
   rename("comparator" = "exposure_name")
 
@@ -118,16 +159,28 @@ mappedOverallCasesResults <-
       "mappedOverallCasesResults.rds"
     )
   ) %>%
-  left_join(mapOutcomes, by = c("estOutcome" = "outcome_id")) %>%
+  left_join(
+    mapOutcomes,
+    by = c("estOutcome" = "outcome_id")
+  ) %>%
   select(-estOutcome) %>%
   rename("estOutcome" = "outcome_name") %>%
-  left_join(mapOutcomes, by = c("stratOutcome" = "outcome_id")) %>%
+  left_join(
+    mapOutcomes,
+    by = c("stratOutcome" = "outcome_id")
+  ) %>%
   select(-stratOutcome) %>%
   rename("stratOutcome" = "outcome_name") %>%
-  left_join(mapExposures, by = c("treatment" = "exposure_id")) %>%
+  left_join(
+    mapExposures,
+    by = c("treatment" = "exposure_id")
+  ) %>%
   select(-treatment) %>%
   rename("treatment" = "exposure_name") %>%
-  left_join(mapExposures, by = c("comparator" = "exposure_id")) %>%
+  left_join(
+    mapExposures,
+    by = c("comparator" = "exposure_id")
+  ) %>%
   select(-comparator) %>%
   rename("comparator" = "exposure_name")
 
@@ -488,113 +541,121 @@ getCalibration <- function(treat,
   )
 }
 
-combinedPlot <- function(cases, relative, absolute, treatment, comparator) {
+# combinedPlot <- function(cases, relative, absolute, treatment, comparator) {
+#
+#   cases <-
+#     reshape::melt(
+#       cases,
+#       id.vars = c("riskStratum", "database", "estOutcome"),
+#       measure.vars = c("casesComparator", "casesTreatment")
+#     ) %>%
+#     dplyr::mutate(
+#       variable = ifelse(variable == "casesComparator", comparator, treatment)
+#     )
+#
+#
+#   cases$test <- file.path(cases$database, cases$estOutcome, cases$variable)
+#
+#   casesPlot <-
+#     ggplot2::ggplot(
+#       data = cases,
+#       ggplot2::aes(
+#         x = riskStratum,
+#         y = value * 100
+#       )
+#     ) +
+#     ggplot2::geom_bar(
+#       stat = "identity",
+#       position = ggplot2::position_dodge(),
+#       ggplot2::aes(
+#         fill = test
+#       ),
+#       width = 0.5
+#     ) +
+#     ggplot2::xlab("Risk Stratum") +
+#     ggplot2::ylab("Outcome Rate (%)") +
+#     ggplot2::geom_hline(yintercept = 0, size = 0.8) +
+#     ggplot2::scale_fill_brewer(palette = "Paired") +
+#     ggplot2::theme_minimal() +
+#     ggplot2::theme(
+#       legend.title = ggplot2::element_blank(),
+#       axis.title.x = ggplot2::element_blank(),
+#       axis.text.x = ggplot2::element_blank(),
+#       legend.direction = "horizontal",
+#       legend.position = "top"
+#     ) +
+#     ggplot2::scale_y_reverse()
+#
+#   relative$test <- file.path(relative$database, relative$estOutcome)
+#
+#   rrrPlot <-
+#     ggplot2::ggplot(
+#       relative,
+#       ggplot2::aes(x = riskStratum, y = estimate, group = test, color = test)
+#     ) +
+#     ggplot2::geom_point(
+#       size = 2.5,
+#       position = ggplot2::position_dodge(width = 0.3)
+#     ) +
+#     ggplot2::geom_errorbar(
+#       ggplot2::aes(ymin = lower, ymax = upper),
+#       width = 0,
+#       position = ggplot2::position_dodge(width = 0.3)
+#     ) +
+#     ggplot2::geom_hline(yintercept = 1, linetype = "dashed", size = 0.8) +
+#     ggplot2::xlab("Risk Stratum") +
+#     ggplot2::ylab("Hazard Ratio") +
+#     ggplot2::theme_minimal() +
+#     ggplot2::scale_color_manual(
+#       values = c("#0099FF", "#009933", "#CC0000", "#FF9933", "#663399", "#CC9966")
+#     ) +
+#     ggplot2::theme(
+#       legend.title = ggplot2::element_blank(),
+#       legend.position = "none",
+#       axis.title.x = ggplot2::element_blank(),
+#       axis.text.x = ggplot2::element_blank()
+#     )
+#
+#   absolute$test <- paste(absolute$database, absolute$estOutcome, sep = "/")
+#
+#   arrPlot <-
+#     ggplot2::ggplot(
+#       absolute,
+#       ggplot2::aes(x = riskStratum, y = estimate * 100,
+#                    group = test,
+#                    color = test)
+#     ) +
+#     ggplot2::geom_point(
+#       size = 2.5,
+#       position = ggplot2::position_dodge(width = 0.3)
+#     ) +
+#     ggplot2::geom_errorbar(
+#       ggplot2::aes(ymin = lower * 100, ymax = upper * 100),
+#       width = 0,
+#       position = ggplot2::position_dodge(width = 0.3)
+#     ) +
+#     ggplot2::geom_hline(yintercept = 0, linetype = "dashed", size = 0.8) +
+#     ggplot2::xlab("Risk stratum") + ggplot2::ylab("Absolute Risk Reduction (%)") +
+#     ggplot2::theme_minimal() +
+#     ggplot2::scale_color_manual(
+#       values = c("#0099FF", "#009933", "#CC0000", "#FF9933", "#663399", "#CC9966")
+#     ) +
+#     ggplot2::theme(
+#       legend.direction = "horizontal",
+#       legend.position = "bottom",
+#       legend.title = ggplot2::element_blank()
+#     )
+#
+#   ggpubr::ggarrange(casesPlot, rrrPlot, arrPlot, nrow = 3, align = "v")
+# }
 
-  cases <-
-    reshape::melt(
-      cases,
-      id.vars = c("riskStratum", "database", "estOutcome"),
-      measure.vars = c("casesComparator", "casesTreatment")
-    ) %>%
-    dplyr::mutate(
-      variable = ifelse(variable == "casesComparator", comparator, treatment)
-    )
 
 
-  cases$test <- file.path(cases$database, cases$estOutcome, cases$variable)
-
-  casesPlot <-
-    ggplot2::ggplot(
-      data = cases,
-      ggplot2::aes(x = riskStratum, y = value * 100)
-    ) +
-    ggplot2::geom_bar(
-      stat = "identity",
-      position = ggplot2::position_dodge(),
-      ggplot2::aes(fill = test),
-      width = 0.5
-    ) +
-    ggplot2::xlab("Risk Stratum") +
-    ggplot2::ylab("Outcome Rate (%)") +
-    ggplot2::geom_hline(yintercept = 0, size = 0.8) +
-    ggplot2::scale_fill_brewer(palette = "Paired") +
-    ggplot2::theme_minimal() +
-    ggplot2::theme(
-      legend.title = ggplot2::element_blank(),
-      axis.title.x = ggplot2::element_blank(),
-      axis.text.x = ggplot2::element_blank(),
-      legend.direction = "horizontal",
-      legend.position = "top"
-    ) +
-    ggplot2::scale_y_reverse()
-
-  relative$test <- file.path(relative$database, relative$estOutcome)
-
-  rrrPlot <-
-    ggplot2::ggplot(
-      relative,
-      ggplot2::aes(x = riskStratum, y = estimate, group = test, color = test)
-    ) +
-    ggplot2::geom_point(
-      size = 2.5,
-      position = ggplot2::position_dodge(width = 0.3)
-    ) +
-    ggplot2::geom_errorbar(
-      ggplot2::aes(ymin = lower, ymax = upper),
-      width = 0,
-      position = ggplot2::position_dodge(width = 0.3)
-    ) +
-    ggplot2::geom_hline(yintercept = 1, linetype = "dashed", size = 0.8) +
-    ggplot2::xlab("Risk Stratum") +
-    ggplot2::ylab("Hazard Ratio") +
-    ggplot2::theme_minimal() +
-    ggplot2::scale_color_manual(
-      values = c("#0099FF", "#009933", "#CC0000", "#FF9933", "#663399", "#CC9966")
-    ) +
-    ggplot2::theme(
-      legend.title = ggplot2::element_blank(),
-      legend.position = "none",
-      axis.title.x = ggplot2::element_blank(),
-      axis.text.x = ggplot2::element_blank()
-    )
-
-  absolute$test <- paste(absolute$database, absolute$estOutcome, sep = "/")
-
-  arrPlot <-
-    ggplot2::ggplot(
-      absolute,
-      ggplot2::aes(x = riskStratum, y = estimate * 100,
-                   group = test,
-                   color = test)
-    ) +
-    ggplot2::geom_point(
-      size = 2.5,
-      position = ggplot2::position_dodge(width = 0.3)
-    ) +
-    ggplot2::geom_errorbar(
-      ggplot2::aes(ymin = lower * 100, ymax = upper * 100),
-      width = 0,
-      position = ggplot2::position_dodge(width = 0.3)
-    ) +
-    ggplot2::geom_hline(yintercept = 0, linetype = "dashed", size = 0.8) +
-    ggplot2::xlab("Risk stratum") + ggplot2::ylab("Absolute Risk Reduction (%)") +
-    ggplot2::theme_minimal() +
-    ggplot2::scale_color_manual(
-      values = c("#0099FF", "#009933", "#CC0000", "#FF9933", "#663399", "#CC9966")
-    ) +
-    ggplot2::theme(
-      legend.direction = "horizontal",
-      legend.position = "bottom",
-      legend.title = ggplot2::element_blank()
-    )
-
-  ggpubr::ggarrange(casesPlot, rrrPlot, arrPlot, nrow = 3, align = "v")
-}
-
-
-
-
-combinedPlot2 <- function(cases, relative, absolute, treatment, comparator) {
+combinedPlot <- function(cases,
+                         relative,
+                         absolute,
+                         treatment,
+                         comparator) {
 
 
   customColors <- c(
@@ -656,8 +717,15 @@ combinedPlot2 <- function(cases, relative, absolute, treatment, comparator) {
   cases <-
     reshape::melt(
       cases,
-      id.vars = c("riskStratum", "database", "estOutcome"),
-      measure.vars = c("casesComparator", "casesTreatment")
+      id.vars = c(
+        "riskStratum",
+        "database",
+        "estOutcome"
+      ),
+      measure.vars = c(
+        "casesComparator",
+        "casesTreatment"
+      )
     ) %>%
     mutate(
       variable = ifelse(
@@ -686,12 +754,30 @@ combinedPlot2 <- function(cases, relative, absolute, treatment, comparator) {
       y = ~value,
       color = ~g,
       colors = "Paired",
-      type = 'bar'
+      type = 'bar',
+      hoverinfo = "text",
+      hovertext = paste(
+        "<b>Outcome:</b>",
+        cases$estOutcome,
+        "<br><b>Database:</b>",
+        cases$database,
+        "<br><b>Exposure:</b>",
+        cases$variable,
+        "<br><b>Event rate:</b>",
+        paste0(
+          round(cases$value, 2),
+          "%"
+        )
+      ),
+      legendgroup = ~g
     ) %>%
     plotly::layout(
       yaxis = list(
         title = 'Observed events (%)',
         autorange = "reversed"
+      ),
+      xaxis = list(
+        title = "Risk stratum"
       ),
       barmode = 'group'
     )
@@ -721,15 +807,38 @@ combinedPlot2 <- function(cases, relative, absolute, treatment, comparator) {
         type = "data",
         array = relative$upper - relative$estimate,
         arrayminus = relative$estimate - relative$lower
-      )
+      ),
+      hoverinfo = "text",
+      hovertext = paste(
+        "<b>Outcome:</b>",
+        relative$estOutcome,
+        "<br><b>Database:</b>",
+        relative$database,
+        "<br><b>HR:</b>",
+        paste0(
+          round(relative$estimate, 2),
+          " (",
+          paste(
+            round(relative$lower, 2),
+            round(relative$upper, 2),
+            sep = ", "
+          ),
+          ")"
+        )
+      ),
+      legendgroup = ~estOutcome
     ) %>%
-    layout(
+    plotly::layout(
       yaxis = list(
         title = "Hazard ratio"
       ),
       xaxis = list(
+        title = "Risk stratum",
         tickformat = ',d'
       )
+    ) %>%
+    layout(
+      shapes = hline(1)
     )
 
   absolute <-
@@ -760,13 +869,34 @@ combinedPlot2 <- function(cases, relative, absolute, treatment, comparator) {
         type = "data",
         array = absolute$upper - absolute$estimate,
         arrayminus = absolute$estimate - absolute$lower
-      )
+      ),
+      hoverinfo = "text",
+      hovertext = paste(
+        "<b>Outcome:</b>",
+        absolute$estOutcome,
+        "<br><b>Database:</b>",
+        absolute$database,
+        "<br><b>Absolute difference:</b>",
+        paste0(
+          round(absolute$estimate, 2),
+          " (",
+          paste(
+            round(absolute$lower, 2),
+            round(absolute$upper, 2),
+            sep = ", "
+          ),
+          ")"
+        )
+      ),
+      legendgroup = ~estOutcome,
+      showlegend = FALSE
     ) %>%
     layout(
       yaxis = list(
         title = "Absolute risk reduction (%)"
       ),
       xaxis = list(
+        title = "Risk stratum",
         tickformat = ',d'
       )
     )
@@ -774,4 +904,21 @@ combinedPlot2 <- function(cases, relative, absolute, treatment, comparator) {
   subplot(p1, p2, p3, shareX = TRUE, nrows = 3, titleY = T)
 
 
+}
+
+
+
+hline <- function(y = 0, color = "black") {
+  list(
+    type = "line",
+    x0 = 0,
+    x1 = 1,
+    xref = "paper",
+    y0 = y,
+    y1 = y,
+    line = list(
+      color = color,
+      dash = "dash"
+    )
+  )
 }

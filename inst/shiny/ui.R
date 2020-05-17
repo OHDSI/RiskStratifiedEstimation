@@ -40,7 +40,7 @@ shiny::shinyUI(
           ),
           shiny::selectInput(
             "estOutcome",
-            "Estimation outcome (max: 6)",
+            "Estimation outcome (max: 5)",
             unique(mapOutcomes$outcome_name),
             selected = unique(mapOutcomes$outcome_name)[1],
             multiple = TRUE,
