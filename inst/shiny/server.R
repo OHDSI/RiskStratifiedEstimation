@@ -39,6 +39,10 @@ shiny::shinyServer(function(input, output, session) {
 
     res <- incidenceSubset()
 
+    treatment <- res$treatment[1]
+    comparator <- res$comparator[1]
+    outcome <- res$stratOutcome[1]
+
     table <- res %>%
       dplyr::select(
         estOutcome,
@@ -67,7 +71,36 @@ shiny::shinyServer(function(input, output, session) {
           "Comparator subjects",
           "Comparator years",
           "Comparator events"
+        ),
+        caption = htmltools::tags$caption(
+          style = "caption-side: bottom; text-align: center;",
+          "Table 1: Number of subjects, follow-up time (in years), event rates in the treatment",
+          htmltools::em(
+            paste0(
+              "(",
+              treatment,
+              ")"
+            )
+          ),
+          "and the comparator",
+          htmltools::em(
+            paste0(
+              "(",
+              comparator,
+              ")"
+            )
+          ),
+          "groups within strata of predicted risk",
+          htmltools::em(
+            paste0(
+              "(",
+              outcome,
+              ")"
+            )
+          )
+
         )
+
       ) %>%
       DT::formatCurrency(
         columns =  "treatmentPersons",
@@ -112,13 +145,17 @@ shiny::shinyServer(function(input, output, session) {
         digits = 0
       )
 
-      return(table)
+    return(table)
 
   })
 
   output$mainTableRelative <- DT::renderDataTable({
 
     res <- resultSubset()
+
+    treatment <- res$relative$treatment[1]
+    comparator <- res$relative$comparator[1]
+    outcome <- res$relative$stratOutcome[1]
 
     table <- res$relative %>%
       dplyr::mutate(
@@ -133,16 +170,45 @@ shiny::shinyServer(function(input, output, session) {
           )
         )
       ) %>%
-          dplyr::rename(
-            Outcome = estOutcome
-          ) %>%
-          dplyr::select(
-            Outcome,
-            riskStratum,
-            combined
-          ) %>%
-          tidyr::spread(riskStratum, combined) %>%
-          DT::datatable()
+      dplyr::rename(
+        Outcome = estOutcome
+      ) %>%
+      dplyr::select(
+        Outcome,
+        riskStratum,
+        combined
+      ) %>%
+      tidyr::spread(riskStratum, combined) %>%
+      DT::datatable(
+        caption = htmltools::tags$caption(
+          style = "caption-side: bottom; text-align: center;",
+          "Table 2: Hazard ratios comparing treatment",
+          htmltools::em(
+            paste0(
+              "(",
+              treatment,
+              ")"
+            )
+          ),
+          "to comparator",
+          htmltools::em(
+            paste0(
+              "(",
+              comparator,
+              ")"
+            )
+          ),
+          "within strata of predicted risk",
+          htmltools::em(
+            paste0(
+              "(",
+              outcome,
+              ")"
+            )
+          )
+
+        )
+      )
 
     return(table)
 
@@ -151,6 +217,10 @@ shiny::shinyServer(function(input, output, session) {
   output$mainTableAbsolute <- DT::renderDataTable({
 
     res <- resultSubset()
+
+    treatment <- res$absolute$treatment[1]
+    comparator <- res$absolute$comparator[1]
+    outcome <- res$absolute$stratOutcome[1]
 
     table <-
       res$absolute %>%
@@ -175,7 +245,36 @@ shiny::shinyServer(function(input, output, session) {
         combined
       ) %>%
       tidyr::spread(riskStratum, combined) %>%
-      DT::datatable()
+      DT::datatable(
+        caption = htmltools::tags$caption(
+          style = "caption-side: bottom; text-align: center;",
+          "Table 3: Absolute risk reduction (%) when comparing treatment",
+          htmltools::em(
+            paste0(
+              "(",
+              treatment,
+              ")"
+            )
+          ),
+          "to comparator",
+          htmltools::em(
+            paste0(
+              "(",
+              comparator,
+              ")"
+            )
+          ),
+          "within strata of predicted risk",
+          htmltools::em(
+            paste0(
+              "(",
+              outcome,
+              ")"
+            )
+          )
+
+        )
+      )
 
 
     return(table)
