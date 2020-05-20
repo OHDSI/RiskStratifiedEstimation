@@ -4,39 +4,84 @@ computeCovariateBalanceWeighted <- function(population,
                                             cohortMethodData){
 
   pops <- population %>%
-    dplyr::group_by(treatment) %>%
-    dplyr::summarise(n = n(),
-                     nWeighted = sum(weights))
+    dplyr::group_by(
+      treatment
+    ) %>%
+    dplyr::summarise(
+      n = n(),
+      nWeighted = sum(weights)
+    )
 
   covariates <- cohortMethodData$covariates[]
   tt <- covariates %>%
-    dplyr::filter(rowId %in% population$rowId) %>%
-    dplyr::left_join(population %>%
-                       dplyr::select(c("rowId", "treatment", "weights")))
+    dplyr::filter(
+      rowId %in% population$rowId
+    ) %>%
+    dplyr::left_join(
+      population %>%
+        dplyr::select(
+          c(
+            "rowId",
+            "treatment",
+            "weights"
+          )
+        )
+    )
 
   test = tt %>%
-    dplyr::group_by(treatment, covariateId) %>%
-    dplyr::summarise(covariateSum = sum(covariateValue)) %>%
-    dplyr::left_join(pops) %>%
-    dplyr::mutate(unweighted = covariateSum/n,
-                  weighted = covariateSum/nWeighted,
-                  sdWeighted = weighted*(1 - weighted)/2,
-                  sdUnweighted = unweighted*(1 - unweighted)/2) %>%
+    dplyr::group_by(
+      treatment,
+      covariateId
+    ) %>%
+    dplyr::summarise(
+      covariateSum = sum(covariateValue)
+    ) %>%
+    dplyr::left_join(
+      pops
+    ) %>%
+    dplyr::mutate(
+      unweighted = covariateSum/n,
+      weighted = covariateSum/nWeighted,
+      sdWeighted = weighted*(1 - weighted)/2,
+      sdUnweighted = unweighted*(1 - unweighted)/2
+    ) %>%
     as.data.frame()
 
   t1 <- test %>%
-    dplyr::mutate(treatment = ifelse(treatment == 1, 1, -1)) %>%
-    dplyr::group_by(covariateId) %>%
-    dplyr::summarise(beforeWeighting = 100*abs(sum(unweighted*treatment))/sqrt(sum(sdUnweighted))) %>%
+    dplyr::mutate(
+      treatment = ifelse(
+        treatment == 1,
+        yes = 1,
+        no = -1
+      )
+    ) %>%
+    dplyr::group_by(
+      covariateId
+    ) %>%
+    dplyr::summarise(
+      beforeWeighting = 100*abs(sum(unweighted*treatment))/sqrt(sum(sdUnweighted))
+    ) %>%
     as.data.frame()
   t2 <- test %>%
-    dplyr::mutate(treatment = ifelse(treatment == 1, 1, -1)) %>%
-    dplyr::group_by(covariateId) %>%
-    dplyr::summarise(afterWeighting = 100*abs(sum(weighted*treatment))/sqrt(sum(sdWeighted))) %>%
+    dplyr::mutate(
+      treatment = ifelse(
+        treatment == 1,
+        yes = 1,
+        no = -1
+      )
+    ) %>%
+    dplyr::group_by(
+      covariateId
+    ) %>%
+    dplyr::summarise(
+      afterWeighting = 100*abs(sum(weighted*treatment))/sqrt(sum(sdWeighted))
+    ) %>%
     as.data.frame()
 
   t1 %>%
-    dplyr::left_join(t2) %>%
+    dplyr::left_join(
+      t2
+    ) %>%
     return()
 }
 
@@ -56,7 +101,9 @@ computeCovariateBalanceOverall <- function(ps,
         computeCovariateBalanceWeighted,
         cohortMethodData = cohortMethodData
       )  %>%
-      dplyr::bind_rows(.id = "riskStratum") %>%
+      dplyr::bind_rows(
+        .id = "riskStratum"
+      ) %>%
       dplyr::mutate(
         riskStratum = paste0(
           "Q",
@@ -71,7 +118,9 @@ computeCovariateBalanceOverall <- function(ps,
       computeCovariateBalanceCohortMethod,
       cohortMethodData = cohortMethodData
     ) %>%
-      dplyr::bind_rows(.id = "riskStratum") %>%
+      dplyr::bind_rows(
+        .id = "riskStratum"
+      ) %>%
       dplyr::mutate(
         riskStratum = paste0(
           "Q",
@@ -224,16 +273,21 @@ computeCovariateBalanceAnalysis <- function(analysisSettings,
     analysisSettings$outcomeIds[which(colSums(analysisSettings$analysisMatrix) != 0)]
 
   cluster <- ParallelLogger::makeCluster(threads)
-  ParallelLogger::clusterRequire(cluster, c("RiskStratifiedEstimation"))
+  ParallelLogger::clusterRequire(
+    cluster,
+    "RiskStratifiedEstimation"
+  )
 
 
-  dummy <- ParallelLogger::clusterApply(cluster = cluster,
-                                      x = predictOutcomes,
-                                      fun = computeCovariateBalanceCombined,
-                                      analysisSettings = analysisSettings,
-                                      runSettings = runSettings,
-                                      getDataSettings = getDataSettings,
-                                      secondaryOutcomes = secondaryOutcomes)
+  dummy <- ParallelLogger::clusterApply(
+    cluster = cluster,
+    x = predictOutcomes,
+    fun = computeCovariateBalanceCombined,
+    analysisSettings = analysisSettings,
+    runSettings = runSettings,
+    getDataSettings = getDataSettings,
+    secondaryOutcomes = secondaryOutcomes
+  )
 
   ParallelLogger::stopCluster(cluster)
 
@@ -247,7 +301,9 @@ psDensityOverall <- function(ps){
 
   lapply(ps,
          psDensity) %>%
-    dplyr::bind_rows(.id = "riskStratum") %>%
+    dplyr::bind_rows(
+      .id = "riskStratum"
+    ) %>%
     dplyr::mutate(
       riskStratum = paste0(
         "Q",
@@ -299,8 +355,8 @@ psDensityCombined <- function(outcomeId,
       estOutcome = outcomeId,
       treatment = ifelse(
         treatment == 1,
-        analysisSettings$treatmentCohortId,
-        analysisSettings$comparatorCohortId
+        yes = analysisSettings$treatmentCohortId,
+        no = analysisSettings$comparatorCohortId
       ),
       treatmentId = analysisSettings$treatmentCohortId,
       comparatorId = analysisSettings$comparatorCohortId,
@@ -352,8 +408,8 @@ psDensityCombined <- function(outcomeId,
           estOutcome = compareOutcome,
           treatment = ifelse(
             treatment == 1,
-            analysisSettings$treatmentCohortId,
-            analysisSettings$comparatorCohortId
+            yes = analysisSettings$treatmentCohortId,
+            no = analysisSettings$comparatorCohortId
           ),
           treatmentId = analysisSettings$treatmentCohortId,
           comparatorId = analysisSettings$comparatorCohortId,
@@ -389,14 +445,19 @@ psDensityAnalysis <- function(analysisSettings,
     analysisSettings$outcomeIds[which(colSums(analysisSettings$analysisMatrix) != 0)]
 
   cluster <- ParallelLogger::makeCluster(threads)
-  ParallelLogger::clusterRequire(cluster, c("RiskStratifiedEstimation"))
+  ParallelLogger::clusterRequire(
+    cluster,
+    "RiskStratifiedEstimation"
+  )
 
 
-  dummy <- ParallelLogger::clusterApply(cluster = cluster,
-                                        x = predictOutcomes,
-                                        fun = psDensityCombined,
-                                        analysisSettings = analysisSettings,
-                                        secondaryOutcomes = secondaryOutcomes)
+  dummy <- ParallelLogger::clusterApply(
+    cluster = cluster,
+    x = predictOutcomes,
+    fun = psDensityCombined,
+    analysisSettings = analysisSettings,
+    secondaryOutcomes = secondaryOutcomes
+  )
 
   ParallelLogger::stopCluster(cluster)
 
@@ -412,14 +473,22 @@ psDensity <- function(population) {
 
   treatmentDensity <- density(
     population %>%
-      dplyr::filter(treatment == 1) %>%
-      dplyr::select(preferenceScore) %>%
+      dplyr::filter(
+        treatment == 1
+      ) %>%
+      dplyr::select(
+        preferenceScore
+      ) %>%
       unlist()
   )
   comparatorDensity <- density(
     population %>%
-      dplyr::filter(treatment == 0) %>%
-      dplyr::select(preferenceScore) %>%
+      dplyr::filter(
+        treatment == 0
+      ) %>%
+      dplyr::select(
+        preferenceScore
+      ) %>%
       unlist()
   )
 
@@ -539,9 +608,18 @@ reanalyzePsMethod <- function(analysisSettings,
     }
   }
 
-  ParallelLogger::logInfo("Re-analyzing for main outcomes")
+  ParallelLogger::logInfo(
+    "Re-analyzing for main outcomes"
+  )
+
   cluster <- ParallelLogger::makeCluster(threads)
-  ParallelLogger::clusterRequire(cluster, c("RiskStratifiedEstimation", "CohortMethod"))
+  ParallelLogger::clusterRequire(
+    cluster,
+    c(
+      "RiskStratifiedEstimation",
+      "CohortMethod"
+    )
+  )
 
   pathToPs <- file.path(
     previousAnalysisPath,
@@ -561,12 +639,14 @@ reanalyzePsMethod <- function(analysisSettings,
     )
   }
 
-  dummy <- ParallelLogger::clusterApply(cluster = cluster,
-                                        x = predictOutcomes,
-                                        fun = reRunAnalyses,
-                                        pathToPs = pathToPs,
-                                        saveDirectory = saveDirectory,
-                                        runSettings = runSettings)
+  dummy <- ParallelLogger::clusterApply(
+    cluster = cluster,
+    x = predictOutcomes,
+    fun = reRunAnalyses,
+    pathToPs = pathToPs,
+    saveDirectory = saveDirectory,
+    runSettings = runSettings
+  )
 
   ParallelLogger::stopCluster(cluster)
 
@@ -589,8 +669,16 @@ reanalyzePsMethod <- function(analysisSettings,
 
     if (!is.null(compareOutcomes)) {
 
-      cluster <- ParallelLogger::makeCluster(threads)
-      ParallelLogger::clusterRequire(cluster, c("RiskStratifiedEstimation", "CohortMethod"))
+      cluster <- ParallelLogger::makeCluster(
+        threads
+      )
+      ParallelLogger::clusterRequire(
+        cluster,
+        c(
+          "RiskStratifiedEstimation",
+          "CohortMethod"
+        )
+      )
 
       pathToPs <- file.path(
         previousAnalysisPath,
@@ -612,12 +700,14 @@ reanalyzePsMethod <- function(analysisSettings,
         )
       }
 
-      dummy <- ParallelLogger::clusterApply(cluster = cluster,
-                                            x = compareOutcomes,
-                                            fun = reRunAnalyses,
-                                            pathToPs = pathToPs,
-                                            saveDirectory = saveDirectory,
-                                            runSettings = runSettings)
+      dummy <- ParallelLogger::clusterApply(
+        cluster = cluster,
+        x = compareOutcomes,
+        fun = reRunAnalyses,
+        pathToPs = pathToPs,
+        saveDirectory = saveDirectory,
+        runSettings = runSettings
+      )
 
       ParallelLogger::stopCluster(cluster)
 
@@ -663,8 +753,8 @@ computeIncidence <- function(population,
     dplyr::mutate(
       outcomeCount = ifelse(
         outcomeCount > 0,
-        1,
-        0
+        yes = 1,
+        no = 0
       )
     )
 
@@ -695,12 +785,20 @@ computeIncidence <- function(population,
   res %>%
     dplyr::mutate(
       treatmentOutcomes = treatmentArmOutcomes %>%
-        dplyr::filter(treatment == 1) %>%
-        dplyr::select(outcomes) %>%
+        dplyr::filter(
+          treatment == 1
+        ) %>%
+        dplyr::select(
+          outcomes
+        ) %>%
         unlist(),
       comparatorOutcomes = treatmentArmOutcomes %>%
-        dplyr::filter(treatment == 0) %>%
-        dplyr::select(outcomes) %>%
+        dplyr::filter(
+          treatment == 0
+        ) %>%
+        dplyr::select(
+          outcomes
+        ) %>%
         unlist()
     ) %>%
     return()
@@ -852,19 +950,30 @@ computeIncidenceAnalysis <- function(analysisSettings,
   predictOutcomes <-
     analysisSettings$outcomeIds[which(colSums(analysisSettings$analysisMatrix) != 0)]
 
-  cluster <- ParallelLogger::makeCluster(threads)
-  ParallelLogger::clusterRequire(cluster, c("RiskStratifiedEstimation", "dplyr"))
+  cluster <- ParallelLogger::makeCluster(
+    threads
+  )
+
+  ParallelLogger::clusterRequire(
+    cluster,
+    c(
+      "RiskStratifiedEstimation",
+      "dplyr"
+    )
+  )
 
 
-  res <- ParallelLogger::clusterApply(cluster = cluster,
-                                      x = predictOutcomes,
-                                      fun = computeIncidenceCombined,
-                                      analysisSettings = analysisSettings,
-                                      alpha = alpha,
-                                      power = power,
-                                      twoSided = twoSided,
-                                      modelType = modelType,
-                                      secondaryOutcomes = secondaryOutcomes)
+  res <- ParallelLogger::clusterApply(
+    cluster = cluster,
+    x = predictOutcomes,
+    fun = computeIncidenceCombined,
+    analysisSettings = analysisSettings,
+    alpha = alpha,
+    power = power,
+    twoSided = twoSided,
+    modelType = modelType,
+    secondaryOutcomes = secondaryOutcomes
+  )
 
   ParallelLogger::stopCluster(cluster)
 
@@ -919,7 +1028,9 @@ predictionPerformance <- function(outcomeId,
       )
     )$evaluationStatistics
 
-    performance <- as.data.frame(performance)
+    performance <- as.data.frame(
+      performance
+    )
     rownames(performance) <- NULL
 
     performance %>%
@@ -958,7 +1069,10 @@ predictionPerformance <- function(outcomeId,
         metric,
         Value
       ) %>%
-      tidyr::spread(metric, Value) %>%
+      tidyr::spread(
+        metric,
+        Value
+      ) %>%
       dplyr::mutate(
         cohort = cohort,
         analysisId = analysisSettings$analysisId,
@@ -1001,9 +1115,11 @@ predictionPerformanceAnalysis <- function(analysisSettings,
   predictOutcomes <-
     analysisSettings$outcomeIds[which(colSums(analysisSettings$analysisMatrix) != 0)]
 
-  performance <- lapply(predictOutcomes,
-                        predictionPerformance,
-                        analysisSettings) %>%
+  performance <- lapply(
+    predictOutcomes,
+    predictionPerformance,
+    analysisSettings
+  ) %>%
     dplyr::bind_rows()
 
   if (save) {
@@ -1031,20 +1147,3 @@ predictionPerformanceAnalysis <- function(analysisSettings,
 
   return(performance)
 }
-
-# pp %>%
-#   left_join(mapExposures, by = c("treatment" = "exposure_id")) %>%
-#   ggplot(aes(x = x, y = y)) +
-#   geom_density(stat = "identity", aes(color = exposure_name, group = exposure_name, fill = exposure_name)) +
-#   facet_grid(~riskStratum) +
-#   ggplot2::ylab("Density") +
-#   ggplot2::xlab("Preference score") +
-#   ggplot2::scale_fill_manual(values = c(rgb(0.8, 0, 0, alpha = 0.5),
-#                                         rgb(0, 0, 0.8, alpha = 0.5))) +
-#   ggplot2::scale_color_manual(values = c(rgb(0.8, 0, 0, alpha = 0.5),
-#                                          rgb(0, 0, 0.8, alpha = 0.5))) +
-#   ggplot2::theme(legend.title = ggplot2::element_blank(),
-#                  legend.position = "top",
-#                  legend.text = ggplot2::element_text(margin = ggplot2::margin(0, 0.5, 0, 0.1, "cm")))
-#
-#
