@@ -1,23 +1,38 @@
 library(dplyr)
 shiny::shinyServer(function(input, output, session) {
 
+
   shiny::observe({
     stratificationOutcome <- input$stratOutcome
     filteredEstimationOutcomes <- mappedOverallRelativeResults %>%
-      dplyr::filter(stratOutcome == stratificationOutcome) %>%
-      dplyr::select(estOutcome)
+      dplyr::filter(
+        stratOutcome == stratificationOutcome
+      ) %>%
+      dplyr::select(
+        estOutcome
+      )
 
 
-    shiny::updateSelectInput(session = session, inputId = "estOutcome", choices = unique(filteredEstimationOutcomes))
+    shiny::updateSelectInput(
+      session = session,
+      inputId = "estOutcome",
+      choices = unique(filteredEstimationOutcomes)
+    )
   })
 
   resultSubset <- shiny::reactive({
 
-    results <- getResults(treat = input$treatment, comp = input$comparator, strat = input$stratOutcome,
-                          est = input$estOutcome, anal = input$analysis, db = input$database,
-                          mappedOverallRelativeResults = mappedOverallRelativeResults,
-                          mappedOverallAbsoluteResults = mappedOverallAbsoluteResults,
-                          mappedOverallCasesResults = mappedOverallCasesResults)
+    results <- getResults(
+      treat = input$treatment,
+      comp = input$comparator,
+      strat = input$stratOutcome,
+      est = input$estOutcome,
+      anal = input$analysis,
+      db = input$database,
+      mappedOverallRelativeResults = mappedOverallRelativeResults,
+      mappedOverallAbsoluteResults = mappedOverallAbsoluteResults,
+      mappedOverallCasesResults = mappedOverallCasesResults
+    )
 
     return(results)
 
@@ -26,14 +41,20 @@ shiny::shinyServer(function(input, output, session) {
   incidenceSubset <- shiny::reactive({
 
     res <- getIncidence(
-      treat = input$treatment, comp = input$comparator, strat = input$stratOutcome,
-      est = input$estOutcome, anal = input$analysis, db = input$database,
+      treat = input$treatment,
+      comp = input$comparator,
+      strat = input$stratOutcome,
+      est = input$estOutcome,
+      anal = input$analysis,
+      db = input$database,
       incidence = incidence
     )
 
     return(res)
 
   })
+
+
 
   output$mainTableIncidence <- DT::renderDataTable({
 
@@ -73,7 +94,7 @@ shiny::shinyServer(function(input, output, session) {
           "Comparator events"
         ),
         caption = htmltools::tags$caption(
-          style = "caption-side: bottom; text-align: center;",
+          style = "caption-side: top; text-align: left;",
           "Table 1: Number of subjects, follow-up time (in years), event rates in the treatment",
           htmltools::em(
             paste0(
@@ -98,7 +119,6 @@ shiny::shinyServer(function(input, output, session) {
               ")"
             )
           )
-
         )
 
       ) %>%
@@ -181,7 +201,7 @@ shiny::shinyServer(function(input, output, session) {
       tidyr::spread(riskStratum, combined) %>%
       DT::datatable(
         caption = htmltools::tags$caption(
-          style = "caption-side: bottom; text-align: center;",
+          style = "caption-side: top; text-align: left;",
           "Table 2: Hazard ratios comparing treatment",
           htmltools::em(
             paste0(
@@ -247,7 +267,7 @@ shiny::shinyServer(function(input, output, session) {
       tidyr::spread(riskStratum, combined) %>%
       DT::datatable(
         caption = htmltools::tags$caption(
-          style = "caption-side: bottom; text-align: center;",
+          style = "caption-side: top; text-align: left;",
           "Table 3: Absolute risk reduction (%) when comparing treatment",
           htmltools::em(
             paste0(
@@ -272,7 +292,6 @@ shiny::shinyServer(function(input, output, session) {
               ")"
             )
           )
-
         )
       )
 
@@ -280,6 +299,7 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
 
   })
+
 
   output$combinedPlot <- plotly::renderPlotly({
 
@@ -337,70 +357,92 @@ shiny::shinyServer(function(input, output, session) {
     return(res)
   })
 
-  output$evaluationPlot <- shiny::renderPlot({
-    stratIdNumber <- mapOutcomes %>%
-      dplyr::filter(
-        outcome_name == input$stratOutcome
+  output$evaluationPlotPs <- shiny::renderPlot({
+
+    psDensitySubset() %>%
+      dplyr::left_join(
+        mapExposures,
+        by = c("treatment" = "exposure_id")
       ) %>%
-      dplyr::select(outcome_id) %>%
-      unlist()
-    estIdNumber <- mapOutcomes %>%
-      dplyr::filter(
-        outcome_name == input$estOutcomeEstimation
-      ) %>%
-      dplyr::select(outcome_id) %>%
-      unlist()
-    if (input$evaluateEstimation == "Propensity scores") {
-      psDensitySubset() %>%
-        dplyr::left_join(
-          mapExposures,
-          by = c("treatment" = "exposure_id")
-        ) %>%
-        ggplot2::ggplot(
-          ggplot2::aes(
-            x = x,
-            y = y
+      ggplot2::ggplot(
+        ggplot2::aes(
+          x = x,
+          y = y
+        )
+      ) +
+      ggplot2::geom_density(
+        stat = "identity",
+        ggplot2::aes(
+          color = exposure_name,
+          group = exposure_name,
+          fill = exposure_name
+        )
+      ) +
+      ggplot2::facet_grid(~riskStratum) +
+      ggplot2::ylab(
+        label = "Density"
+      ) +
+      ggplot2::xlab(
+        label = "Preference score"
+      ) +
+      ggplot2::scale_fill_manual(
+        values = c(
+          rgb(
+            red = 0.8,
+            green = 0,
+            blue = 0,
+            alpha = 0.5
+          ),
+          rgb(
+            red = 0,
+            green = 0,
+            blue = 0.8,
+            alpha = 0.5
           )
-        ) +
-        ggplot2::geom_density(
-          stat = "identity",
-          ggplot2::aes(
-            color = exposure_name,
-            group = exposure_name,
-            fill = exposure_name
+        )
+      ) +
+      ggplot2::scale_color_manual(
+        values = c(
+          rgb(
+            red = 0.8,
+            green = 0,
+            blue = 0,
+            alpha = 0.5
+          ),
+          rgb(
+            red = 0,
+            green = 0,
+            blue = 0.8,
+            alpha = 0.5
           )
-        ) +
-        ggplot2::facet_grid(~riskStratum) +
-        ggplot2::ylab("Density") +
-        ggplot2::xlab("Preference score") +
-        ggplot2::scale_fill_manual(
-          values = c(
-            rgb(0.8, 0, 0, alpha = 0.5),
-            rgb(0, 0, 0.8, alpha = 0.5)
+        )
+      ) +
+      ggplot2::theme(
+        legend.title = ggplot2::element_blank(),
+        legend.position = "top",
+        legend.text = ggplot2::element_text(
+          margin = ggplot2::margin(
+            t = 0,
+            r = 0.5,
+            b = 0,
+            l = 0.1,
+            unit = "cm"
           )
-        ) +
-        ggplot2::scale_color_manual(
-          values = c(
-            rgb(0.8, 0, 0, alpha = 0.5),
-            rgb(0, 0, 0.8, alpha = 0.5)
-          )
-        ) +
-        ggplot2::theme(
-          legend.title = ggplot2::element_blank(),
-          legend.position = "top",
-          legend.text = ggplot2::element_text(
-            margin = ggplot2::margin(0, 0.5, 0, 0.1, "cm")
-          )
-        ) %>%
-        return()
-    }
-    else {
-      balanceSubset() %>%
-        CohortMethod::plotCovariateBalanceScatterPlot() +
-        ggplot2::facet_grid(~riskStratum) %>%
-        return()
-    }
+        )
+      )
   })
+
+  output$evaluationPlotBalance <- shiny::renderPlot({
+    balanceSubset() %>%
+      CohortMethod::plotCovariateBalanceScatterPlot(
+        beforeLabel = "Before stratification",
+        afterLabel = "After stratification"
+      ) +
+      ggplot2::facet_grid(
+        ~riskStratum
+      )
+  })
+
 
   calibrationSubset <- shiny::reactive({
     res <- getCalibration(
@@ -442,8 +484,12 @@ shiny::shinyServer(function(input, output, session) {
         size = 0.4,
         show.legend = TRUE
       ) +
-      ggplot2::scale_x_continuous("Average Predicted Probability") +
-      ggplot2::scale_y_continuous("Observed Fraction With Outcome")
+      ggplot2::scale_x_continuous(
+        name = "Average Predicted Probability"
+      ) +
+      ggplot2::scale_y_continuous(
+        name = "Observed Fraction With Outcome"
+      )
 
   })
 
@@ -477,12 +523,36 @@ shiny::shinyServer(function(input, output, session) {
   output$discriminationPlot <- shiny::renderPlot({
     plot <-
       aucSubset() %>%
-      ggplot2::ggplot(ggplot2::aes(x = fpRate, y = sens)) +
-      ggplot2::geom_abline(intercept = 0, slope = 1) +
-      ggplot2::geom_area(color = grDevices::rgb(0, 0, 0.8, alpha = 0.8),
-                         fill = grDevices::rgb(0, 0, 0.8, alpha = 0.4)) +
-      ggplot2::scale_x_continuous("1 - specificity") +
-      ggplot2::scale_y_continuous("Sensitivity")
+      ggplot2::ggplot(
+        ggplot2::aes(
+          x = fpRate,
+          y = sens
+        )
+      ) +
+      ggplot2::geom_abline(
+        intercept = 0,
+        slope = 1
+      ) +
+      ggplot2::geom_area(
+        color = grDevices::rgb(
+          red = 0,
+          green = 0,
+          blue = 0.8,
+          alpha = 0.8
+        ),
+        fill = grDevices::rgb(
+          red = 0,
+          green = 0,
+          blue = 0.8,
+          alpha = 0.4
+        )
+      ) +
+      ggplot2::scale_x_continuous(
+        name = "1 - specificity"
+      ) +
+      ggplot2::scale_y_continuous(
+        name = "Sensitivity"
+      )
 
     labels <- predictionPerformanceSubset() %>%
       dplyr::select(auc) %>%
@@ -500,16 +570,17 @@ shiny::shinyServer(function(input, output, session) {
       )
 
     plot <- plot +
-      ggplot2::geom_label(data = labels,
-                          x = .78,
-                          y = .05,
-                          hjust = "left",
-                          vjust = "top",
-                          alpha = 0.8,
-                          ggplot2::aes(
-                            label = auc
-                          ),
-                          size = 5.5
+      ggplot2::geom_label(
+        data = labels,
+        x = .78,
+        y = .05,
+        hjust = "left",
+        vjust = "top",
+        alpha = 0.8,
+        ggplot2::aes(
+          label = auc
+        ),
+        size = 5.5
       )
 
     return(plot)
@@ -517,21 +588,26 @@ shiny::shinyServer(function(input, output, session) {
   })
 
   showInfoBox <- function(title, htmlFileName) {
-    showModal(modalDialog(
-      title = title,
-      easyClose = TRUE,
-      footer = NULL,
-      size = "l",
-      HTML(readChar(htmlFileName, file.info(htmlFileName)$size) )
-    ))
+    showModal(
+      modalDialog(
+        title = title,
+        easyClose = TRUE,
+        footer = NULL,
+        size = "l",
+        HTML(
+          readChar(
+            htmlFileName,
+            file.info(htmlFileName)$size)
+        )
+      )
+    )
   }
 
   observeEvent(input$testInfo, {
     showInfoBox(
       "Database information",
       file.path(
-        analysisPath,
-        "html",
+        pathToHtml,
         paste(
           input$database,
           "html",
@@ -540,5 +616,4 @@ shiny::shinyServer(function(input, output, session) {
       )
     )
   })
-
 })
