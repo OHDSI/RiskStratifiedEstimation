@@ -7,13 +7,12 @@
 createAnalysisSettings(
   analysisId = NULL,
   databaseName,
+  analysisType,
   treatmentCohortId,
   comparatorCohortId,
   outcomeIds,
-  negativeControlOutcomes = c(),
   analysisMatrix = diag(length(outcomeIds)),
   mapTreatments,
-  mapNegativeControls = NULL,
   mapOutcomes,
   verbosity = NULL,
   saveDirectory = NULL
@@ -24,14 +23,14 @@ createAnalysisSettings(
 
 \item{databaseName}{The name of the database.}
 
+\item{analysisType}{The type of the analysis. Could be "matching", "stratifyByPs" or
+"inversePtWeighted".}
+
 \item{treatmentCohortId}{The cohort definition id of the treatment cohort in the cohortTable.}
 
 \item{comparatorCohortId}{The cohort definition id of the comparator cohort in the cohortTable.}
 
 \item{outcomeIds}{The cohort definition ids of the outcome cohorts in the outcomeTable.}
-
-\item{negativeControlOutcomes}{The ids of the negative control oucomes used to assess systematic
-error.}
 
 \item{analysisMatrix}{Boolean matrix defining the outcomes to be assessed (rows) within risk
 strata (columns). The order in columns should match the the order of
@@ -41,9 +40,6 @@ were defined.}
 
 \item{mapTreatments}{Dataframe containing 2 columns: *idNumber* with the id numbers of the
 treatment and comparator cohorts and *label* the cohort names.}
-
-\item{mapNegativeControls}{Dataframe containing 2 columns: *idNumber* with the id numbers of the
-negative control outcomes and *label* their names.}
 
 \item{mapOutcomes}{Dataframe containing 2 columns: *idNumber* with the cohort names of
 the outcomes of interest and *label* with their names.}

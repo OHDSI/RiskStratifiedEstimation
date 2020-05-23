@@ -612,9 +612,85 @@ runRiskStratifiedEstimation <- function(connectionDetails,
     }
   }
 
+  ParallelLogger::logInfo(
+    "Creating and saving overall results"
+  )
 
   createOverallResults(
     analysisSettings
+  )
+
+  ParallelLogger::logInfo(
+    "Evaluating prediction models"
+  )
+
+  nThreads <- ifelse(
+    runSettings$runCmSettings$createPsThreads > 4,
+    yes = 4,
+    no = runSettings$runCmSettings$createPsThreads
+  )
+
+  cluster <- ParallelLogger::makeCluster(
+    nThreads
+  )
+
+  ParallelLogger::clusterRequire(
+    cluster,
+    "RiskStratifiedEstimation"
+  )
+
+  dummy <- ParallelLogger::clusterApply(
+    cluster = cluster,
+    x = predictOutcomes,
+    fun = evaluatePrediction,
+    analysisSettings = analysisSettings,
+    getDataSettings = getDataSettings,
+    populationSettings = populationSettings
+  )
+
+  ParallelLogger::stopCluster(
+    cluster
+  )
+
+  ParallelLogger::logInfo(
+    "Saving prediction model performance"
+  )
+
+  predictionPerformanceAnalysis(
+    analysisSettings = analysisSettings,
+    save = TRUE
+  )
+
+  ParallelLogger::logInfo(
+    "Computing and saving incidence"
+  )
+
+  computeIncidenceAnalysis(
+    analysisSettings = analysisSettings,
+    secondaryOutcomes = TRUE,
+    threads = nThreads
+  )
+
+  ParallelLogger::logInfo(
+    "Computing and saving propensity score density"
+  )
+
+  psDensityAnalysis(
+    analysisSettings = analysisSettings,
+    secondaryOutcomes = TRUE,
+    threads = nThreads
+  )
+
+  ParallelLogger::logInfo(
+    "Computing and saving covariate balance. This may take a while..."
+  )
+
+  computeCovariateBalanceAnalysis(
+    analysisSettings = analysisSettings,
+    runSettings = runSettings,
+    getDataSettings = getDataSettings,
+    secondaryOutcomes = TRUE,
+    threads = nThreads
   )
 
   saveRDS(
@@ -626,11 +702,6 @@ runRiskStratifiedEstimation <- function(connectionDetails,
     )
   )
 
-
-
-  ParallelLogger::logInfo(
-    'Created reference table'
-  )
 
   ParallelLogger::logInfo(
     'Run finished successfully'

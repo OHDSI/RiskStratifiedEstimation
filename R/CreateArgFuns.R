@@ -587,11 +587,11 @@ createCreateIPWArgs <- function(weightsType = "ATE",
 #'
 #' @param analysisId                 The analysis ID.
 #' @param databaseName               The name of the database.
+#' @param analysisType               The type of the analysis. Could be "matching", "stratifyByPs" or
+#'                                   "inversePtWeighted".
 #' @param treatmentCohortId          The cohort definition id of the treatment cohort in the cohortTable.
 #' @param comparatorCohortId         The cohort definition id of the comparator cohort in the cohortTable.
 #' @param outcomeIds                 The cohort definition ids of the outcome cohorts in the outcomeTable.
-#' @param negativeControlOutcomes    The ids of the negative control oucomes used to assess systematic
-#'                                   error.
 #' @param analysisMatrix             Boolean matrix defining the outcomes to be assessed (rows) within risk
 #'                                   strata (columns). The order in columns should match the the order of
 #'                                   \code{outcomeIds}. Default is the diagonal matrix, which leads to the
@@ -599,8 +599,6 @@ createCreateIPWArgs <- function(weightsType = "ATE",
 #'                                   were defined.
 #' @param mapTreatments              Dataframe containing 2 columns: *idNumber* with the id numbers of the
 #'                                   treatment and comparator cohorts and *label* the cohort names.
-#' @param mapNegativeControls        Dataframe containing 2 columns: *idNumber* with the id numbers of the
-#'                                   negative control outcomes and *label* their names.
 #' @param mapOutcomes                Dataframe containing 2 columns: *idNumber* with the cohort names of
 #'                                   the outcomes of interest and *label* with their names.
 #' @param verbosity                  Sets the level of the verbosity. If the log level is at or higher in
@@ -623,22 +621,25 @@ createCreateIPWArgs <- function(weightsType = "ATE",
 
 createAnalysisSettings <- function(analysisId = NULL,
                                    databaseName,
+                                   analysisType,
                                    treatmentCohortId,
                                    comparatorCohortId,
                                    outcomeIds,
-                                   negativeControlOutcomes = c(),
                                    analysisMatrix = diag(length(outcomeIds)),
                                    mapTreatments,
-                                   mapNegativeControls = NULL,
                                    mapOutcomes,
                                    verbosity = NULL,
                                    saveDirectory = NULL) {
 
   res <- list(analysisId = analysisId,
+              databaseName = databaseName,
+              analysisType = analysisType,
               treatmentCohortId = treatmentCohortId,
               comparatorCohortId = comparatorCohortId,
               outcomeIds = outcomeIds,
               analysisMatrix = analysisMatrix,
+              mapTreatments = mapTreatments,
+              mapOutcomes = mapOutcomes,
               verbosity = verbosity,
               saveDirectory = saveDirectory)
 
