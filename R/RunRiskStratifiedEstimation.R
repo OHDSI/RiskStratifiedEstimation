@@ -18,6 +18,9 @@
 #'                                   \code{\link[RiskStratifiedEstimation]{createPopulationSettings}}.
 #' @param runSettings                An R object of type \code{runSettings} created using the function
 #'                                   \code{\link[RiskStratifiedEstimation]{createRunSettings}}.
+#' @param tempDir                    Directory where temporary files required for the analysis will be
+#'                                   stored.
+#'
 #'
 #' @return                           The function saves all results based on \code{analysisSettings}. No
 #'                                   results are returned.
@@ -31,7 +34,8 @@ runRiskStratifiedEstimation <- function(connectionDetails,
                                         getDataSettings,
                                         covariateSettings,
                                         populationSettings,
-                                        runSettings){
+                                        runSettings,
+                                        tempDir = NULL){
 
   if (is.null(analysisSettings$verbosity)) {
 
@@ -64,6 +68,28 @@ runRiskStratifiedEstimation <- function(connectionDetails,
         )
       )
     )
+  }
+
+  if (!is.null(tempDir)) {
+
+    temporary <- file.path(
+      tempDir,
+      analysisSettings$analysisId
+    )
+
+    if (!dir.exists(temporary)) {
+
+      dir.create(
+        path = temporary,
+        recursive = TRUE
+      )
+
+    }
+
+    options(
+      fftempdir = temporary
+    )
+
   }
 
   if (is.null(analysisSettings$saveDirectory)) {
@@ -184,17 +210,13 @@ runRiskStratifiedEstimation <- function(connectionDetails,
   }
 
   if (is.null(getDataSettings$cohortMethodDataFolder)) {
-    cohortMethodDataOutcomes <- c(
-      analysisSettings$outcomeIds,
-      analysisSettings$negativeControlOutcomes
-    )
 
     cohortMethodData <- CohortMethod::getDbCohortMethodData(
       connectionDetails = connectionDetails,
       cdmDatabaseSchema = databaseSettings$cdmDatabaseSchema,
       targetId = analysisSettings$treatmentCohortId,
       comparatorId = analysisSettings$comparatorCohortId,
-      outcomeIds = cohortMethodDataOutcomes,
+      outcomeIds = analysisSettings$outcomeIds,
       studyStartDate = getDataSettings$getCmDataSettings$studyStartDate,
       studyEndDate = getDataSettings$getCmDataSettings$studyEndDate,
       exposureDatabaseSchema = databaseSettings$exposureDatabaseSchema,
@@ -263,6 +285,19 @@ runRiskStratifiedEstimation <- function(connectionDetails,
   )
 
   ParallelLogger::stopCluster(cluster)
+
+  do.call(
+    file.remove(
+      list(
+        list.files(
+          getOption(
+            "fftempdir"
+          ),
+          full.names = TRUE
+        )
+      )
+    )
+  )
 
   ParallelLogger::logInfo(
     "Done estimating propensity scores"
@@ -359,6 +394,19 @@ runRiskStratifiedEstimation <- function(connectionDetails,
     )
   }
 
+  do.call(
+    file.remove(
+      list(
+        list.files(
+          getOption(
+            "fftempdir"
+          ),
+          full.names = TRUE
+        )
+      )
+    )
+  )
+
   ParallelLogger::logInfo(
     "Estimated prediction models for all outcomes"
   )
@@ -397,6 +445,19 @@ runRiskStratifiedEstimation <- function(connectionDetails,
 
   ParallelLogger::stopCluster(
     cluster
+  )
+
+  do.call(
+    file.remove(
+      list(
+        list.files(
+          getOption(
+            "fftempdir"
+          ),
+          full.names = TRUE
+        )
+      )
+    )
   )
 
   ParallelLogger::logInfo(
@@ -443,6 +504,19 @@ runRiskStratifiedEstimation <- function(connectionDetails,
 
       ParallelLogger::stopCluster(
         cluster
+      )
+
+      do.call(
+        file.remove(
+          list(
+            list.files(
+              getOption(
+                "fftempdir"
+              ),
+              full.names = TRUE
+            )
+          )
+        )
       )
     }
   }
@@ -529,77 +603,6 @@ runRiskStratifiedEstimation <- function(connectionDetails,
       dummy <- ParallelLogger::clusterApply(
         cluster = cluster,
         x = compareOutcomes,
-        fun = fitOutcomeModels,
-        getDataSettings = getDataSettings,
-        pathToPs = pathToPs,
-        runSettings = runSettings
-      )
-
-      ParallelLogger::stopCluster(
-        cluster
-      )
-    }
-  }
-
-  if (!is.null(analysisSettings$negativeControlOutcomes)) {
-
-    negativeControlIds <- analysisSettings$negativeControlOutcomes
-    analysisSettingsForNegativeControls <- analysisSettings
-
-    analysisSettingsForNegativeControls$analysisId <- file.path(
-      analysisSettings$analysisId,
-      "NegativeControls"
-    )
-
-    ParallelLogger::logInfo(
-      "Starting estimation for negative control outcomes"
-    )
-
-
-    for (predictOutcome in predictOutcomes) {
-
-      cluster <- ParallelLogger::makeCluster(
-        runSettings$runCmSettings$createPsThreadsNegativeControls
-      )
-
-      ParallelLogger::clusterRequire(
-        cluster,
-        c(
-          "RiskStratifiedEstimation",
-          "CohortMethod"
-        )
-      )
-
-      pathToPs <- file.path(
-        analysisSettings$saveDirectory,
-        analysisSettings$analysisId,
-        "Estimation",
-        predictOutcome
-      )
-
-      ParallelLogger::logInfo(
-        "Fitting negative control propensity score models"
-      )
-
-      dummy <- ParallelLogger::clusterApply(
-        cluster = cluster,
-        x = negativeControlIds,
-        fun = fitPsModelSwitch,
-        predictOutcome = predictOutcome,
-        analysisSettings = analysisSettings,
-        getDataSettings = getDataSettings,
-        populationSettings = populationSettings,
-        runSettings = runSettings
-      )
-
-      ParallelLogger::logInfo(
-        "Fitting negative control outcome models"
-      )
-
-
-      dummy <- ParallelLogger::clusterApply(
-        cluster = cluster,
-        x = negativeControlIds,
         fun = fitOutcomeModels,
         getDataSettings = getDataSettings,
         pathToPs = pathToPs,

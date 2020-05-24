@@ -11,7 +11,8 @@ runRiskStratifiedEstimation(
   getDataSettings,
   covariateSettings,
   populationSettings,
-  runSettings
+  runSettings,
+  tempDir = NULL
 )
 }
 \arguments{
@@ -35,6 +36,9 @@ runRiskStratifiedEstimation(
 
 \item{runSettings}{An R object of type \code{runSettings} created using the function
 \code{\link[RiskStratifiedEstimation]{createRunSettings}}.}
+
+\item{tempDir}{Directory where temporary files required for the analysis will be
+stored.}
 }
 \value{
 The function saves all results based on \code{analysisSettings}. No
