@@ -1046,8 +1046,10 @@ fitPsModelOverall <- function(outcomeId,
     requireTimeAtRisk = populationSettings$populationPlpSettings$requireTimeAtRisk,
     minTimeAtRisk = populationSettings$populationPlpSettings$minTimeAtRisk,
     riskWindowStart = populationSettings$populationPlpSettings$riskWindowStart,
+    startAnchor = populationSettings$populationPlpSettings$startAnchor,
     addExposureDaysToStart = populationSettings$populationPlpSettings$addExposureDaysToStart,
     riskWindowEnd = populationSettings$populationPlpSettings$riskWindowEnd,
+    endAnchor = populationSettings$populationPlpSettings$endAnchor,
     addExposureDaysToEnd = populationSettings$populationPlpSettings$addExposureDaysToEnd,
     verbosity = populationSettings$populationPlpSettings$verbosity
   )

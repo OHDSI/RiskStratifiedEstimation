@@ -15,8 +15,10 @@ createPopulationPlpSettingsArgs(
   minTimeAtRisk = 365,
   riskWindowStart = 0,
   startAnchor = "cohort start",
+  addExposureDaysToStart = NULL,
   riskWindowEnd = 365,
   endAnchor = "cohort start",
+  addExposureDaysToEnd = NULL,
   verbosity = "INFO"
 )
 }
@@ -41,9 +43,13 @@ createPopulationPlpSettingsArgs(
 
 \item{startAnchor}{The anchor point for the start of the risk window. Can be "cohort start" or "cohort end".}
 
+\item{addExposureDaysToStart}{DEPRECATED: Add the length of exposure the start of the risk window? Use startAnchor instead.}
+
 \item{riskWindowEnd}{The end of the risk window (in days) relative to the endAnchor parameter}
 
 \item{endAnchor}{The anchor point for the end of the risk window. Can be "cohort start" or "cohort end".}
+
+\item{addExposureDaysToEnd}{DEPRECATED: Add the length of exposure the risk window? Use endAnchor instead.}
 
 \item{verbosity}{Sets the level of the verbosity. If the log level is at or higher in priority than the logger threshold, a message will print. The levels are:DEBUGHighest verbosity showing all debug statementsTRACEShowing information about start and end of stepsINFOShow informative information (Default)WARNShow warning messagesERRORShow error messagesFATALBe silent except for fatal errors}
 }
