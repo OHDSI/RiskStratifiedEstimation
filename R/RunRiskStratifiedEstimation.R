@@ -611,13 +611,6 @@ runRiskStratifiedEstimation <- function(connectionDetails,
     }
   }
 
-  ParallelLogger::logInfo(
-    "Creating and saving overall results"
-  )
-
-  createOverallResults(
-    analysisSettings
-  )
 
   ParallelLogger::logInfo(
     "Evaluating prediction models"
@@ -690,6 +683,14 @@ runRiskStratifiedEstimation <- function(connectionDetails,
     getDataSettings = getDataSettings,
     secondaryOutcomes = TRUE,
     threads = nThreads
+  )
+
+  ParallelLogger::logInfo(
+    "Creating and saving overall results"
+  )
+
+  createOverallResults(
+    analysisSettings
   )
 
   saveRDS(
