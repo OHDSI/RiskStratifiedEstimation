@@ -197,9 +197,9 @@ fitPsModelSwitch <- function(predictOutcome,
       priorOutcomeLookback = populationSettings$populationCmSettings$priorOutcomeLookback,
       minDaysAtRisk = populationSettings$populationCmSettings$minDaysAtRisk,
       riskWindowStart = populationSettings$populationCmSettings$riskWindowStart,
-      addExposureDaysToStart = populationSettings$populationCmSettings$addExposureDaysToStart,
+      startAnchor = populationSettings$populationCmSettings$startAnchor,
       riskWindowEnd = populationSettings$populationCmSettings$riskWindowEnd,
-      addExposureDaysToEnd = populationSettings$populationCmSettings$addExposureDaysToEnd,
+      endAnchor = populationSettings$populationCmSettings$endAnchor,
       censorAtNewRiskWindow = populationSettings$populationCmSettings$censorAtNewRiskWindow
     ) %>%
     dplyr::left_join(
@@ -240,9 +240,9 @@ fitPsModelSwitch <- function(predictOutcome,
       priorOutcomeLookback = populationSettings$populationCmSettings$priorOutcomeLookback,
       minDaysAtRisk = populationSettings$populationCmSettings$minDaysAtRisk,
       riskWindowStart = populationSettings$populationCmSettings$riskWindowStart,
-      addExposureDaysToStart = populationSettings$populationCmSettings$addExposureDaysToStart,
+      startAnchor = populationSettings$populationCmSettings$startAnchor,
       riskWindowEnd = populationSettings$populationCmSettings$riskWindowEnd,
-      addExposureDaysToEnd = populationSettings$populationCmSettings$addExposureDaysToEnd,
+      endAnchor = populationSettings$populationCmSettings$endAnchor,
       censorAtNewRiskWindow = populationSettings$populationCmSettings$censorAtNewRiskWindow)
 
   riskPredictions <-
@@ -1047,10 +1047,8 @@ fitPsModelOverall <- function(outcomeId,
     minTimeAtRisk = populationSettings$populationPlpSettings$minTimeAtRisk,
     riskWindowStart = populationSettings$populationPlpSettings$riskWindowStart,
     startAnchor = populationSettings$populationPlpSettings$startAnchor,
-    addExposureDaysToStart = populationSettings$populationPlpSettings$addExposureDaysToStart,
     riskWindowEnd = populationSettings$populationPlpSettings$riskWindowEnd,
     endAnchor = populationSettings$populationPlpSettings$endAnchor,
-    addExposureDaysToEnd = populationSettings$populationPlpSettings$addExposureDaysToEnd,
     verbosity = populationSettings$populationPlpSettings$verbosity
   )
 
@@ -1326,9 +1324,9 @@ fitPsModel <- function(outcomeId,
     requireTimeAtRisk = populationSettings$populationPlpSettings$requireTimeAtRisk,
     minTimeAtRisk = populationSettings$populationPlpSettings$minTimeAtRisk,
     riskWindowStart = populationSettings$populationPlpSettings$riskWindowStart,
-    addExposureDaysToStart = populationSettings$populationPlpSettings$addExposureDaysToStart,
+    startAnchor = populationSettings$populationPlpSettings$startAnchor,
     riskWindowEnd = populationSettings$populationPlpSettings$riskWindowEnd,
-    addExposureDaysToEnd = populationSettings$populationPlpSettings$addExposureDaysToEnd,
+    endAnchor = populationSettings$populationPlpSettings$endAnchor,
     verbosity = populationSettings$populationPlpSettings$verbosity
   )
 
@@ -1347,9 +1345,9 @@ fitPsModel <- function(outcomeId,
     priorOutcomeLookback = populationSettings$populationCmSettings$priorOutcomeLookback,
     minDaysAtRisk = populationSettings$populationCmSettings$minDaysAtRisk,
     riskWindowStart = populationSettings$populationCmSettings$riskWindowStart,
-    addExposureDaysToStart = populationSettings$populationCmSettings$addExposureDaysToStart,
+    startAnchor = populationSettings$populationCmSettings$startAnchor,
     riskWindowEnd = populationSettings$populationCmSettings$riskWindowEnd,
-    addExposureDaysToEnd = populationSettings$populationCmSettings$addExposureDaysToEnd,
+    endAnchor = populationSettings$populationCmSettings$endAnchor,
     censorAtNewRiskWindow = populationSettings$populationCmSettings$censorAtNewRiskWindow
   )
 
