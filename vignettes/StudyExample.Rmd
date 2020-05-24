@@ -69,13 +69,15 @@ The analysis settings refer to information that define the structure of the stud
 We can create the analysis settings using the following code:
 
 ```{r tidy=FALSE, eval=FALSE}
-analysisSettings <- createAnalysisSettings (analysisId = "vignette_demonstration",
-                                            treatmentCohortId = 1001,
-                                            comparatorCohortId = 1002,
-                                            outcomeIds = c(134, 153),
-                                            analysisMatrix = diag(2)),
-                                            verbosity = "INFO",
-                                            saveDirectory = "path/to/save/directory")
+analysisSettings <- createAnalysisSettings (
+  analysisId = "vignette_demonstration",
+  treatmentCohortId = 1001,
+  comparatorCohortId = 1002,
+  outcomeIds = c(134, 153),
+  analysisMatrix = diag(2)),
+verbosity = "INFO",
+saveDirectory = "path/to/save/directory"
+)
 ```
 
 
@@ -83,91 +85,101 @@ analysisSettings <- createAnalysisSettings (analysisId = "vignette_demonstration
 We need to define our connection details that will be used to connect to the database we have access to in order to construct extract the data objects required for our analyses. They can be created from:
 
 ```{r tidy=FALSE, eval=FALSE}
-connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = dbms,
-                                                                server = server,
-                                                                user = "joe",
-                                                                password = "secret",
-                                                                port = port)
+connectionDetails <- DatabaseConnector::createConnectionDetails(
+  dbms = dbms,
+  server = server,
+  user = "joe",
+  password = "secret",
+  port = port
+)
 ```
 
 ### Database settings
 The database settings contain relevant information on the database we want to access. These refer to the database schema based on which we extract our data along with the tables where the cohorts of interest are stored. Note that we also need to create a table containing the merged treatment and comparator cohorts that will be used to derive the prediction models (requires write permission). Database settings can be created from:
 
 ```{r tidy=FALSE, eval=FALSE}
-databaseSettings <- createDatabaseSettings(cdmDatabaseSchema = "cdm_truven_mdcd_v780.dbo",
-                                           cohortDatabaseSchema = "Scratch.dbo",
-                                           outcomeDatabaseSchema = "Scratch.dbo",
-                                           resultsDatabaseSchema = "Scratch.dbo",
-                                           exposureDatabaseSchema = "Scratch.dbo",
-                                           cohortTable = "ace_beta_cohorts",
-                                           outcomeTable = "ace_beta_outcomes",
-                                           exposureTable = "ace_beta_cohorts",
-                                           mergedCohortTable = "ace_beta_merged",
-                                           attributeDefinitionTable = "ace_beta_def",
-                                           cohortAttributeTable = "ace_beta_attr")
+databaseSettings <- createDatabaseSettings(
+  cdmDatabaseSchema = "cdm_truven_mdcd_v780.dbo",
+  cohortDatabaseSchema = "Scratch.dbo",
+  outcomeDatabaseSchema = "Scratch.dbo",
+  resultsDatabaseSchema = "Scratch.dbo",
+  exposureDatabaseSchema = "Scratch.dbo",
+  cohortTable = "ace_beta_cohorts",
+  outcomeTable = "ace_beta_outcomes",
+  exposureTable = "ace_beta_cohorts",
+  mergedCohortTable = "ace_beta_merged",
+  attributeDefinitionTable = "ace_beta_def",
+  cohortAttributeTable = "ace_beta_attr"
+)
 ```
 
 ### Settings for getting the data
 There are two data objects that need to be defined. The prediction data object that will be used for the derivation of the prediction models used to risk stratify patients and the estimation data object that will be used to estimate propensity scores and estimate treatment effects within risk strata.
 
 ```{r tidy=FALSE, eval=FALSE}
-getDataSettings <- createGetDataSettings(getPlpDataSettings = 
-                                           createGetPlpDataArgs(washoutPeriod = 365),
-                                         getCmDataSettings = 
-                                           createGetCmDataArgs(washoutPeriod = 365))
+getDataSettings <- createGetDataSettings(
+  getPlpDataSettings = createGetPlpDataArgs(
+    washoutPeriod = 365
+  ),
+  getCmDataSettings = createGetCmDataArgs(
+    washoutPeriod = 365
+  )
+)
 ```
 
 ### Covariate settings
 The purpose of the covariate settings is twofold. In the prediction step they define the set of candidate predictors for the develppment of the model. In the estimation step they define the set of candidate confounders to be considered for the esitmation of the propensity scores. In both cases we use the same covariate settings using a large set of standardized covariates:
 
 ```{r tidy=FALSE, eval=FALSE}
-covariateSettings <- 
-  createGetCovariateSettings(covariateSettingsCm = 
-                               FeatureExtraction::createCovariateSettings(
-                                 useDemographicsGender = TRUE,
-                                 useDemographicsAge = TRUE,
-                                 useConditionOccurrenceLongTerm = TRUE,
-                                 useConditionOccurrenceShortTerm = TRUE,
-                                 useDrugExposureLongTerm = TRUE,
-                                 useDrugExposureShortTerm = TRUE,
-                                 useDrugEraLongTerm = TRUE,
-                                 useDrugEraShortTerm = TRUE,
-                                 useCharlsonIndex = TRUE,
-                                 addDescendantsToExclude = TRUE,
-                                 excludedCovariateConceptIds = 
-                                   excludedCovariateConceptIds,
-                                 addDescendantsToInclude = TRUE),
-                             covariateSettingsPlp = 
-                               FeatureExtraction::createCovariateSettings(
-                                 useDemographicsGender = TRUE,
-                                 useDemographicsAge = TRUE,
-                                 useConditionOccurrenceLongTerm = TRUE,
-                                 useConditionOccurrenceShortTerm = TRUE,
-                                 useDrugExposureLongTerm = TRUE,
-                                 useDrugExposureShortTerm = TRUE,
-                                 useDrugEraLongTerm = TRUE,
-                                 useDrugEraShortTerm = TRUE,
-                                 useCharlsonIndex = TRUE,
-                                 addDescendantsToExclude = TRUE))
+covariateSettings <- createGetCovariateSettings(
+  covariateSettingsCm = FeatureExtraction::createCovariateSettings(
+    useDemographicsGender = TRUE,
+    useDemographicsAge = TRUE,
+    useConditionOccurrenceLongTerm = TRUE,
+    useConditionOccurrenceShortTerm = TRUE,
+    useDrugExposureLongTerm = TRUE,
+    useDrugExposureShortTerm = TRUE,
+    useDrugEraLongTerm = TRUE,
+    useDrugEraShortTerm = TRUE,
+    useCharlsonIndex = TRUE,
+    addDescendantsToExclude = TRUE,
+    excludedCovariateConceptIds = 
+      excludedCovariateConceptIds,
+    addDescendantsToInclude = TRUE
+  ),
+  covariateSettingsPlp = FeatureExtraction::createCovariateSettings(
+    useDemographicsGender = TRUE,
+    useDemographicsAge = TRUE,
+    useConditionOccurrenceLongTerm = TRUE,
+    useConditionOccurrenceShortTerm = TRUE,
+    useDrugExposureLongTerm = TRUE,
+    useDrugExposureShortTerm = TRUE,
+    useDrugEraLongTerm = TRUE,
+    useDrugEraShortTerm = TRUE,
+    useCharlsonIndex = TRUE,
+    addDescendantsToExclude = TRUE
+  )
+)
 ```
 
 ### Population settings
 The population settings contain additional restrictions for the definitive target populations. Again in this case we need to define the target population in the prediction step, based on which we will actually develop the prediction models. In the estimation step the population settings will define the population from which the propensity score models will be derived and the treatment effects will be estimated. The final populations may contain slightly different patients. We can define the population settings from:
 
 ```{r tidy=FALSE, eval=FALSE}
-populationSettings <- 
-  createPopulationSettings(populationPlpSettings = 
-                             createPopulationPlpSettingsArgs(
-                               riskWindowEnd = 365,
-                               minTimeAtRisk = 364),
-                           populationCmSettings =
-                             createPopulationCmSettingsArgs(
-                               removeDuplicateSubjects = "keep first",
-                               removeSubjectsWithPriorOutcome = TRUE,
-                               riskWindowStart = 1,
-                               riskWindowEnd = 9999,
-                               addExposureDaysToEnd = FALSE,
-                               minDaysAtRisk = 1))
+populationSettings <- createPopulationSettings(
+  populationPlpSettings = createPopulationPlpSettingsArgs(
+    riskWindowEnd = 365,
+    minTimeAtRisk = 364
+  ),
+  populationCmSettings = createPopulationCmSettingsArgs(
+    removeDuplicateSubjects = "keep first",
+    removeSubjectsWithPriorOutcome = TRUE,
+    riskWindowStart = 1,
+    riskWindowEnd = 9999,
+    addExposureDaysToEnd = FALSE,
+    minDaysAtRisk = 1
+  )
+)
 
 ```
 
@@ -175,16 +187,16 @@ populationSettings <-
 Finally, we need to define the settings based on which the algorithms in the prediction and estimation steps will be run. For example, in the prediction step we need to define the prediction algorithm to be used along with the hyperparameter parameter search strategy. In the estimation step some of the settings we need to define the propensity score method to be used for the estimation of the effects within risk strata or the time point at which we will assess absolute and relative risk differences. Since we mostly deal with time-to-event data this means that absolute risk reduction is esimtated absed on the difference on the Kaplan-Meier estimates at the specific time point. The run settings can be created from:
 
 ```{r tidy=FALSE, eval=FALSE}
-runSettings <- 
-  createRunSettings(runPlpSettings = 
-                      createRunPlpSettingsArgs(),
-                    runCmSettings = 
-                      createRunCmSettingsArgs(
-                        psMethod = "inversePtWeighted",
-                        effectEstimationSettings = createCreateIPWArgs(),
-                        psSettings = createCreatePsArgs(),
-                        fitOutcomeModelsThreads = 2,
-                        timePoint = 365))
+runSettings <- createRunSettings(
+  runPlpSettings = createRunPlpSettingsArgs(),
+  runCmSettings = createRunCmSettingsArgs(
+    psMethod = "inversePtWeighted",
+    effectEstimationSettings = createCreateIPWArgs(),
+    psSettings = createCreatePsArgs(),
+    fitOutcomeModelsThreads = 2,
+    timePoint = 365
+  )
+)
 
 ```
 
