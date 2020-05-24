@@ -901,7 +901,7 @@ estimateTreatmentEffect <- function(ps,
       1:riskStrata
     )
 
-  } else if(runSettings$runCmSettings$psMethod == "inversePtWeighted") {
+  } else if (runSettings$runCmSettings$psMethod == "inversePtWeighted") {
 
     ps <- lapply(
       ps,
@@ -1164,8 +1164,7 @@ fitOutcomeModelsOverall <- function(outcomeId,
 
     arr <- absoluteRiskReduction(
       matchedPop,
-      timePoint = runCmSettings$
-        timePoint,
+      timePoint = runCmSettings$timePoint,
       psMethod = "matchOnPs"
     )
 

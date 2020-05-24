@@ -287,14 +287,13 @@ runRiskStratifiedEstimation <- function(connectionDetails,
   ParallelLogger::stopCluster(cluster)
 
   do.call(
-    file.remove(
-      list(
-        list.files(
-          getOption(
-            "fftempdir"
-          ),
-          full.names = TRUE
-        )
+    file.remove,
+    list(
+      list.files(
+        getOption(
+          "fftempdir"
+        ),
+        full.names = TRUE
       )
     )
   )
@@ -395,14 +394,13 @@ runRiskStratifiedEstimation <- function(connectionDetails,
   }
 
   do.call(
-    file.remove(
-      list(
-        list.files(
-          getOption(
-            "fftempdir"
-          ),
-          full.names = TRUE
-        )
+    file.remove,
+    list(
+      list.files(
+        getOption(
+          "fftempdir"
+        ),
+        full.names = TRUE
       )
     )
   )
@@ -448,14 +446,13 @@ runRiskStratifiedEstimation <- function(connectionDetails,
   )
 
   do.call(
-    file.remove(
-      list(
-        list.files(
-          getOption(
-            "fftempdir"
-          ),
-          full.names = TRUE
-        )
+    file.remove,
+    list(
+      list.files(
+        getOption(
+          "fftempdir"
+        ),
+        full.names = TRUE
       )
     )
   )
@@ -507,14 +504,13 @@ runRiskStratifiedEstimation <- function(connectionDetails,
       )
 
       do.call(
-        file.remove(
-          list(
-            list.files(
-              getOption(
-                "fftempdir"
-              ),
-              full.names = TRUE
-            )
+        file.remove,
+        list(
+          list.files(
+            getOption(
+              "fftempdir"
+            ),
+            full.names = TRUE
           )
         )
       )
