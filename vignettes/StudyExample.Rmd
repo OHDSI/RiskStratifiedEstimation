@@ -64,16 +64,18 @@ In this section we assume that our cohorts have been created and have been extra
 The analysis settings refer to information that define the structure of the study and can be used to identify it. The analysis id is a--pereferably--unique identifier of the present study. The treatment cohort id refers to the unique identifier of the treatment cohort definition. In our case, that is $1001$ and refers to the extracted hypertensive patients receving ACE-inhibitors. The comparator cohort id refers to the unique identifier of the comparator cohort. In our case this is $1002$ and refers to the extracted cohort of hypertensive patients receiving beta blockers; the outcome ids that refer to the unique identifiers of the outcome cohorts. A very important characteristic of the analysis settings is the analysis matrix, that dictates which comparisons are to be made. The columns of this square boolean matrix refer to risk stratification outcomes and the rows to estimation outcomes. Therefore, the default diagonal matrix defines the following analyses:
 
 - Within strata of CVD risk estimate relative and absolute treatment effects of CVD events.
-- Within strata of cough risk estimate relative and absolute treatment effects of coughing events.
+- Within strata of acute myocardial infarction risk estimate relative and absolute treatment effects of acute myocardial infarction events.
 
 We can create the analysis settings using the following code:
 
 ```{r tidy=FALSE, eval=FALSE}
 analysisSettings <- createAnalysisSettings (
   analysisId = "vignette_demonstration",
+  analysisType = "stratifyByPs",
+  description = "description text",
   treatmentCohortId = 1001,
   comparatorCohortId = 1002,
-  outcomeIds = c(134, 153),
+  outcomeIds = c(131, 102),
   analysisMatrix = diag(2)),
 verbosity = "INFO",
 saveDirectory = "path/to/save/directory"
@@ -176,7 +178,6 @@ populationSettings <- createPopulationSettings(
     removeSubjectsWithPriorOutcome = TRUE,
     riskWindowStart = 1,
     riskWindowEnd = 9999,
-    addExposureDaysToEnd = FALSE,
     minDaysAtRisk = 1
   )
 )
@@ -190,8 +191,8 @@ Finally, we need to define the settings based on which the algorithms in the pre
 runSettings <- createRunSettings(
   runPlpSettings = createRunPlpSettingsArgs(),
   runCmSettings = createRunCmSettingsArgs(
-    psMethod = "inversePtWeighted",
-    effectEstimationSettings = createCreateIPWArgs(),
+    psMethod = "stratifyByPs",
+    effectEstimationSettings = createStratifyByPsAndCovariatesArgs(),
     psSettings = createCreatePsArgs(),
     fitOutcomeModelsThreads = 2,
     timePoint = 365
@@ -200,84 +201,26 @@ runSettings <- createRunSettings(
 
 ```
 
-# Plots
-The `RiskStratifiedEstimation` package allows for the construction of several plots. We have already mentioned that we can obtain the default plots provided from the `PatientLevelPrediction` package for model evaulation. Additionally, we can derive the propensity score diagnostics described in the `CohortMethod` package vignette.
-
-## Balance diagnostics
-![Covariate Balance plot](balancePlot.jpeg)
-Using the code presented below we can plot the covariate balance in the weighted population of the 4th (highest) risk stratum.
-
-```{r eval = FALSE}
-plotCovariateBalance(ps = result$ps[[4]],
-                     cohortMethodData = cohortMethodData,
-                     calculateWeights = FALSE,
-                     showNotBalancedCovariateIds = TRUE)
+### Perform the analysis
+Now that we have defined all the required settings objects, we can proceed with running the actual analysis. One last setting that is required is the location where the temporary files will be stored. The user needs to have read and write permission. Run the analysis as follows:
+```{r tidy=FALSE, eval=FALSE}
+result <- runRiskStratifiedEstimation(
+  connectionDetails = connectionDetails,
+  analysisSettings = analysisSettings,
+  databaseSettings = databaseSettings,
+  getDataSettings = getDataSettings,
+  covariateSettings = covariateSettings,
+  populationSettings = populationSettings,
+  runSettings = runSettings,
+  tempDir = "path/to/temporary/directory"
+)
 ```
 
-## Weighted Kaplan-Meier
-![Weighted Kaplan Meier plot](KMPlot.jpeg)
-Using the code presented below we can produce plots of the weighted Kaplan-Meier estimates within risk strata. The time interval of interest is one year (365 days). Again, we consider the case of the 4th risk stratum. 
+The analysis will usually take smome time to complete. All results are saved on the hard drive in `analysisSettings$saveDirectory`/`analysisSettings$analysisId`
 
-```{r eval = FALSE}
-plotWeightedKM(dataKM = result$dataKM[[4]], 
-               xlim = c(0, 365), 
-               ylim = c(.7, 1),
-               ci = FALSE)
+# Evaluation of results
+The overall results are saved in a sub-directory called "shiny". The user can interactively explore the results of the performed analysis using a shiny application. To launch it, the following command can be used:
+
+```{r tidy=FALSE, eval=FALSE}
+rseeViewer("path/to/shiny/directory")
 ```
-```{r echo = FALSE, message = FALSE, eval = TRUE}
-if(file.exists('S:\\arekkas\\celecoxib-naproxen-vignette\\20180924053516 RSEE\\dataKM.rds')){
-  dataKM <- readRDS('S:\\arekkas\\celecoxib-naproxen-vignette\\20180924053516 RSEE\\dataKM.rds')
-  plotWeightedKM(dataKM = result$dataKM[[4]], 
-               xlim = c(0, 365), 
-               ylim = c(.7, 1),
-               ci = FALSE)
-}
-```
-
-## Analysis result
-![Analysis result plot](comparisonPlot.jpeg)
-Finally, we can produce an analysis summary plot using the code below. This plot contains the outcome rates in the propensity weighted populations along with the absolute and relative (hazard ratios) risk differences.
-```{r eval = FALSE}
-comparisonPlot(dataARR = result$absoluteRiskReduction, 
-               dataRRR = result$relativeRiskReduction,
-               cases = result$cases,
-               ylimRRR = c(.4, 1.1), 
-               ylimARR = c(-.01, .05),
-               ylimCases = c(0, .125))
-```
-```{r eval = TRUE, message = FALSE, echo = FALSE}
-if(file.exists('S:\\arekkas\\celecoxib-naproxen-vignette\\20180924053516 RSEE\\absoluteRiskReduction.rds')&
-   file.exists('S:\\arekkas\\celecoxib-naproxen-vignette\\20180924053516 RSEE\\relativeRiskReduction.rds')&
-   file.exists('S:\\arekkas\\celecoxib-naproxen-vignette\\20180924053516 RSEE\\cases.rds')){
-  
-  
-  dataKM <- readRDS('S:\\arekkas\\celecoxib-naproxen-vignette\\20180924053516 RSEE\\dataKM.rds')
-  relativeRiskReduction <- readRDS('S:\\arekkas\\celecoxib-naproxen-vignette\\20180924053516 RSEE\\relativeRiskReduction.rds')
-  absoluteRiskReduction <- readRDS('S:\\arekkas\\celecoxib-naproxen-vignette\\20180924053516 RSEE\\relativeRiskReduction.rds')
-  cases <- readRDS('S:\\arekkas\\celecoxib-naproxen-vignette\\20180924053516 RSEE\\cases.rds')
-  comparisonPlot(dataARR = absoluteRiskReduction, 
-                 dataRRR = relativeRiskReduction,
-                 cases = cases,
-                 ylimRRR = c(.4, 1.1), 
-                 ylimARR = c(-.01, .05),
-                 ylimCases = c(0, .125))
-}
-```
-We can use such a plot to provide insight to the presence of HTE and draw useful conclusions on treatment assignment.
-
-# Future steps
-## Extending the LEGEND study
-The Large-scale Evidence Generation and Evaluation in a Network of Databases (LEGEND) study compared classes of hypertension drugs for their relative treatment effect on multiple outcomes. The absolute treatment effect (absolute risk reduction) of one drug class versus another often depends on baseline outcome risk. We performed a risk-based re-analysis of the LEGEND study, comparing the absolute risk difference of angiotensin-converting enzyme (ACE) inhibitors versus beta blockers for multiple outcomes The analyses were performed with regard to baseline 2-year risk of total cardiovascular disease (CVD) risk
-
-For our analyses we considered the following databases: 
-  - IBM MarketScan® Multi-State Medicaid Database(MDCD) 
-  - IBM MarketScan® Medicare Supplemental Database (MDCR)
-  - IBM MarketScan® Commercial Database (CCAE)
-  
-We predicted personalized CVD risk using LASSO logistic regression on the combined ACE-inhibitor and beta blocker cohorts. We estimated propensity scores using LASSO logistic regression within quartiles of predicted CVD risk.For balancing covariates within CVD risk quartiles we used inverse probability of treatment weighting. Finally, we estimated absolute risk reduction for each LEGEND outcome from the difference of the weighted treatment-specific (ACE-inhibitors vs beta blockers) Kaplan-Meier estimators within quartiles of predicted CVD risk. The overall results of the study in providing all results in the highest and lowest CVD risk quartiles can be foun in figure \ref{legend}. Finally, more thorough inspection of the results can be done from the shiny application available [here](https://mi-erasmusmc.shinyapps.io/LEGEND-HTE/).
-
-![Absolute risk differences in the highest and lowest CVD risk quartiles \label{legend}](high_low_risk.png)
-
-## Osteoporosis
-
-Following the publication of the first-ever h2h trial in osteoporosis demonstrating the superiority of teriparatide vs risedronate, new guidelines will recommend the use of teriparatide in subjects at very high risk of fracture based on the FRAX prediction tool. Although this approach is of course better than the previous (just treat everyone at high risk with whatever you feel will work best), there are at least two issues that require attention: 1) there has been only one such trial; and 2) the lack of evidence of treatment heterogeneity from previous trial data. The target cohort should contain women above the age of 50 initiating subcutaneous teriparatide. The comaprator cohort should contain women above the age of 50 initiating oral bisphosphonate treatment. Patients with previous use of any anti-osteoporosis treatment in the past two years should be excluded from both cohorts along with patients with history of breast cancer or Paget's disease. Finally, several effectiveness and safety outcomes should be considered. The former are fracture cases, containing spine/vertebral fractures, hip fractures or major osteoporotic fracture, a composite outcome including the previous 2 and also wrist/forearm and shoulder/proximal humerus fractures. The latter can be oesophagical reactions, hypercalcaemia, urolithiasis, orthostatic hypotension and others.
