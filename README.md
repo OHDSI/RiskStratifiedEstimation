@@ -24,14 +24,11 @@ Screenshots
 ===========
 <table border = "">
 <tr valign="top">
-<td width = 33%>
+<td width = 50%>
   <img src="https://github.com/mi-erasmusmc/RiskStratifiedEstimation/blob/develop/vignettes/comparisonPlot.png" alt="CohortMethod propensity score plot" title="RiskStratifiedEstimation comparison plot" />
 </td>
-<td width = 33%>
- <img src="https://github.com/mi-erasmusmc/RiskStratifiedEstimation/blob/master/vignettes/KMPlot.jpeg" alt="CohortMethod covariate balance plot" title="RiskStratifiedEstimation weighted Kaplan-Meier estimate" />
-</td>
-<td width = 33%>
- <img src="https://github.com/mi-erasmusmc/RiskStratifiedEstimation/blob/master/vignettes/balancePlot.jpeg" alt="CohortMethod covariate balance plot" title="RiskStratifiedEstimation weighted Kaplan-Meier estimate" />
+<td width = 50%>
+ <img src="https://github.com/mi-erasmusmc/RiskStratifiedEstimation/blob/develop/vignettes/balance.png" alt="CohortMethod covariate balance plot" title="RiskStratifiedEstimation weighted Kaplan-Meier estimate" />
 </td>
 </tr><tr>
 <td>Comparison plot across risk strata</td><td>Weighted Kaplan-Meier estimator</td><td>Covariate balance plot</td>
