@@ -3,13 +3,15 @@ RiskStratifiedEstimation
 
 Introduction
 ============
-RiskStratifiedEstimation is an R package for implementing risk stratified analyses for the assessment of treatment effect heterogeneity in an observational database in the OMOP Common Data Model. The package combines functionality of PatientLevelPrediction and CohortMethod R packages.
+RiskStratifiedEstimation is an R package for implementing risk stratified analyses for the assessment of treatment effect heterogeneity in an observational database in the OMOP Common Data Model. The package combines functionality of [PatientLevelPrediction](https://github.com/OHDSI/PatientLevelPrediction) and [CohortMethod](https://github.com/OHDSI/CohortMethod) R packages.
+
+The figure below illustrates the overall process of performing a risk-based analysis of treatment effect heterogeneity using the RiskStratifiedEstimation package. (A) Starting from a treatment (top), a comparator (bottom) and an outcome (middle) cohort we estimate the propensity scores on the entire target population. (B) We match patients on the propensity scores and estimate the prediction model. Since we match patients we develop the prediction model on smaller subset of the initial population and, therefore, the number of patients is smaller in B compared to A. (C) We apply the prediction model on the entire population (green: lower 25% of the risk distribution; yellow: patients with risk between 25% and 50% of the risk distribution; orange: patients with risk between 50% and 75% of the risk distribution; red: patients at risk higher than 75% of the risk distribution). (D) We separate in risk subgroups, here quarters. Within risk quarters propensity scores are estimated again and relative and absolute treatment effects are estimated.
 
 Features
 ========
 - Extracts the necessary data from a database in OMOP Common Data Model format.
 - Uses a large set of covariates for the prediction, the propensity and the outcome model, including for example all drugs, diagnoses, procedures, as well as age, comorbidity indexes, etc.
-- Imports functionality from [PatientLevelPrediction](https://github.com/OHDSI/PatientLevelPrediction) for the development of prediction models for risk stratification.
+- Imports functionality from [PatientLevelPrediction](https://github.com/OHDSI/PatientLevelPrediction) package for the development of prediction models for risk stratification.
 - Large scale regularized regression to fit the propensity and outcome models.
 - Includes diagnostic functions, including propensity score distribution plots and plots showing covariate balance before and after performing a propensity score-based analysis.
 
