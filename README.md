@@ -15,6 +15,8 @@ Features
 - Large scale regularized regression to fit the propensity and outcome models.
 - Includes diagnostic functions, including propensity score distribution plots and plots showing covariate balance before and after performing a propensity score-based analysis.
 
+  <img src="https://github.com/mi-erasmusmc/RiskStratifiedEstimation/blob/develop/vignettes/rsee_workflow.jpg" alt="CohortMethod propensity score plot" title="RiskStratifiedEstimation comparison plot" />
+
 
 Screenshots
 ===========
