@@ -69,21 +69,40 @@ createPopulationCmSettingsArgs <- function(firstExposureOnly = FALSE,
 #' @details
 #' Create an object defining the parameter values.
 #'
-#' @param binary Forces the outcomeCount to be 0 or 1 (use for binary prediction problems)
-#' @param includeAllOutcomes (binary) indicating whether to include people with outcomes who are not observed for the whole at risk period
-#' @param firstExposureOnly Should only the first exposure per subject be included? Note thatthis is typically done in the createStudyPopulation function,
-#' @param washoutPeriod The mininum required continuous observation time prior to indexdate for a person to be included in the cohort.
-#' @param removeSubjectsWithPriorOutcome Remove subjects that have the outcome prior to the risk window start?
-#' @param priorOutcomeLookback How many days should we look back when identifying prior outcomes?
-#' @param requireTimeAtRisk Should subject without time at risk be removed?
-#' @param minTimeAtRisk The minimum number of days at risk required to be included
-#' @param riskWindowStart The start of the risk window (in days) relative to the startAnchor.
-#' @param startAnchor The anchor point for the start of the risk window. Can be "cohort start" or "cohort end".
-#' @param addExposureDaysToStart DEPRECATED: Add the length of exposure the start of the risk window? Use startAnchor instead.
-#' @param riskWindowEnd The end of the risk window (in days) relative to the endAnchor parameter
-#' @param endAnchor The anchor point for the end of the risk window. Can be "cohort start" or "cohort end".
-#' @param addExposureDaysToEnd DEPRECATED: Add the length of exposure the risk window? Use endAnchor instead.
-#' @param verbosity Sets the level of the verbosity. If the log level is at or higher in priority than the logger threshold, a message will print. The levels are:DEBUGHighest verbosity showing all debug statementsTRACEShowing information about start and end of stepsINFOShow informative information (Default)WARNShow warning messagesERRORShow error messagesFATALBe silent except for fatal errors
+#' @param binary                           Forces the outcomeCount to be 0 or 1 (use for binary
+#'                                         prediction problems)
+#' @param includeAllOutcomes               (binary) indicating whether to include people with outcomes
+#'                                         who are not observed for the whole at risk period
+#' @param firstExposureOnly                Should only the first exposure per subject be included? Note
+#'                                         thatthis is typically done in the createStudyPopulation
+#'                                         function,
+#' @param washoutPeriod                    The mininum required continuous observation time prior to
+#'                                         indexdate for a person to be included in the cohort.
+#' @param removeSubjectsWithPriorOutcome   Remove subjects that have the outcome prior to the risk
+#'                                         window start?
+#' @param priorOutcomeLookback             How many days should we look back when identifying prior
+#'                                         outcomes?
+#' @param requireTimeAtRisk                Should subject without time at risk be removed?
+#' @param minTimeAtRisk                    The minimum number of days at risk required to be included
+#' @param riskWindowStart                  The start of the risk window (in days) relative to the
+#'                                         startAnchor.
+#' @param startAnchor                      The anchor point for the start of the risk window. Can be
+#'                                         "cohort start" or "cohort end".
+#' @param addExposureDaysToStart           DEPRECATED: Add the length of exposure the start of the risk
+#'                                         window? Use startAnchor instead.
+#' @param riskWindowEnd                    The end of the risk window (in days) relative to the
+#'                                         endAnchor parameter
+#' @param endAnchor                        The anchor point for the end of the risk window. Can be
+#'                                         "cohort start" or "cohort end".
+#' @param addExposureDaysToEnd             DEPRECATED: Add the length of exposure the risk window? Use
+#'                                         endAnchor instead.
+#' @param verbosity                        Sets the level of the verbosity. If the log level is at or
+#'                                         higher in priority than the logger threshold, a message will
+#'                                         print. The levels are:DEBUGHighest verbosity showing all
+#'                                         debug statementsTRACEShowing information about start and end
+#'                                         of stepsINFOShow informative information (Default)WARNShow
+#'                                         warning messagesERRORShow error messagesFATALBe silent
+#'                                         except for fatal errors
 #'
 #' @export
 createPopulationPlpSettingsArgs <- function(binary = T,
@@ -171,6 +190,8 @@ createPopulationPlpSettingsArgs <- function(binary = T,
 #'                                 \item {FATAL}{Be silent except for fatal errors}
 #'                               }
 #'
+#'
+#'
 #' @param timeStamp              If TRUE a timestamp will be added to each logging statement.
 #'                               Automatically switched on for TRACE level.
 #' @param analysisId             Identifier for the analysis. It is used to create, e.g., the result
@@ -212,10 +233,9 @@ createRunPlpSettingsArgs <- function(minCovariateFraction = 0.001,
 
 
 
-#' Create a settings object for running the analyses
-#' Create the settings for running the analyses. The input consists of two parts: 1) the settings for
-#' running the prediction algorithms and 2) the settings for estimating treatment effects within
-#' strata of predicted risk.
+#' Create a settings object for running the analyses Create the settings for running the analyses. The
+#' input consists of two parts: 1) the settings for running the prediction algorithms and 2) the
+#' settings for estimating treatment effects within strata of predicted risk.
 #'
 #' @param runPlpSettings   A parameterer object of type \code{runPlpSettingsArgs} defined using the
 #'                         function \code{\link[RiskStratifiedEstimation]{createRunPlpSettingsArgs}}.
@@ -406,9 +426,9 @@ createCreatePsArgs <- function(excludeCovariateIds = c(),
 
 
 
-#' Create a parameter object for running the estimation step
-#' Create a parameter object for running the estimation step. This function is used to create part of
-#' the input of \code{\link[RiskStratifiedEstimation]{createRunSettings}}.
+#' Create a parameter object for running the estimation step Create a parameter object for running the
+#' estimation step. This function is used to create part of the input of
+#' \code{\link[RiskStratifiedEstimation]{createRunSettings}}.
 #'
 #' @param psMethod                          How should the propensity scores be used? Can be one of
 #'                                          "inversePtWeighted", "stratifyByPs" or "matchOnPs".
@@ -553,8 +573,8 @@ createMatchOnPsArgs <- function(caliper = 0.2,
 
 
 
-#' Create a parameter object for the function createIPW
-#' Create an object defining the parameter values.
+#' Create a parameter object for the function createIPW Create an object defining the parameter
+#' values.
 #'
 #' @param weightsType            The type of the weights to be used. Allowed options are 'ATE' for
 #'                               average treatment effect and 'ATT' for average treatment effect on the
@@ -589,37 +609,39 @@ createCreateIPWArgs <- function(weightsType = "ATE",
 #' Create a parameter defining the performed risk stratified analysis
 #'
 #'
-#' @param analysisId                 The analysis ID.
-#' @param databaseName               The name of the database.
-#' @param analysisType               The type of the analysis. Could be "matching", "stratifyByPs" or
-#'                                   "inversePtWeighted".
-#' @param treatmentCohortId          The cohort definition id of the treatment cohort in the cohortTable.
-#' @param comparatorCohortId         The cohort definition id of the comparator cohort in the cohortTable.
-#' @param outcomeIds                 The cohort definition ids of the outcome cohorts in the outcomeTable.
-#' @param analysisMatrix             Boolean matrix defining the outcomes to be assessed (rows) within risk
-#'                                   strata (columns). The order in columns should match the the order of
-#'                                   \code{outcomeIds}. Default is the diagonal matrix, which leads to the
-#'                                   risk stratified assessment of only the outcome for which the risk strata
-#'                                   were defined.
-#' @param mapTreatments              Dataframe containing 2 columns: *idNumber* with the id numbers of the
-#'                                   treatment and comparator cohorts and *label* the cohort names.
-#' @param mapOutcomes                Dataframe containing 2 columns: *idNumber* with the cohort names of
-#'                                   the outcomes of interest and *label* with their names.
-#' @param verbosity                  Sets the level of the verbosity. If the log level is at or higher in
-#'                                   priority than the logger threshold, a message will print. The levels
-#'                                   are:
-#'                                   \itemize{
-#'                                     \item {DEBUG}{Highest verbosity showing all debug statements}
-#'                                     \item {TRACE}{Showing information about start and end of steps}
-#'                                     \item {INFO}{Show informative information (Default)}
-#'                                     \item {WARN}{Show warning messages}
-#'                                     \item {ERROR}{Show error messages}
-#'                                     \item {FATAL}{Be silent except for fatal errors}
-#'                                   }
+#' @param analysisId           The analysis ID.
+#' @param databaseName         The name of the database.
+#' @param analysisType         The type of the analysis. Could be "matching", "stratifyByPs" or
+#'                             "inversePtWeighted".
+#' @param treatmentCohortId    The cohort definition id of the treatment cohort in the cohortTable.
+#' @param comparatorCohortId   The cohort definition id of the comparator cohort in the cohortTable.
+#' @param outcomeIds           The cohort definition ids of the outcome cohorts in the outcomeTable.
+#' @param analysisMatrix       Boolean matrix defining the outcomes to be assessed (rows) within risk
+#'                             strata (columns). The order in columns should match the the order of
+#'                             \code{outcomeIds}. Default is the diagonal matrix, which leads to the
+#'                             risk stratified assessment of only the outcome for which the risk strata
+#'                             were defined.
+#' @param mapTreatments        Dataframe containing 2 columns: *idNumber* with the id numbers of the
+#'                             treatment and comparator cohorts and *label* the cohort names.
+#' @param mapOutcomes          Dataframe containing 2 columns: *idNumber* with the cohort names of the
+#'                             outcomes of interest and *label* with their names.
+#' @param verbosity            Sets the level of the verbosity. If the log level is at or higher in
+#'                             priority than the logger threshold, a message will print. The levels
+#'                             are:
+#'                             \itemize{
+#'                               \item {DEBUG}{Highest verbosity showing all debug statements}
+#'                               \item {TRACE}{Showing information about start and end of steps}
+#'                               \item {INFO}{Show informative information (Default)}
+#'                               \item {WARN}{Show warning messages}
+#'                               \item {ERROR}{Show error messages}
+#'                               \item {FATAL}{Be silent except for fatal errors}
+#'                             }
 #'
-#' @param saveDirectory             The directory name where the results of the analyses will be stored.
-#' @return                          An analysisSettings object providing the identification information
-#'                                  of the analysis.
+#'
+#'
+#' @param saveDirectory        The directory name where the results of the analyses will be stored.
+#' @return
+#' An analysisSettings object providing the identification information of the analysis.
 #'
 #' @export
 
@@ -693,9 +715,8 @@ createGetDataSettings <- function(getPlpDataSettings = createGetPlpDataArgs(),
 
 
 
-#' Create parameter object for defining the analysis populations
-#' Contains the settings for defining both the \code{populationPlp} and the \code{populationCm}
-#' objects.
+#' Create parameter object for defining the analysis populations Contains the settings for defining
+#' both the \code{populationPlp} and the \code{populationCm} objects.
 #
 #' @param populationPlpSettings   Parameter object for the definition of the \code{populationPlp}
 #'                                object created from
@@ -796,9 +817,8 @@ createDatabaseSettings <- function(cdmVersion = "5",
 
 
 
-#' Create the parameter object for extracting the covariates
-#' Contains the arguments for the extraction of both the covariates related to the prediction step and
-#' the estimation step.
+#' Create the parameter object for extracting the covariates Contains the arguments for the extraction
+#' of both the covariates related to the prediction step and the estimation step.
 #'
 #' @param covariateSettingsCm    The covariate settings object related to the estimation step created
 #'                               from \code{\link[FeatureExtraction]{createCovariateSettings}}.
