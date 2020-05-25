@@ -7,6 +7,8 @@ RiskStratifiedEstimation is an R package for implementing risk stratified analys
 
 The figure below illustrates the overall process of performing a risk-based analysis of treatment effect heterogeneity using the RiskStratifiedEstimation package. (A) Starting from a treatment (top), a comparator (bottom) and an outcome (middle) cohort we estimate the propensity scores on the entire target population. (B) We match patients on the propensity scores and estimate the prediction model. Since we match patients we develop the prediction model on smaller subset of the initial population and, therefore, the number of patients is smaller in B compared to A. (C) We apply the prediction model on the entire population (green: lower 25% of the risk distribution; yellow: patients with risk between 25% and 50% of the risk distribution; orange: patients with risk between 50% and 75% of the risk distribution; red: patients at risk higher than 75% of the risk distribution). (D) We separate in risk subgroups, here quarters. Within risk quarters propensity scores are estimated again and relative and absolute treatment effects are estimated.
 
+  <img src="https://github.com/mi-erasmusmc/RiskStratifiedEstimation/blob/develop/vignettes/rsee_process.jpg" alt="CohortMethod propensity score plot" title="RiskStratifiedEstimation comparison plot" />
+  
 Features
 ========
 - Extracts the necessary data from a database in OMOP Common Data Model format.
@@ -15,7 +17,6 @@ Features
 - Large scale regularized regression to fit the propensity and outcome models.
 - Includes diagnostic functions, including propensity score distribution plots and plots showing covariate balance before and after performing a propensity score-based analysis.
 
-  <img src="https://github.com/mi-erasmusmc/RiskStratifiedEstimation/blob/develop/vignettes/rsee_process.jpg" alt="CohortMethod propensity score plot" title="RiskStratifiedEstimation comparison plot" />
 
 
 Screenshots
