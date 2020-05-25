@@ -9,7 +9,7 @@ Features
 ========
 - Extracts the necessary data from a database in OMOP Common Data Model format.
 - Uses a large set of covariates for the prediction, the propensity and the outcome model, including for example all drugs, diagnoses, procedures, as well as age, comorbidity indexes, etc.
-- Imports functionality from [PatientLevelPrediction](https://github.com/OHDSI/PatientLevelPrediction)
+- Imports functionality from [PatientLevelPrediction](https://github.com/OHDSI/PatientLevelPrediction) for the development of prediction models for risk stratification.
 - Large scale regularized regression to fit the propensity and outcome models.
 - Includes diagnostic functions, including propensity score distribution plots and plots showing covariate balance before and after performing a propensity score-based analysis.
 
