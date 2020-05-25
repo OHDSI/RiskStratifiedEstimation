@@ -25,7 +25,7 @@ Screenshots
 <table border = "">
 <tr valign="top">
 <td width = 33%>
-  <img src="https://github.com/mi-erasmusmc/RiskStratifiedEstimation/blob/master/vignettes/comparisonPlot.jpeg" alt="CohortMethod propensity score plot" title="RiskStratifiedEstimation comparison plot" />
+  <img src="https://github.com/mi-erasmusmc/RiskStratifiedEstimation/blob/develop/vignettes/comparisonPlot.png" alt="CohortMethod propensity score plot" title="RiskStratifiedEstimation comparison plot" />
 </td>
 <td width = 33%>
  <img src="https://github.com/mi-erasmusmc/RiskStratifiedEstimation/blob/master/vignettes/KMPlot.jpeg" alt="CohortMethod covariate balance plot" title="RiskStratifiedEstimation weighted Kaplan-Meier estimate" />
