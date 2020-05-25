@@ -9,12 +9,10 @@ Features
 ========
 - Extracts the necessary data from a database in OMOP Common Data Model format.
 - Uses a large set of covariates for the prediction, the propensity and the outcome model, including for example all drugs, diagnoses, procedures, as well as age, comorbidity indexes, etc.
-- Imports all functionality from PatientLevelPrediction package for patient level predictions.
+- Imports functionality from [PatientLevelPrediction](https://github.com/OHDSI/PatientLevelPrediction)
 - Large scale regularized regression to fit the propensity and outcome models.
-- Only inverse probability of treatment weighting (IPTW) is now available for balancing covariates.
-- Right now only fixed truncation at quantiles of weight distribution is implemented for handling of extreme weights.
-- Includes diagnostic functions, including propensity score distribution plots and plots showing covariate balance before and after weighting.
-- Right now only (conditional) cox regression outcome models are available.
+- Includes diagnostic functions, including propensity score distribution plots and plots showing covariate balance before and after performing a propensity score-based analysis.
+
 
 Screenshots
 ===========
