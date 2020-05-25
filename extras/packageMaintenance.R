@@ -25,6 +25,19 @@ OhdsiRTools::updateCopyrightYearFolder()
 shell("rm extras/RiskStratifiedEstimation-manual.pdf")
 shell("R CMD Rd2pdf ./ --output=extras/RiskStratifiedEstimation-manual.pdf")
 
+if (!dir.exists("inst/doc")) {
+
+  dir.create(
+    file.path(
+      "inst",
+      "doc"
+    ),
+    recursive = TRUE
+  )
+
+}
+
+
 rmarkdown::render("vignettes/StudyExample.Rmd",
                   output_file = "../inst/doc/StudyExample.pdf",
                   rmarkdown::pdf_document(latex_engine = "pdflatex",
