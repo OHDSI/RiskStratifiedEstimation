@@ -23,35 +23,54 @@ createPopulationPlpSettingsArgs(
 )
 }
 \arguments{
-\item{binary}{Forces the outcomeCount to be 0 or 1 (use for binary prediction problems)}
+\item{binary}{Forces the outcomeCount to be 0 or 1 (use for binary
+prediction problems)}
 
-\item{includeAllOutcomes}{(binary) indicating whether to include people with outcomes who are not observed for the whole at risk period}
+\item{includeAllOutcomes}{(binary) indicating whether to include people with outcomes
+who are not observed for the whole at risk period}
 
-\item{firstExposureOnly}{Should only the first exposure per subject be included? Note thatthis is typically done in the createStudyPopulation function,}
+\item{firstExposureOnly}{Should only the first exposure per subject be included? Note
+thatthis is typically done in the createStudyPopulation
+function,}
 
-\item{washoutPeriod}{The mininum required continuous observation time prior to indexdate for a person to be included in the cohort.}
+\item{washoutPeriod}{The mininum required continuous observation time prior to
+indexdate for a person to be included in the cohort.}
 
-\item{removeSubjectsWithPriorOutcome}{Remove subjects that have the outcome prior to the risk window start?}
+\item{removeSubjectsWithPriorOutcome}{Remove subjects that have the outcome prior to the risk
+window start?}
 
-\item{priorOutcomeLookback}{How many days should we look back when identifying prior outcomes?}
+\item{priorOutcomeLookback}{How many days should we look back when identifying prior
+outcomes?}
 
 \item{requireTimeAtRisk}{Should subject without time at risk be removed?}
 
 \item{minTimeAtRisk}{The minimum number of days at risk required to be included}
 
-\item{riskWindowStart}{The start of the risk window (in days) relative to the startAnchor.}
+\item{riskWindowStart}{The start of the risk window (in days) relative to the
+startAnchor.}
 
-\item{startAnchor}{The anchor point for the start of the risk window. Can be "cohort start" or "cohort end".}
+\item{startAnchor}{The anchor point for the start of the risk window. Can be
+"cohort start" or "cohort end".}
 
-\item{addExposureDaysToStart}{DEPRECATED: Add the length of exposure the start of the risk window? Use startAnchor instead.}
+\item{addExposureDaysToStart}{DEPRECATED: Add the length of exposure the start of the risk
+window? Use startAnchor instead.}
 
-\item{riskWindowEnd}{The end of the risk window (in days) relative to the endAnchor parameter}
+\item{riskWindowEnd}{The end of the risk window (in days) relative to the
+endAnchor parameter}
 
-\item{endAnchor}{The anchor point for the end of the risk window. Can be "cohort start" or "cohort end".}
+\item{endAnchor}{The anchor point for the end of the risk window. Can be
+"cohort start" or "cohort end".}
 
-\item{addExposureDaysToEnd}{DEPRECATED: Add the length of exposure the risk window? Use endAnchor instead.}
+\item{addExposureDaysToEnd}{DEPRECATED: Add the length of exposure the risk window? Use
+endAnchor instead.}
 
-\item{verbosity}{Sets the level of the verbosity. If the log level is at or higher in priority than the logger threshold, a message will print. The levels are:DEBUGHighest verbosity showing all debug statementsTRACEShowing information about start and end of stepsINFOShow informative information (Default)WARNShow warning messagesERRORShow error messagesFATALBe silent except for fatal errors}
+\item{verbosity}{Sets the level of the verbosity. If the log level is at or
+higher in priority than the logger threshold, a message will
+print. The levels are:DEBUGHighest verbosity showing all
+debug statementsTRACEShowing information about start and end
+of stepsINFOShow informative information (Default)WARNShow
+warning messagesERRORShow error messagesFATALBe silent
+except for fatal errors}
 }
 \description{
 Create a parameter object for the function createStudyPopulation

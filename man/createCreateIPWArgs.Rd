@@ -2,8 +2,8 @@
 % Please edit documentation in R/CreateArgFuns.R
 \name{createCreateIPWArgs}
 \alias{createCreateIPWArgs}
-\title{Create a parameter object for the function createIPW
-Create an object defining the parameter values.}
+\title{Create a parameter object for the function createIPW Create an object defining the parameter
+values.}
 \usage{
 createCreateIPWArgs(
   weightsType = "ATE",
@@ -22,6 +22,6 @@ treated weights}
 score.}
 }
 \description{
-Create a parameter object for the function createIPW
-Create an object defining the parameter values.
+Create a parameter object for the function createIPW Create an object defining the parameter
+values.
 }

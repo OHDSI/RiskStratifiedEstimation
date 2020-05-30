@@ -2,9 +2,8 @@
 % Please edit documentation in R/CreateArgFuns.R
 \name{createPopulationSettings}
 \alias{createPopulationSettings}
-\title{Create parameter object for defining the analysis populations
-Contains the settings for defining both the \code{populationPlp} and the \code{populationCm}
-objects.}
+\title{Create parameter object for defining the analysis populations Contains the settings for defining
+both the \code{populationPlp} and the \code{populationCm} objects.}
 \usage{
 createPopulationSettings(
   populationPlpSettings = createPopulationPlpSettingsArgs(),
@@ -21,7 +20,6 @@ created from
 \code{\link[RiskStratifiedEstimation]{createPopulationCmSettingsArgs}}.}
 }
 \description{
-Create parameter object for defining the analysis populations
-Contains the settings for defining both the \code{populationPlp} and the \code{populationCm}
-objects.
+Create parameter object for defining the analysis populations Contains the settings for defining
+both the \code{populationPlp} and the \code{populationCm} objects.
 }

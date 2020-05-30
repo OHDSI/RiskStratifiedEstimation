@@ -2,10 +2,9 @@
 % Please edit documentation in R/CreateArgFuns.R
 \name{createRunSettings}
 \alias{createRunSettings}
-\title{Create a settings object for running the analyses
-Create the settings for running the analyses. The input consists of two parts: 1) the settings for
-running the prediction algorithms and 2) the settings for estimating treatment effects within
-strata of predicted risk.}
+\title{Create a settings object for running the analyses Create the settings for running the analyses. The
+input consists of two parts: 1) the settings for running the prediction algorithms and 2) the
+settings for estimating treatment effects within strata of predicted risk.}
 \usage{
 createRunSettings(
   runPlpSettings = createRunPlpSettingsArgs(modelSettings =
@@ -24,8 +23,7 @@ function \code{\link[RiskStratifiedEstimation]{createRunCmSettingsArgs}}}
 An R object of type \code{runSettings}
 }
 \description{
-Create a settings object for running the analyses
-Create the settings for running the analyses. The input consists of two parts: 1) the settings for
-running the prediction algorithms and 2) the settings for estimating treatment effects within
-strata of predicted risk.
+Create a settings object for running the analyses Create the settings for running the analyses. The
+input consists of two parts: 1) the settings for running the prediction algorithms and 2) the
+settings for estimating treatment effects within strata of predicted risk.
 }

@@ -2,9 +2,8 @@
 % Please edit documentation in R/CreateArgFuns.R
 \name{createGetCovariateSettings}
 \alias{createGetCovariateSettings}
-\title{Create the parameter object for extracting the covariates
-Contains the arguments for the extraction of both the covariates related to the prediction step and
-the estimation step.}
+\title{Create the parameter object for extracting the covariates Contains the arguments for the extraction
+of both the covariates related to the prediction step and the estimation step.}
 \usage{
 createGetCovariateSettings(
   covariateSettingsCm = FeatureExtraction::createCovariateSettings(),
@@ -19,7 +18,6 @@ from \code{\link[FeatureExtraction]{createCovariateSettings}}.}
 from \code{\link[FeatureExtraction]{createCovariateSettings}}.}
 }
 \description{
-Create the parameter object for extracting the covariates
-Contains the arguments for the extraction of both the covariates related to the prediction step and
-the estimation step.
+Create the parameter object for extracting the covariates Contains the arguments for the extraction
+of both the covariates related to the prediction step and the estimation step.
 }

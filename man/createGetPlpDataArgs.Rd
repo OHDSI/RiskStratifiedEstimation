@@ -18,7 +18,7 @@ date can appear. Date format is 'yyyymmdd'.}
 
 \item{studyEndDate}{A calendar date specifying the maximum date that a cohort index
 date can appear. Date format is 'yyyymmdd'. Important: the
-studyend data is also used to truncate risk windows, meaning no
+studyEnd data is also used to truncate risk windows, meaning no
 outcomes beyond the study end date will be considered.}
 
 \item{firstExposureOnly}{Should only the first exposure per subject be included? Note

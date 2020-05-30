@@ -5,6 +5,7 @@
 \title{Create a parameter object for the function runPlp}
 \usage{
 createRunPlpSettingsArgs(
+  plpResults = NULL,
   minCovariateFraction = 0.001,
   normalizeData = TRUE,
   modelSettings = PatientLevelPrediction::setLassoLogisticRegression(),
@@ -23,6 +24,9 @@ createRunPlpSettingsArgs(
 )
 }
 \arguments{
+\item{plpResults}{A data frame containig the path to an existing plpResult. The column
+names should be "outcomeId" and "directory".}
+
 \item{minCovariateFraction}{The minimum fraction of target population who must have a covariate
 for it to be included in the model training}
 

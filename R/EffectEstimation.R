@@ -1364,12 +1364,18 @@ fitPsModel <- function(outcomeId,
     "Loading the prediction result"
   )
 
+  pathToPlpResult <- runSettings$runPlpSettings$plpResults %>%
+    dplyr::filter(
+      outcomeId == outcomeId
+    ) %>%
+    dplyr::select(
+      directory
+    ) %>%
+    unlist()
+
   predictionResult <- PatientLevelPrediction::loadPlpResult(
     file.path(
-      analysisPath,
-      "Prediction",
-      outcomeId,
-      analysisSettings$analysisId,
+      pathToPlpResult,
       "plpResult"
     )
   )

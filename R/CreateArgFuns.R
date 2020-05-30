@@ -144,6 +144,8 @@ createPopulationPlpSettingsArgs <- function(binary = T,
 #' @details
 #' Create an object defining the parameter values.
 #'
+#' @param plpResults             A data frame containig the path to an existing plpResult. The column
+#'                               names should be "outcomeId" and "directory".
 #' @param minCovariateFraction   The minimum fraction of target population who must have a covariate
 #'                               for it to be included in the model training
 #' @param normalizeData          Whether to normalise the covariates before training (Default: TRUE)
@@ -199,7 +201,8 @@ createPopulationPlpSettingsArgs <- function(binary = T,
 #'
 #' @export
 
-createRunPlpSettingsArgs <- function(minCovariateFraction = 0.001,
+createRunPlpSettingsArgs <- function(plpResults = NULL,
+                                     minCovariateFraction = 0.001,
                                      normalizeData = TRUE,
                                      modelSettings = PatientLevelPrediction::setLassoLogisticRegression(),
                                      testSplit = "person",
@@ -267,7 +270,7 @@ createRunSettings <- function(runPlpSettings = createRunPlpSettingsArgs(modelSet
 #'                                     date can appear. Date format is 'yyyymmdd'.
 #' @param studyEndDate                 A calendar date specifying the maximum date that a cohort index
 #'                                     date can appear. Date format is 'yyyymmdd'. Important: the
-#'                                     studyend data is also used to truncate risk windows, meaning no
+#'                                     studyEnd data is also used to truncate risk windows, meaning no
 #'                                     outcomes beyond the study end date will be considered.
 #' @param firstExposureOnly            Should only the first exposure per subject be included? Note
 #'                                     that this is typically done in the createStudyPopulation

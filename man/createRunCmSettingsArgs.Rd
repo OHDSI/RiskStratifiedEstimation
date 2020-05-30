@@ -2,9 +2,9 @@
 % Please edit documentation in R/CreateArgFuns.R
 \name{createRunCmSettingsArgs}
 \alias{createRunCmSettingsArgs}
-\title{Create a parameter object for running the estimation step
-Create a parameter object for running the estimation step. This function is used to create part of
-the input of \code{\link[RiskStratifiedEstimation]{createRunSettings}}.}
+\title{Create a parameter object for running the estimation step Create a parameter object for running the
+estimation step. This function is used to create part of the input of
+\code{\link[RiskStratifiedEstimation]{createRunSettings}}.}
 \usage{
 createRunCmSettingsArgs(
   psMethod = "inversePtWeighted",
@@ -55,7 +55,7 @@ should be estimated.}
 A parameter object for running the the estimation step.
 }
 \description{
-Create a parameter object for running the estimation step
-Create a parameter object for running the estimation step. This function is used to create part of
-the input of \code{\link[RiskStratifiedEstimation]{createRunSettings}}.
+Create a parameter object for running the estimation step Create a parameter object for running the
+estimation step. This function is used to create part of the input of
+\code{\link[RiskStratifiedEstimation]{createRunSettings}}.
 }

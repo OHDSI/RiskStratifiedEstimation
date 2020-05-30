@@ -402,3 +402,51 @@ createOverallResults <- function(analysisSettings){
   return(NULL)
 }
 
+
+
+
+fitMultiplePsModelOverall <- function(analysisSettings,
+                                      runSettings,
+                                      getDataSettings,
+                                      populationSettings,
+                                      outcomeIds) {
+
+  cluster <- ParallelLogger::makeCluster(
+    runSettings$runCmSettings$createPsThreads
+  )
+
+  ParallelLogger::clusterRequire(
+    cluster,
+    c(
+      "RiskStratifiedEstimation",
+      "CohortMethod"
+    )
+  )
+
+  dummy <- ParallelLogger::clusterApply(
+    cluster = cluster,
+    x = outcomeIds,
+    fun = fitPsModelOverall,
+    getDataSettings = getDataSettings,
+    populationSettings = populationSettings,
+    analysisSettings = analysisSettings,
+    runCmSettings = runSettings$runCmSettings
+  )
+
+  ParallelLogger::stopCluster(cluster)
+
+  do.call(
+    file.remove,
+    args = list(
+      list.files(
+        getOption(
+          "fftempdir"
+        ),
+        full.names = TRUE
+      ),
+      showWarnings = FALSE
+    )
+  )
+
+}
+

@@ -41,8 +41,8 @@ were defined.}
 \item{mapTreatments}{Dataframe containing 2 columns: *idNumber* with the id numbers of the
 treatment and comparator cohorts and *label* the cohort names.}
 
-\item{mapOutcomes}{Dataframe containing 2 columns: *idNumber* with the cohort names of
-the outcomes of interest and *label* with their names.}
+\item{mapOutcomes}{Dataframe containing 2 columns: *idNumber* with the cohort names of the
+outcomes of interest and *label* with their names.}
 
 \item{verbosity}{Sets the level of the verbosity. If the log level is at or higher in
 priority than the logger threshold, a message will print. The levels
@@ -59,8 +59,7 @@ are:
 \item{saveDirectory}{The directory name where the results of the analyses will be stored.}
 }
 \value{
-An analysisSettings object providing the identification information
-                                 of the analysis.
+An analysisSettings object providing the identification information of the analysis.
 }
 \description{
 Create a parameter defining the performed risk stratified analysis
