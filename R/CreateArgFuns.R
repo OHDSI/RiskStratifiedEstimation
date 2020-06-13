@@ -624,10 +624,10 @@ createCreateIPWArgs <- function(weightsType = "ATE",
 #'                             \code{outcomeIds}. Default is the diagonal matrix, which leads to the
 #'                             risk stratified assessment of only the outcome for which the risk strata
 #'                             were defined.
-#' @param mapTreatments        Dataframe containing 2 columns: *idNumber* with the id numbers of the
-#'                             treatment and comparator cohorts and *label* the cohort names.
-#' @param mapOutcomes          Dataframe containing 2 columns: *idNumber* with the cohort names of the
-#'                             outcomes of interest and *label* with their names.
+#' @param mapTreatments        Dataframe containing 2 columns: "exposure_id" with the id numbers of the
+#'                             treatment and comparator cohorts and "exposure_name" the cohort names.
+#' @param mapOutcomes          Dataframe containing 2 columns: "outcome_id" with the cohort names of the
+#'                             outcomes of interest and "outcome_name" with their names.
 #' @param verbosity            Sets the level of the verbosity. If the log level is at or higher in
 #'                             priority than the logger threshold, a message will print. The levels
 #'                             are:

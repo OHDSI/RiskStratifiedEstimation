@@ -42,9 +42,7 @@ runRiskStratifiedEstimation <- function(
 
   if (is.null(analysisSettings$verbosity))
   {
-
     analysisSettings$verbosity <- "INFO"
-
   }
   else
   {
@@ -55,8 +53,8 @@ runRiskStratifiedEstimation <- function(
     }
   }
   start.all <- Sys.time()
-  if (is.null(analysisSettings$analysisId)) {
-
+  if (is.null(analysisSettings$analysisId))
+  {
     analysisSettings$analysisId <- paste(
       gsub(
         ':',
@@ -73,6 +71,12 @@ runRiskStratifiedEstimation <- function(
       )
     )
   }
+
+  analysisSettings$analysisType <- paste(
+    analysisSettings$analysisType,
+    runSettings$runCmSettings$psMethod,
+    sep = "_"
+  )
 
   if (!is.null(tempDir))
   {
@@ -609,8 +613,8 @@ runRiskStratifiedEstimation <- function(
   )
 
   nThreads <- ifelse(
-    runSettings$runCmSettings$createPsThreads > 4,
-    yes = 4,
+    runSettings$runCmSettings$createPsThreads > runSettings$runCmSettings$riskStrata,
+    yes = runSettings$runCmSettings$riskStrata,
     no = runSettings$runCmSettings$createPsThreads
   )
 

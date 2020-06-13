@@ -63,12 +63,10 @@ prepareMultipleRseeViewer <- function(
     lapply(
         analysisDirs,
         readRDS
-    )
-    %>%
+    ) %>%
         plyr::join_all(
             type = "full"
-        )
-    %>%
+        ) %>%
         saveRDS(
             file.path(
                 saveDir,

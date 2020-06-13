@@ -188,10 +188,8 @@ createOverallResults <- function(analysisSettings){
 
   for (predictOutcome in predictOutcomes)
   {
-
     for (predictionPopulation in predictonPopulations)
     {
-
       prediction <- readRDS(
         file.path(
           pathToPrediction,
@@ -201,7 +199,6 @@ createOverallResults <- function(analysisSettings){
           "prediction.rds"
         )
       )
-
       prediction <- prediction[order(-prediction$value), c("value", "outcomeCount")]
       prediction$sens <- cumsum(prediction$outcomeCount) / sum(prediction$outcomeCount)
       prediction$fpRate <- cumsum(prediction$outcomeCount == 0) / sum(prediction$outcomeCount == 0)
@@ -216,7 +213,6 @@ createOverallResults <- function(analysisSettings){
           comparatorId = analysisSettings$comparatorCohortId,
           analysisType = analysisSettings$analysisType
         )
-
       saveRDS(
         data,
         file.path(
@@ -225,7 +221,8 @@ createOverallResults <- function(analysisSettings){
            paste(
              "auc",
              predictionPopulation,
-             analysisSettings$analysisId,
+             analysisSettings$databaseName,
+             analysisSettings$analysisType,
              analysisSettings$treatmentCohortId,
              analysisSettings$comparatorCohortId,
              predictOutcome,
@@ -279,7 +276,8 @@ createOverallResults <- function(analysisSettings){
               paste(
                 "calibration",
                 predictionPopulation,
-                analysisSettings$analysisId,
+                analysisSettings$databaseName,
+                analysisSettings$analysisType,
                 analysisSettings$treatmentCohortId,
                 analysisSettings$comparatorCohortId,
                 predictOutcome,
@@ -432,10 +430,6 @@ createOverallResults <- function(analysisSettings){
     saveRDS(file.path(saveDir, "mappedOverallCasesResults.rds"))
 
   analysisSettings$mapOutcomes %>%
-    dplyr::rename(
-      "outcome_id" = "idNumber",
-      "outcome_name" = "label"
-    ) %>%
     saveRDS(
       file.path(
         saveDir,
@@ -444,10 +438,6 @@ createOverallResults <- function(analysisSettings){
     )
 
   analysisSettings$mapTreatments %>%
-    dplyr::rename(
-      "exposure_id" = "idNumber",
-      "exposure_name" = "label"
-    ) %>%
     saveRDS(
       file.path(
         saveDir,
@@ -468,8 +458,6 @@ createOverallResults <- function(analysisSettings){
         "analyses.rds"
       )
     )
-
-
 
   return(NULL)
 }

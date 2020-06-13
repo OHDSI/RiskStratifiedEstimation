@@ -33,9 +33,7 @@ Imports: PatientLevelPrediction,
          survival,
          tidyr,
          doSNOW,
-         formatR,
-         ggpubr,
-         survminer
+         formatR
 Suggests: knitr,
     rmarkdown
 VignetteBuilder: knitr

@@ -38,11 +38,11 @@ strata (columns). The order in columns should match the the order of
 risk stratified assessment of only the outcome for which the risk strata
 were defined.}
 
-\item{mapTreatments}{Dataframe containing 2 columns: *idNumber* with the id numbers of the
-treatment and comparator cohorts and *label* the cohort names.}
+\item{mapTreatments}{Dataframe containing 2 columns: "exposure_id" with the id numbers of the
+treatment and comparator cohorts and "exposure_name" the cohort names.}
 
-\item{mapOutcomes}{Dataframe containing 2 columns: *idNumber* with the cohort names of the
-outcomes of interest and *label* with their names.}
+\item{mapOutcomes}{Dataframe containing 2 columns: "outcome_id" with the cohort names of the
+outcomes of interest and "outcome_name" with their names.}
 
 \item{verbosity}{Sets the level of the verbosity. If the log level is at or higher in
 priority than the logger threshold, a message will print. The levels
