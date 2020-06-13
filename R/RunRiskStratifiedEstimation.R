@@ -28,29 +28,33 @@
 #'
 #' @export
 
-runRiskStratifiedEstimation <- function(connectionDetails,
-                                        analysisSettings,
-                                        databaseSettings,
-                                        getDataSettings,
-                                        covariateSettings,
-                                        populationSettings,
-                                        runSettings,
-                                        tempDir = NULL){
+runRiskStratifiedEstimation <- function(
+  connectionDetails,
+  analysisSettings,
+  databaseSettings,
+  getDataSettings,
+  covariateSettings,
+  populationSettings,
+  runSettings,
+  tempDir = NULL
+)
+{
 
-  if (is.null(analysisSettings$verbosity)) {
+  if (is.null(analysisSettings$verbosity))
+  {
 
     analysisSettings$verbosity <- "INFO"
 
-  } else {
+  }
+  else
+  {
     if (!analysisSettings$verbosity %in% c("DEBUG","TRACE","INFO","WARN","FATAL","ERROR")) {
       stop(
         'Incorrect verbosity string'
       )
     }
   }
-
   start.all <- Sys.time()
-
   if (is.null(analysisSettings$analysisId)) {
 
     analysisSettings$analysisId <- paste(
@@ -70,43 +74,39 @@ runRiskStratifiedEstimation <- function(connectionDetails,
     )
   }
 
-  if (!is.null(tempDir)) {
-
+  if (!is.null(tempDir))
+  {
     temporary <- file.path(
       tempDir,
       analysisSettings$analysisId
     )
-
-    if (!dir.exists(temporary)) {
-
+    if (!dir.exists(temporary))
+    {
       dir.create(
         path = temporary,
         recursive = TRUE
       )
-
     }
-
     options(
       fftempdir = temporary
     )
-
   }
 
-  if (is.null(analysisSettings$saveDirectory)) {
-
+  if (is.null(analysisSettings$saveDirectory))
+  {
     analysisSettings$saveDirectory <- file.path(
       getwd(),
       'RSEE'
     )
   }
 
-
   analysisPath <- file.path(
     analysisSettings$saveDirectory,
     analysisSettings$analysisId
   )
 
-  if (!dir.exists(analysisPath)) {
+  if (!dir.exists(analysisPath))
+  {
     dir.create(
       analysisPath,
       recursive = TRUE
@@ -153,8 +153,8 @@ runRiskStratifiedEstimation <- function(connectionDetails,
 
 
 
-  if (is.null(getDataSettings$plpDataFolder)) {
-
+  if (is.null(getDataSettings$plpDataFolder))
+  {
     prepareForPlpData(
       treatmentCohortId = analysisSettings$treatmentCohortId,
       comparatorCohortId = analysisSettings$comparatorCohortId,
@@ -165,30 +165,26 @@ runRiskStratifiedEstimation <- function(connectionDetails,
       mergedCohortTable = databaseSettings$mergedCohortTable,
       connectionDetails = connectionDetails
     )
-
     ParallelLogger::logInfo(
       "Constructing the plpData object"
     )
-
     plpData <- PatientLevelPrediction::getPlpData(
-        connectionDetails = connectionDetails,
-        cdmDatabaseSchema = databaseSettings$cdmDatabaseSchema,
-        cohortId = databaseSettings$targetCohortId,
-        outcomeIds = predictOutcomes,
-        cohortDatabaseSchema = databaseSettings$resultsDatabaseSchema,
-        cohortTable = databaseSettings$mergedCohortTable,
-        outcomeDatabaseSchema = databaseSettings$outcomeDatabaseSchema,
-        outcomeTable = databaseSettings$outcomeTable,
-        studyStartDate = getDataSettings$getPlpDataSettings$studyStartDate,
-        studyEndDate = getDataSettings$getPlpDataSettings$studyEndDate,
-        cdmVersion = databaseSettings$cdmVersion,
-        firstExposureOnly = getDataSettings$getPlpDataSettings$firstExposureOnly,
-        washoutPeriod = getDataSettings$getPlpDataSettings$washoutPeriod,
-        excludeDrugsFromCovariates = getDataSettings$getPlpDataSettings$excludeDrugsFromCovariates,
-        covariateSettings = covariateSettings$covariateSettingsPlp
+      connectionDetails = connectionDetails,
+      cdmDatabaseSchema = databaseSettings$cdmDatabaseSchema,
+      cohortId = databaseSettings$targetCohortId,
+      outcomeIds = predictOutcomes,
+      cohortDatabaseSchema = databaseSettings$resultsDatabaseSchema,
+      cohortTable = databaseSettings$mergedCohortTable,
+      outcomeDatabaseSchema = databaseSettings$outcomeDatabaseSchema,
+      outcomeTable = databaseSettings$outcomeTable,
+      studyStartDate = getDataSettings$getPlpDataSettings$studyStartDate,
+      studyEndDate = getDataSettings$getPlpDataSettings$studyEndDate,
+      cdmVersion = databaseSettings$cdmVersion,
+      firstExposureOnly = getDataSettings$getPlpDataSettings$firstExposureOnly,
+      washoutPeriod = getDataSettings$getPlpDataSettings$washoutPeriod,
+      excludeDrugsFromCovariates = getDataSettings$getPlpDataSettings$excludeDrugsFromCovariates,
+      covariateSettings = covariateSettings$covariateSettingsPlp
     )
-
-
     PatientLevelPrediction::savePlpData(
       plpData,
       file = file.path(
@@ -197,20 +193,21 @@ runRiskStratifiedEstimation <- function(connectionDetails,
         "plpData"
       )
     )
-
     getDataSettings$plpDataFolder <- file.path(
       analysisPath,
       "Data",
       "plpData"
     )
-  } else {
+  }
+  else
+  {
     plpData <- PatientLevelPrediction::loadPlpData(
       getDataSettings$plpDataFolder
     )
   }
 
-  if (is.null(getDataSettings$cohortMethodDataFolder)) {
-
+  if (is.null(getDataSettings$cohortMethodDataFolder))
+  {
     cohortMethodData <- CohortMethod::getDbCohortMethodData(
       connectionDetails = connectionDetails,
       cdmDatabaseSchema = databaseSettings$cdmDatabaseSchema,
@@ -232,7 +229,6 @@ runRiskStratifiedEstimation <- function(connectionDetails,
       maxCohortSize = getDataSettings$getCmDataSettings$maxCohortSize,
       covariateSettings = covariateSettings$covariateSettingsCm
     )
-
     CohortMethod::saveCohortMethodData(
       cohortMethodData,
       file.path(
@@ -241,13 +237,14 @@ runRiskStratifiedEstimation <- function(connectionDetails,
         "cmData"
       )
     )
-
     getDataSettings$cohortMethodDataFolder <- file.path(
       analysisPath,
       "Data",
       "cmData"
     )
-  }  else {
+  }
+  else
+  {
     cohortMethodData <- CohortMethod::loadCohortMethodData(
       getDataSettings$cohortMethodDataFolder
     )
@@ -265,13 +262,11 @@ runRiskStratifiedEstimation <- function(connectionDetails,
 
     developPredictionOutcomes <-
       analysisSettings$outcomeIds[!(analysisSettings$outcomeIds %in% existingPredictionOutcomeIds)]
-
-  } else {
-
-    developPredictionOutcomes <- analysisSettings$outcomeIds
-
   }
-
+  else
+  {
+    developPredictionOutcomes <- analysisSettings$outcomeIds
+  }
 
   ParallelLogger::logInfo(
     paste(
@@ -307,7 +302,8 @@ runRiskStratifiedEstimation <- function(connectionDetails,
     logger
   )
 
-  for (id in developPredictionOutcomes) {
+  for (id in developPredictionOutcomes)
+  {
     ps <- readRDS(
       file.path(
         analysisSettings$saveDirectory,
@@ -317,18 +313,14 @@ runRiskStratifiedEstimation <- function(connectionDetails,
         "psFull.rds"
       )
     )
-
     pop <- CohortMethod::matchOnPs(
       ps
     )
-
     cohorts <- plpData$cohorts
-
     population <- cohorts %>%
       dplyr::filter(
         subjectId %in% pop$subjectId
       )
-
     population <- PatientLevelPrediction::createStudyPopulation(
       plpData = plpData,
       outcomeId = id,
@@ -347,7 +339,6 @@ runRiskStratifiedEstimation <- function(connectionDetails,
       endAnchor = populationSettings$populationPlpSettings$endAnchor,
       verbosity = populationSettings$populationPlpSettings$verbosity
     )
-
     predictionResults <- PatientLevelPrediction::runPlp(
       population = population,
       plpData = plpData,
@@ -440,13 +431,15 @@ runRiskStratifiedEstimation <- function(connectionDetails,
   )
 
 
-  dummy <- ParallelLogger::clusterApply(cluster = cluster,
-                                        x = predictOutcomes,
-                                        fun = fitPsModel,
-                                        analysisSettings = analysisSettings,
-                                        getDataSettings = getDataSettings,
-                                        populationSettings = populationSettings,
-                                        runSettings = runSettings)
+  dummy <- ParallelLogger::clusterApply(
+    cluster = cluster,
+    x = predictOutcomes,
+    fun = fitPsModel,
+    analysisSettings = analysisSettings,
+    getDataSettings = getDataSettings,
+    populationSettings = populationSettings,
+    runSettings = runSettings
+  )
 
   ParallelLogger::stopCluster(
     cluster
@@ -574,19 +567,15 @@ runRiskStratifiedEstimation <- function(connectionDetails,
     compLoc <- analysisSettings$analysisMatrix[, predLoc]
     compareOutcomes <- analysisSettings$outcomeIds[as.logical(compLoc)]
     compareOutcomes <- compareOutcomes[compareOutcomes != predictOutcome]
-
-    if (length(compareOutcomes) == 0) {
-
+    if (length(compareOutcomes) == 0)
+    {
       compareOutcomes <- NULL
-
-      }
-
-    if (!is.null(compareOutcomes)) {
-
+    }
+    if (!is.null(compareOutcomes))
+    {
       cluster <- ParallelLogger::makeCluster(
         runSettings$runCmSettings$createPsThreads
       )
-
       ParallelLogger::clusterRequire(
         cluster,
         c(
@@ -594,15 +583,12 @@ runRiskStratifiedEstimation <- function(connectionDetails,
           "CohortMethod"
         )
       )
-
-
       pathToPs <- file.path(
         analysisSettings$saveDirectory,
         analysisSettings$analysisId,
         "Estimation",
         predictOutcome
       )
-
       dummy <- ParallelLogger::clusterApply(
         cluster = cluster,
         x = compareOutcomes,
@@ -611,7 +597,6 @@ runRiskStratifiedEstimation <- function(connectionDetails,
         pathToPs = pathToPs,
         runSettings = runSettings
       )
-
       ParallelLogger::stopCluster(
         cluster
       )

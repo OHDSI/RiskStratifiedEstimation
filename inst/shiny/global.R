@@ -805,7 +805,7 @@ combinedPlot <- function(cases,
         tickformat = ',d'
       )
     ) %>%
-    layout(
+    plotly::layout(
       shapes = hline(1)
     )
 

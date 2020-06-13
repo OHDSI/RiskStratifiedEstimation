@@ -1,23 +1,22 @@
 #' @export
 
-rseeViewer <- function(analysisPath){
+rseeViewer <- function(
+    analysisPath
+)
+{
 
- appDir <- system.file(
-   "shiny",
-   package = "RiskStratifiedEstimation"
- )
- # shinySettings <- analysisSettingsList
- .GlobalEnv$shinySettings <- analysisPath
-
- shiny::runApp(appDir)
-
- on.exit(
-    rm(
-       shinySettings,
-       env = .GlobalEnv
+    appDir <- system.file(
+        "shiny",
+        package = "RiskStratifiedEstimation"
     )
- )
-
+    .GlobalEnv$shinySettings <- analysisPath
+    shiny::runApp(appDir)
+    on.exit(
+        rm(
+            shinySettings,
+            env = .GlobalEnv
+        )
+    )
 
 }
 
@@ -25,8 +24,11 @@ rseeViewer <- function(analysisPath){
 #' @importFrom dplyr %>%
 #' @export
 
-prepareMultipleRseeViewer <- function(pathList,
-                                      saveDirectory) {
+prepareMultipleRseeViewer <- function(
+    pathList,
+    saveDirectory
+)
+{
 
     saveDir <- file.path(
         saveDirectory,
@@ -40,8 +42,12 @@ prepareMultipleRseeViewer <- function(pathList,
         )
     }
 
-    createAnlysisPath <- function(path,
-                                  file){
+    createAnlysisPath <- function(
+        path,
+        file
+    )
+
+    {
         res <- file.path(
             path,
             file
@@ -54,27 +60,26 @@ prepareMultipleRseeViewer <- function(pathList,
         createAnlysisPath,
         file = "analyses.rds"
     )
-
     lapply(
         analysisDirs,
         readRDS
-    ) %>%
+    )
+    %>%
         plyr::join_all(
             type = "full"
-        ) %>%
+        )
+    %>%
         saveRDS(
             file.path(
                 saveDir,
                 "analyses.rds"
             )
         )
-
     analysisDirs <- sapply(
         pathList,
         createAnlysisPath,
         file = "map_exposures.rds"
     )
-
     lapply(
         analysisDirs,
         readRDS
@@ -88,13 +93,11 @@ prepareMultipleRseeViewer <- function(pathList,
                 "map_exposures.rds"
             )
         )
-
     analysisDirs <- sapply(
         pathList,
         createAnlysisPath,
         file = "map_outcomes.rds"
     )
-
     lapply(
         analysisDirs,
         readRDS
@@ -108,13 +111,11 @@ prepareMultipleRseeViewer <- function(pathList,
                 "map_outcomes.rds"
             )
         )
-
     analysisDirs <- sapply(
         pathList,
         createAnlysisPath,
         file = "incidence.rds"
     )
-
     lapply(
         analysisDirs,
         readRDS
@@ -126,13 +127,11 @@ prepareMultipleRseeViewer <- function(pathList,
                 "incidence.rds"
             )
         )
-
     analysisDirs <- sapply(
         pathList,
         createAnlysisPath,
         file = "predictionPerformance.rds"
     )
-
     lapply(
         analysisDirs,
         readRDS
@@ -144,13 +143,11 @@ prepareMultipleRseeViewer <- function(pathList,
                 "predictionPerformance.rds"
             )
         )
-
     analysisDirs <- sapply(
         pathList,
         createAnlysisPath,
         file = "mappedOverallAbsoluteResults.rds"
     )
-
     lapply(
         analysisDirs,
         readRDS
@@ -162,13 +159,11 @@ prepareMultipleRseeViewer <- function(pathList,
                 "mappedOverallAbsoluteResults.rds"
             )
         )
-
     analysisDirs <- sapply(
         pathList,
         createAnlysisPath,
         file = "mappedOverallRelativeResults.rds"
     )
-
     lapply(
         analysisDirs,
         readRDS
@@ -185,7 +180,6 @@ prepareMultipleRseeViewer <- function(pathList,
         createAnlysisPath,
         file = "mappedOverallCasesResults.rds"
     )
-
     lapply(
         analysisDirs,
         readRDS
@@ -197,15 +191,12 @@ prepareMultipleRseeViewer <- function(pathList,
                 "mappedOverallCasesResults.rds"
             )
         )
-
     for (path in pathList) {
-
         filesToCopy <- list.files(
             path,
             pattern = "^auc|^bal|^ps|cal",
             full.names = TRUE
         )
-
         file.copy(
             filesToCopy,
             saveDir
