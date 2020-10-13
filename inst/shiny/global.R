@@ -8,6 +8,8 @@ if (is.null(.GlobalEnv$shinySettings)) {
   analysisPath <- .GlobalEnv$shinySettings
 }
 
+
+
 mapOutcomes <- readRDS(
 	file.path(
 		analysisPath,
@@ -30,6 +32,87 @@ mapExposures <- readRDS(
 		"map_exposures.rds"
 	)
 )
+
+overallAnalysisFiles <- list.files(
+  analysisPath,
+  pattern = "^overall"
+)
+
+if (!is.null(overallAnalysisFiles))
+{
+  overallAnalysis <- TRUE
+
+  overallMappedOverallRelativeResults <- readRDS(
+    file.path(
+    analysisPath,
+    "mappedOverallResults.rds"
+    )
+  ) %>%
+    dplyr::left_join(
+      mapOutcomes,
+      by = c(
+        "outcomeId" = "outcome_id"
+      )
+    ) %>%
+    dplyr::select(-"outcomeId") %>%
+    dplyr::rename(
+      "stratOutcome" = "outcome_name"
+    ) %>%
+    dplyr::left_join(
+      mapExposures,
+      by = c(
+        "treatmentId" = "exposure_id"
+      )
+    ) %>%
+    dplyr::select(-"treatmentId") %>%
+    dplyr::rename(
+      "treatment" = "exposure_name"
+    ) %>%
+    dplyr::left_join(
+      mapExposures,
+      by = c(
+        "comparatorId" = "exposure_id"
+      )
+    ) %>%
+    dplyr::select(-"comparatorId") %>%
+    dplyr::rename("comparator" = "exposure_name")
+
+
+  overallIncidence <- readRDS(
+    file.path(
+      analysisPath,
+      "incidenceOverall.rds"
+    )
+  ) %>%
+    dplyr::left_join(
+      mapOutcomes,
+      by = c(
+        "outcomeId" = "outcome_id"
+      )
+    ) %>%
+    dplyr::select(-"outcomeId") %>%
+    dplyr::rename(
+      "stratOutcome" = "outcome_name"
+    ) %>%
+    dplyr::left_join(
+      mapExposures,
+      by = c(
+        "treatmentId" = "exposure_id"
+      )
+    ) %>%
+    dplyr::select(-"treatmentId") %>%
+    dplyr::rename(
+      "treatment" = "exposure_name"
+    ) %>%
+    dplyr::left_join(
+      mapExposures,
+      by = c(
+        "comparatorId" = "exposure_id"
+      )
+    ) %>%
+    dplyr::select(-"comparatorId") %>%
+    dplyr::rename("comparator" = "exposure_name")
+}
 
 analyses <- readRDS(
 	file.path(
@@ -184,7 +267,7 @@ mappedOverallRelativeResults <-
 		)
 	) %>%
 	dplyr::select(-"estOutcome") %>%
-	rename(
+	dplyr::rename(
 		"estOutcome" = "outcome_name"
 	) %>%
 	dplyr::left_join(
@@ -310,21 +393,50 @@ getResults <- function(treat, comp, strat, est, db, anal,
 
 }
 
+getResultsOverall <- function(
+  treat, comp, strat, db, anal,
+  overallMappedOverallRelativeResults
+)
+{
+  result <- overallMappedOverallRelativeResults %>%
+    dplyr::filter(
+      .$stratOutcome %in% strat & .$treatment %in% treat & .$comparator %in% comp & .$database %in% db & .$analysisType %in% anal
+    )
+}
 
-getIncidence <- function(treat,
-						 comp,
-						 strat,
-						 est,
-						 db,
-						 anal,
-						 incidence) {
-	incidence %>%
+
+getIncidence <- function(
+  treat,
+  comp,
+  strat,
+  est,
+  db,
+  anal,
+  incidence
+  )
+{
+  incidence %>%
 		dplyr::filter(
 			.$stratOutcome %in% strat & .$estOutcome %in% est & .$treatment %in% treat & .$comparator %in% comp & .$database %in% db & .$analysisType %in% anal
 		) %>%
 		return()
 }
 
+getIncidenceOverall <- function(
+  treat,
+  comp,
+  strat,
+  db,
+  anal,
+  incidence
+  )
+{
+  incidence %>%
+		dplyr::filter(
+			.$stratOutcome == strat & .$treatment %in% treat & .$comparator %in% comp & .$database %in% db & .$analysisType %in% anal
+		) %>%
+		return()
+}
 
 getPredictionPerformance <- function(treat,
 									 comp,
@@ -341,23 +453,27 @@ getPredictionPerformance <- function(treat,
 
 }
 
-getBalance <- function(treat,
-					   comp,
-					   strat,
-					   est,
-					   db,
-					   anal,
-					   analyses,
-					   mapExposures,
-					   mapOutcomes,
-					   analysisPath) {
+getBalance <- function(
+  treat,
+  comp,
+  strat,
+  est = NULL,
+  db,
+  anal,
+  analyses,
+  mapExposures,
+  mapOutcomes,
+  analysisPath,
+  isOverall = FALSE
+)
+{
 
-	res <- analyses %>%
-		dplyr::left_join(
-			mapExposures,
-			by = c("treatment_id" = "exposure_id")
-		) %>%
-		dplyr::rename(
+  res <- analyses %>%
+    dplyr::left_join(
+      mapExposures,
+      by = c("treatment_id" = "exposure_id")
+    ) %>%
+    dplyr::rename(
 			"treatment_name" = "exposure_name"
 		) %>%
 		dplyr::left_join(
@@ -394,26 +510,47 @@ getBalance <- function(treat,
 		dplyr::select("exposure_id") %>%
 		unlist()
 
-	readRDS(
-		file.path(
-			analysisPath,
-			paste0(
-				paste(
-					"balance",
-					res$analysis_id,
-					treatmentId,
-					comparatorId,
-					stratOutcomeId,
-					estOutcomeId,
-					sep = "_"
-				),
-				".rds"
-			)
-		)
-	)
+	if (isOverall)
+	{
+	  readRDS(
+	    file.path(
+	      analysisPath,
+	      paste0(
+	        paste(
+	          "overall",
+	          "balance",
+	          res$analysis_id,
+	          treatmentId,
+	          comparatorId,
+	          stratOutcomeId,
+	          sep = "_"
+	        ),
+	        ".rds"
+	      )
+	    )
+	  )
+	}
+	else
+	{
+	  readRDS(
+	    file.path(
+	      analysisPath,
+	      paste0(
+	        paste(
+	          "balance",
+	          res$analysis_id,
+	          treatmentId,
+	          comparatorId,
+	          stratOutcomeId,
+	          estOutcomeId,
+	          sep = "_"
+	        ),
+	        ".rds"
+	      )
+	    )
+	  )
+	}
 }
-
-
 
 
 getPsDensity <- function(treat,
@@ -488,6 +625,75 @@ getPsDensity <- function(treat,
 	)
 }
 
+
+getPsDensityOverall <- function(
+  treat,
+  comp,
+  strat,
+  db,
+  anal,
+  analyses,
+  mapExposures,
+  mapOutcomes,
+  analysisPath
+)
+{
+
+  res <- analyses %>%
+    dplyr::left_join(
+      mapExposures,
+      by = c("treatment_id" = "exposure_id")
+    ) %>%
+    dplyr::rename(
+      "treatment_name" = "exposure_name"
+		) %>%
+		dplyr::left_join(
+			mapExposures,
+			by = c("comparator_id" = "exposure_id")
+		) %>%
+		dplyr::rename(
+			"comparator_name" = "exposure_name"
+		) %>%
+		dplyr::filter(
+			.$treatment_name == treat,
+			.$comparator_name == comp,
+			.$database == db,
+			.$analysis_type == anal
+		)
+
+	stratOutcomeId <- mapOutcomes %>%
+		dplyr::filter(.$outcome_name == strat) %>%
+		dplyr::select("outcome_id") %>%
+		unlist()
+
+	treatmentId <- mapExposures %>%
+		dplyr::filter(.$exposure_name == treat) %>%
+		dplyr::select("exposure_id") %>%
+		unlist()
+
+	comparatorId <- mapExposures %>%
+		dplyr::filter(.$exposure_name == comp) %>%
+		dplyr::select("exposure_id") %>%
+		unlist()
+
+	readRDS(
+		file.path(
+			analysisPath,
+			paste0(
+				paste(
+				  "overall",
+					"psDensity",
+					res$analysis_id,
+					treatmentId,
+					comparatorId,
+					stratOutcomeId,
+					sep = "_"
+				),
+				".rds"
+			)
+		)
+	)
+}
 
 getAuc <- function(treat,
 				   comp,

@@ -141,7 +141,8 @@ createOverallResults <- function(analysisSettings){
     "shiny"
   )
 
-  if (!dir.exists(saveDir)) {
+  if (!dir.exists(saveDir))
+  {
     dir.create(saveDir, recursive = T)
   }
 
@@ -179,7 +180,7 @@ createOverallResults <- function(analysisSettings){
     comparator = numeric()
   )
 
-  predictonPopulations <- c(
+  predictionPopulations <- c(
     "EntirePopulation",
     "Matched",
     "Treatment",
@@ -188,7 +189,12 @@ createOverallResults <- function(analysisSettings){
 
   for (predictOutcome in predictOutcomes)
   {
-    for (predictionPopulation in predictonPopulations)
+
+    # failedAnalyses <- analysisSettings$failedAnalyses %>%
+    #   dplyr::filter(.$stratOutcome == predictOutcome) %>%
+    #   unlist()
+
+    for (predictionPopulation in predictionPopulations)
     {
       prediction <- readRDS(
         file.path(
@@ -239,16 +245,11 @@ createOverallResults <- function(analysisSettings){
           predictOutcome,
           analysisSettings$analysisId,
           predictionPopulation,
-          "performanceEvaluation.rds"
+          "calibrationData.rds"
         )
       )
 
-      calibration$calibrationSummary %>%
-        dplyr::select(
-          averagePredictedProbability,
-          observedIncidence,
-          PersonCountAtRisk
-        ) %>%
+      calibration %>%
         dplyr::rowwise() %>%
         dplyr::mutate(
           lower = binom.test(
@@ -349,73 +350,154 @@ createOverallResults <- function(analysisSettings){
     )
     cases <- rbind(cases, casesResult)
 
+    # psFailed <- analysisSettings$failed$ps %>%
+    #   dplyr::filter(
+    #     .$stratOutcome == predictOutcome
+    #   ) %>%
+    #   dplyr::select(
+    #     "estOutcome"
+    #   ) %>%
+    #   unlist(
+    #     use.names = FALSE
+    #   )
+    #
+    # resFailed <- analysisSettings$failed$results %>%
+    #   dplyr::filter(
+    #     .$stratOutcome == predictOutcome
+    #   ) %>%
+    #   dplyr::select(
+    #     "estOutcome"
+    #   ) %>%
+    #   unlist(
+    #     use.names = FALSE
+    #   )
+    #
+    # failed <- unique(
+    #   c(
+    #     psFailed,
+    #     resFailed
+    #   )
+    # )
+
     predLoc <- which(analysisSettings$outcomeIds == predictOutcome)
     compLoc <- analysisSettings$analysisMatrix[, predLoc]
     compareOutcomes <- analysisSettings$outcomeIds[as.logical(compLoc)]
     compareOutcomes <- compareOutcomes[compareOutcomes != predictOutcome]
+    # compareOutcomes <- compareOutcomes[!compareOutcomes %in% failedAnalyses]
+    compareOutcomes <- sort(
+      compareOutcomes[compareOutcomes != predictOutcome]
+    )
+    # predLoc <- which(analysisSettings$outcomeIds == predictOutcome)
+    # compLoc <- analysisSettings$analysisMatrix[, predLoc]
+    # compareOutcomes <- analysisSettings$outcomeIds[as.logical(compLoc)]
+    # compareOutcomes <- compareOutcomes[compareOutcomes != predictOutcome]
+    # compareOutcomes <- compareOutcomes[!compareOutcomes %in% failedAnalyses]
 
     if (length(compareOutcomes) != 0)
     {
       for (compareOutcome in compareOutcomes)
       {
-        absoluteResult <- readRDS(
-          file.path(
-            pathToResults,
-            predictOutcome,
-            compareOutcome,
-            "absoluteRiskReduction.rds"
-          )
-        ) %>%
-          dplyr::rename("estimate" = "ARR")
-        absoluteResult <- data.frame(
-          absoluteResult,
-          stratOutcome = predictOutcome,
-          estOutcome = compareOutcome,
-          database = analysisSettings$databaseName,
-          analysisType = analysisSettings$analysisType,
-          treatment = analysisSettings$treatmentCohortId,
-          comparator = analysisSettings$comparatorCohortId
+        absoluteResult <- tryCatch(
+          {
+            absoluteResult <- readRDS(
+              file.path(
+                pathToResults,
+                predictOutcome,
+                compareOutcome,
+                "absoluteRiskReduction.rds"
+              )
+            ) %>%
+              dplyr::rename("estimate" = "ARR")
+          },
+          error = function(e)
+          {
+            e$message
+          }
         )
-        absolute <- rbind(absolute, absoluteResult)
-        relativeResult <- readRDS(
-          file.path(
-            pathToResults,
-            predictOutcome,
-            compareOutcome,
-            "relativeRiskReduction.rds"
+
+        if (!is.character(absoluteResult))
+        {
+          absoluteResult <- data.frame(
+            absoluteResult,
+            stratOutcome = predictOutcome,
+            estOutcome = compareOutcome,
+            database = analysisSettings$databaseName,
+            analysisType = analysisSettings$analysisType,
+            treatment = analysisSettings$treatmentCohortId,
+            comparator = analysisSettings$comparatorCohortId
           )
-        ) %>%
-          dplyr::rename("estimate" = "HR")
-        relativeResult <- data.frame(
-          relativeResult,
-          stratOutcome = predictOutcome,
-          estOutcome = compareOutcome,
-          database = analysisSettings$databaseName,
-          analysisType = analysisSettings$analysisType,
-          treatment = analysisSettings$treatmentCohortId,
-          comparator = analysisSettings$comparatorCohortId
+
+          absolute <- rbind(absolute, absoluteResult)
+        }
+
+        relativeResult <- tryCatch(
+          {
+            relativeResult <- readRDS(
+              file.path(
+                pathToResults,
+                predictOutcome,
+                compareOutcome,
+                "relativeRiskReduction.rds"
+              )
+            ) %>%
+              dplyr::rename("estimate" = "HR")
+          },
+          error = function(e)
+          {
+            e$message
+          }
         )
-        relative <- rbind(relative, relativeResult)
-        casesResult <- readRDS(
-          file.path(
-            pathToResults,
-            predictOutcome,
-            compareOutcome,
-            "cases.rds"
+
+        if (!is.character(relativeResult))
+        {
+
+          relativeResult <- data.frame(
+            relativeResult,
+            stratOutcome = predictOutcome,
+            estOutcome = compareOutcome,
+            database = analysisSettings$databaseName,
+            analysisType = analysisSettings$analysisType,
+            treatment = analysisSettings$treatmentCohortId,
+            comparator = analysisSettings$comparatorCohortId
           )
-        ) %>%
-          dplyr::rename("casesComparator" = "comparator") %>%
-          dplyr::rename("casesTreatment" = "treatment")
-        casesResult <- data.frame(
-          casesResult,
-          stratOutcome = predictOutcome,
-          estOutcome = compareOutcome,
-          database = analysisSettings$databaseName,
-          analysisType = analysisSettings$analysisType,
-          treatment = analysisSettings$treatmentCohortId,
-          comparator = analysisSettings$comparatorCohortId
+
+          relative <- rbind(relative, relativeResult)
+
+        }
+
+        casesResult <- tryCatch(
+          {
+            casesResult <- readRDS(
+              file.path(
+                pathToResults,
+                predictOutcome,
+                compareOutcome,
+                "cases.rds"
+              )
+            ) %>%
+              dplyr::rename("casesComparator" = "comparator") %>%
+              dplyr::rename("casesTreatment" = "treatment")
+
+          },
+          error = function(e){
+            e$message
+          }
         )
-        cases <- rbind(cases, casesResult)
+
+        if (!is.character(casesResult))
+        {
+          casesResult <- data.frame(
+            casesResult,
+            stratOutcome = predictOutcome,
+            estOutcome = compareOutcome,
+            database = analysisSettings$databaseName,
+            analysisType = analysisSettings$analysisType,
+            treatment = analysisSettings$treatmentCohortId,
+            comparator = analysisSettings$comparatorCohortId
+          )
+          cases <- rbind(cases, casesResult)
+
+        }
       }
     }
   }

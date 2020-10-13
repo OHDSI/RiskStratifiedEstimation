@@ -1,11 +1,13 @@
 #' @importFrom dplyr %>%
 #' @export
 
-evaluatePrediction <- function(analysisSettings,
-                               getDataSettings,
-                               populationSettings,
-                               predictionId){
-
+evaluatePrediction <- function(
+  analysisSettings,
+  getDataSettings,
+  populationSettings,
+  predictionId
+)
+{
   saveDir <- file.path(
     analysisSettings$saveDirectory,
     analysisSettings$analysisId
@@ -14,12 +16,6 @@ evaluatePrediction <- function(analysisSettings,
   plpData <- PatientLevelPrediction::loadPlpData(
     getDataSettings$plpDataFolder
   )
-
-  cohortMethodData <- CohortMethod::loadCohortMethodData(
-    getDataSettings$cohortMethodDataFolder
-  )
-
-
 
   plpResult <- PatientLevelPrediction::loadPlpResult(
     file.path(
@@ -40,31 +36,33 @@ evaluatePrediction <- function(analysisSettings,
     )
   )
 
-  startingPopulation <- plpData$cohorts %>%
-    dplyr::filter(
-      subjectId %in% psFull$subjectId
+  startingPopulation <- psFull %>%
+    dplyr::select(
+      -"daysToEvent"
     )
+  attr(startingPopulation, "metaData") <- attr(plpData$cohorts, "metaData")
 
-  psFull <- PatientLevelPrediction::createStudyPopulation(
-    plpData = plpData,
-    population = startingPopulation,
-    outcomeId = predictionId,
-    binary = populationSettings$populationPlpSettings$binary,
-    includeAllOutcomes = populationSettings$populationPlpSettings$includeAllOutcomes,
-    firstExposureOnly = populationSettings$populationPlpSettings$firstExposureOnly,
-    washoutPeriod = populationSettings$populationPlpSettings$washoutPeriod,
-    removeSubjectsWithPriorOutcome = populationSettings$populationPlpSettings$removeSubjectsWithPriorOutcome,
-    priorOutcomeLookback = populationSettings$populationPlpSettings$priorOutcomeLookback,
-    requireTimeAtRisk = populationSettings$populationPlpSettings$requireTimeAtRisk,
-    minTimeAtRisk = populationSettings$populationPlpSettings$minTimeAtRisk,
-    riskWindowStart = populationSettings$populationPlpSettings$riskWindowStart,
-    startAnchor = populationSettings$populationPlpSettings$startAnchor,
-    riskWindowEnd = populationSettings$populationPlpSettings$riskWindowEnd,
-    endAnchor = populationSettings$populationPlpSettings$endAnchor,
-    verbosity = populationSettings$populationPlpSettings$verbosity
-  ) %>%
-    dplyr::left_join(
-      psFull
+  psFull <-
+    psFull %>%
+    dplyr::right_join(
+      PatientLevelPrediction::createStudyPopulation(
+        plpData = plpData,
+        population = startingPopulation,
+        outcomeId = predictionId,
+        binary = populationSettings$populationPlpSettings$binary,
+        includeAllOutcomes = populationSettings$populationPlpSettings$includeAllOutcomes,
+        firstExposureOnly = populationSettings$populationPlpSettings$firstExposureOnly,
+        washoutPeriod = populationSettings$populationPlpSettings$washoutPeriod,
+        removeSubjectsWithPriorOutcome = populationSettings$populationPlpSettings$removeSubjectsWithPriorOutcome,
+        priorOutcomeLookback = populationSettings$populationPlpSettings$priorOutcomeLookback,
+        requireTimeAtRisk = populationSettings$populationPlpSettings$requireTimeAtRisk,
+        minTimeAtRisk = populationSettings$populationPlpSettings$minTimeAtRisk,
+        riskWindowStart = populationSettings$populationPlpSettings$riskWindowStart,
+        startAnchor = populationSettings$populationPlpSettings$startAnchor,
+        riskWindowEnd = populationSettings$populationPlpSettings$riskWindowEnd,
+        endAnchor = populationSettings$populationPlpSettings$endAnchor,
+        verbosity = populationSettings$populationPlpSettings$verbosity
+      )
     ) %>%
     dplyr::mutate(
       outcomeCount = ifelse(
@@ -73,6 +71,8 @@ evaluatePrediction <- function(analysisSettings,
         no = 0
       )
     )
+
+  # attr(psFull, "metaData") <- attr(psFull, "metaData")
 
   # Evaluate on matched set
   populationSubset <- CohortMethod::matchOnPs(
@@ -88,6 +88,33 @@ evaluatePrediction <- function(analysisSettings,
     plpData = plpData,
     plpModel = plpResult$model
   )
+
+  # calibrationData <- PatientLevelPrediction::calibrationLine(
+  #   prediction = modelEvaluationOnSubset$prediction
+  # )
+
+  calibrationData <- modelEvaluationOnSubset$prediction %>%
+    dplyr::mutate(
+      group = dplyr::ntile(
+        value,
+        10
+      )
+    ) %>%
+    dplyr::group_by(
+      group
+    ) %>%
+    dplyr::summarise(
+      personsWithOutcome = sum(
+        outcomeCount
+      ),
+      PersonCountAtRisk = dplyr::n(),
+      observedIncidence = mean(
+        outcomeCount
+      ),
+     averagePredictedProbability = mean(
+       value
+     )
+    )
 
   # Save evaluation on matched set
   analysisPath <- file.path(
@@ -114,6 +141,14 @@ evaluatePrediction <- function(analysisSettings,
     )
 
   }
+
+  saveRDS(
+    calibrationData,
+    file = file.path(
+      analysisPath,
+      "calibrationData.rds"
+    )
+  )
 
   saveRDS(
     modelEvaluationOnSubset$performanceEvaluation,
@@ -156,6 +191,29 @@ evaluatePrediction <- function(analysisSettings,
     plpModel = plpResult$model
   )
 
+  calibrationData <- modelEvaluationOnPopulation$prediction %>%
+    dplyr::mutate(
+      group = dplyr::ntile(
+        value,
+        10
+      )
+    ) %>%
+    dplyr::group_by(
+      group
+    ) %>%
+    dplyr::summarise(
+      personsWithOutcome = sum(
+        outcomeCount
+      ),
+      PersonCountAtRisk = dplyr::n(),
+      observedIncidence = mean(
+        outcomeCount
+      ),
+     averagePredictedProbability = mean(
+       value
+     )
+    )
+
   # Save evaluation on the entire target population
   analysisPath <- file.path(
     saveDir,
@@ -174,6 +232,13 @@ evaluatePrediction <- function(analysisSettings,
 
   }
 
+  saveRDS(
+    calibrationData,
+    file = file.path(
+      analysisPath,
+      "calibrationData.rds"
+    )
+  )
   saveRDS(
     modelEvaluationOnPopulation$performanceEvaluation,
     file = file.path(
@@ -211,6 +276,29 @@ evaluatePrediction <- function(analysisSettings,
     plpModel = plpResult$model
   )
 
+  calibrationData <- modelEvaluationOnSubset$prediction %>%
+    dplyr::mutate(
+      group = dplyr::ntile(
+        value,
+        10
+      )
+    ) %>%
+    dplyr::group_by(
+      group
+    ) %>%
+    dplyr::summarise(
+      personsWithOutcome = sum(
+        outcomeCount
+      ),
+      PersonCountAtRisk = dplyr::n(),
+      observedIncidence = mean(
+        outcomeCount
+      ),
+      averagePredictedProbability = mean(
+        value
+      )
+    )
+
   # Save evaluation on treatment arm
   analysisPath <- file.path(
     saveDir,
@@ -228,6 +316,14 @@ evaluatePrediction <- function(analysisSettings,
     )
 
   }
+
+  saveRDS(
+    calibrationData,
+    file = file.path(
+      analysisPath,
+      "calibrationData.rds"
+    )
+  )
 
   saveRDS(
     modelEvaluationOnSubset$performanceEvaluation,
@@ -265,6 +361,29 @@ evaluatePrediction <- function(analysisSettings,
     plpModel = plpResult$model
   )
 
+  calibrationData <- modelEvaluationOnSubset$prediction %>%
+    dplyr::mutate(
+      group = dplyr::ntile(
+        value,
+        10
+      )
+    ) %>%
+    dplyr::group_by(
+      group
+    ) %>%
+    dplyr::summarise(
+      personsWithOutcome = sum(
+        outcomeCount
+      ),
+      PersonCountAtRisk = dplyr::n(),
+      observedIncidence = mean(
+        outcomeCount
+      ),
+      averagePredictedProbability = mean(
+        value
+      )
+    )
+
   # Save evaluation on comparator arm
   analysisPath <- file.path(
     saveDir,
@@ -282,6 +401,14 @@ evaluatePrediction <- function(analysisSettings,
     )
 
   }
+
+  saveRDS(
+    calibrationData,
+    file = file.path(
+      analysisPath,
+      "calibrationData.rds"
+    )
+  )
 
   saveRDS(
     modelEvaluationOnSubset$performanceEvaluation,
@@ -399,215 +526,6 @@ computeCovariateBalanceWeighted <- function(population,
 }
 
 
-#' @export
-computeCovariateBalanceOverall <- function(ps,
-                                           cohortMethodData,
-                                           analysisSettings,
-                                           runSettings){
-
-  analysisType <- analysisSettings$analysisType
-
-  if (analysisType == "inversePtWeighted") {
-    covariateBalanceList <-
-      lapply(
-        ps,
-        computeCovariateBalanceWeighted,
-        cohortMethodData = cohortMethodData
-      )  %>%
-      dplyr::bind_rows(
-        .id = "riskStratum"
-      ) %>%
-      dplyr::mutate(
-        riskStratum = paste0(
-          "Q",
-          riskStratum
-        )
-      )
-
-  } else if (analysisType == "stratifyByPs") {
-
-    covariateBalanceList <- lapply(
-      ps,
-      computeCovariateBalanceCohortMethod,
-      cohortMethodData = cohortMethodData
-    ) %>%
-      dplyr::bind_rows(
-        .id = "riskStratum"
-      ) %>%
-      dplyr::mutate(
-        riskStratum = paste0(
-          "Q",
-          riskStratum
-        )
-      )
-
-  }
-
-  return(covariateBalanceList)
-
-}
-
-#' @export
-computeCovariateBalanceCombined <- function(outcomeId,
-                                            analysisSettings,
-                                            runSettings,
-                                            getDataSettings,
-                                            secondaryOutcomes = FALSE){
-
-  saveDir <- file.path(
-    analysisSettings$saveDirectory,
-    analysisSettings$analysisId,
-    "shiny"
-  )
-
-  if (!dir.exists(saveDir)) {
-    dir.create(
-      saveDir,
-      recursive = TRUE
-    )
-  }
-
-  cohortMethodData <-
-    CohortMethod::loadCohortMethodData(
-      file = getDataSettings$cohortMethodDataFolder
-    )
-  analysisPath <- file.path(
-    analysisSettings$saveDirectory,
-    analysisSettings$analysisId
-  )
-  ps <- readRDS(
-    file.path(
-      analysisPath,
-      "Estimation",
-      outcomeId,
-      "ps.rds"
-    )
-  )
-
-  computeCovariateBalanceOverall(
-    ps,
-    cohortMethodData = cohortMethodData,
-    analysisSettings = analysisSettings,
-    runSettings = runSettings
-  ) %>%
-    dplyr::mutate(
-      database = analysisSettings$databaseName,
-      analysisId = analysisSettings$analysisId,
-      stratOutcome = outcomeId,
-      estOutcome = outcomeId,
-      treatmentId = analysisSettings$treatmentCohortId,
-      comparatorId = analysisSettings$comparatorCohortId,
-      analysisType = analysisSettings$analysisType
-    ) %>%
-    saveRDS(
-      file.path(
-        saveDir,
-        paste0(
-          paste(
-            "balance",
-            analysisSettings$analysisId,
-            analysisSettings$treatmentCohortId,
-            analysisSettings$comparatorCohortId,
-            outcomeId,
-            outcomeId,
-            sep = "_"
-          ),
-          ".rds"
-        )
-      )
-    )
-
-  if (secondaryOutcomes) {
-    predLoc <- which(analysisSettings$outcomeIds == outcomeId)
-    compLoc <- analysisSettings$analysisMatrix[, predLoc]
-    compareOutcomes <- analysisSettings$outcomeIds[as.logical(compLoc)]
-    compareOutcomes <- compareOutcomes[compareOutcomes != outcomeId]
-
-    for (compareOutcome in compareOutcomes) {
-      dir <- file.path(
-        analysisPath,
-        "Estimation",
-        outcomeId,
-        compareOutcome
-      )
-      ps <- readRDS(
-        file.path(
-          dir,
-          "ps.rds"
-        )
-      )
-
-      computeCovariateBalanceOverall(
-        ps,
-        cohortMethodData = cohortMethodData,
-        analysisSettings = analysisSettings,
-        runSettings = runSettings
-      ) %>%
-        dplyr::mutate(
-          database = analysisSettings$databaseName,
-          analysisId = analysisSettings$analysisId,
-          stratOutcome = outcomeId,
-          estOutcome = compareOutcome,
-          treatmentId = analysisSettings$treatmentCohortId,
-          comparatorId = analysisSettings$comparatorCohortId,
-          analysisType = analysisSettings$analysisType
-        ) %>%
-        saveRDS(
-          file.path(
-            saveDir,
-            paste0(
-              paste(
-                "balance",
-                analysisSettings$analysisId,
-                analysisSettings$treatmentCohortId,
-                analysisSettings$comparatorCohortId,
-                outcomeId,
-                compareOutcome,
-                sep = "_"
-              ),
-              ".rds"
-            )
-          )
-        )
-    }
-  }
-  return(NULL)
-}
-
-
-
-#' @export
-computeCovariateBalanceAnalysis <- function(analysisSettings,
-                                            runSettings,
-                                            getDataSettings,
-                                            secondaryOutcomes = FALSE,
-                                            threads = 1){
-  predictOutcomes <-
-    analysisSettings$outcomeIds[which(colSums(analysisSettings$analysisMatrix) != 0)]
-
-  cluster <- ParallelLogger::makeCluster(threads)
-  ParallelLogger::clusterRequire(
-    cluster,
-    "RiskStratifiedEstimation"
-  )
-
-
-  dummy <- ParallelLogger::clusterApply(
-    cluster = cluster,
-    x = predictOutcomes,
-    fun = computeCovariateBalanceCombined,
-    analysisSettings = analysisSettings,
-    runSettings = runSettings,
-    getDataSettings = getDataSettings,
-    secondaryOutcomes = secondaryOutcomes
-  )
-
-  ParallelLogger::stopCluster(cluster)
-
-  return(NULL)
-}
-
-
 #' @importFrom dplyr %>%
 #' @export
 psDensityOverall <- function(ps){
@@ -651,14 +569,31 @@ psDensityCombined <- function(outcomeId,
     analysisSettings$analysisId
   )
 
-  ps <- readRDS(
-    file.path(
-      analysisPath,
-      "Estimation",
-      outcomeId,
-      "ps.rds"
-    )
+  dir <- file.path(
+    analysisPath,
+    "Estimation",
+    outcomeId
   )
+
+  ps <- tryCatch(
+    {
+      readRDS(
+        file.path(
+          dir,
+          "ps.rds"
+        )
+      )
+    },
+    error = function(e)
+    {
+      e$message
+    }
+  )
+
+  if (is.character(ps))
+  {
+    return(NULL)
+  }
 
   psDensityOverall(ps) %>%
     dplyr::mutate(
@@ -698,6 +633,9 @@ psDensityCombined <- function(outcomeId,
     compLoc <- analysisSettings$analysisMatrix[, predLoc]
     compareOutcomes <- analysisSettings$outcomeIds[as.logical(compLoc)]
     compareOutcomes <- compareOutcomes[compareOutcomes != outcomeId]
+    compareOutcomes <- sort(
+      compareOutcomes[compareOutcomes != outcomeId]
+    )
 
     for (compareOutcome in compareOutcomes) {
       dir <- file.path(
@@ -706,12 +644,26 @@ psDensityCombined <- function(outcomeId,
         outcomeId,
         compareOutcome
       )
-      ps <- readRDS(
-        file.path(
-          dir,
-          "ps.rds"
-        )
+
+      ps <- tryCatch(
+        {
+          readRDS(
+            file.path(
+              dir,
+              "ps.rds"
+            )
+          )
+        },
+        error = function(e)
+        {
+          e$message
+        }
       )
+
+      if (is.character(ps))
+      {
+        return(NULL)
+      }
 
       psDensityOverall(ps) %>%
         dplyr::mutate(
@@ -1030,28 +982,6 @@ reanalyzePsMethod <- function(analysisSettings,
 }
 
 
-#' @importFrom dplyr %>%
-#' @export
-computeCovariateBalanceCohortMethod <- function(population,
-                                                cohortMethodData) {
-
-  CohortMethod::computeCovariateBalance(
-    population = population,
-    cohortMethodData = cohortMethodData
-  ) %>%
-    dplyr::select(
-      covariateId,
-      covariateName,
-      beforeMatchingStdDiff,
-      afterMatchingStdDiff
-    ) %>%
-    return()
-
-}
-
-
-
-
 
 #' @importFrom dplyr %>%
 #' @export
@@ -1155,13 +1085,16 @@ computeIncidenceOverall <- function(ps,
 
 #' @importFrom dplyr %>%
 #' @export
-computeIncidenceCombined <- function(outcomeId,
-                                     analysisSettings,
-                                     alpha = 0.05,
-                                     power = 0.8,
-                                     twoSided = TRUE,
-                                     modelType = "cox",
-                                     secondaryOutcomes = FALSE) {
+computeIncidenceCombined <- function(
+  outcomeId,
+  analysisSettings,
+  alpha = 0.05,
+  power = 0.8,
+  twoSided = TRUE,
+  modelType = "cox",
+  secondaryOutcomes = FALSE
+)
+{
 
   saveDir <- file.path(
     analysisSettings$saveDirectory,
@@ -1210,10 +1143,23 @@ computeIncidenceCombined <- function(outcomeId,
 
   if (secondaryOutcomes) {
 
+    # failed <- analysisSettings$failed$ps %>%
+    #   dplyr::filter(
+    #     .$stratOutcome == outcomeId
+    #   ) %>%
+    #   dplyr::select(
+    #     "estOutcome"
+    #   ) %>%
+    #   unlist(
+    #     use.names = FALSE
+    #   )
+
     predLoc <- which(analysisSettings$outcomeIds == outcomeId)
     compLoc <- analysisSettings$analysisMatrix[, predLoc]
     compareOutcomes <- analysisSettings$outcomeIds[as.logical(compLoc)]
-    compareOutcomes <- compareOutcomes[compareOutcomes != outcomeId]
+    compareOutcomes <- sort(
+      compareOutcomes[compareOutcomes != outcomeId]
+    )
 
     for (compareOutcome in compareOutcomes) {
       dir <- file.path(
@@ -1222,12 +1168,26 @@ computeIncidenceCombined <- function(outcomeId,
         outcomeId,
         compareOutcome
       )
-      ps <- readRDS(
-        file.path(
-          dir,
-          "ps.rds"
-        )
+
+      ps <- tryCatch(
+        {
+          readRDS(
+            file.path(
+              dir,
+              "ps.rds"
+            )
+          )
+        },
+        error = function(e)
+        {
+          e$message
+        }
       )
+
+      if (is.character(ps))
+      {
+        next
+      }
 
       incidence <-
         computeIncidenceOverall(ps) %>%
@@ -1362,8 +1322,9 @@ predictionPerformance <- function(outcomeId,
           "AUPRC",
           "BrierScore",
           "BrierScaled",
-          "CalibrationIntercept.Intercept",
-          "CalibrationSlope.Gradient"
+          "CalibrationIntercept",
+          "CalibrationSlope",
+          "CalibrationInLarge"
         )
       ) %>%
       dplyr::mutate(
@@ -1375,7 +1336,8 @@ predictionPerformance <- function(outcomeId,
           "brierScore",
           "brierScaled",
           "calibrationIntercept",
-          "calibrationSlope"
+          "calibrationSlope",
+          "calibrationInLarge"
         )
       ) %>%
       dplyr::select(
@@ -1460,4 +1422,3 @@ predictionPerformanceAnalysis <- function(analysisSettings,
 
   return(performance)
 }
-

@@ -125,6 +125,23 @@ prepareMultipleRseeViewer <- function(
                 "incidence.rds"
             )
         )
+
+    # analysisDirs <- sapply(
+    #   pathList,
+    #   createAnlysisPath,
+    #   file = "incidenceOverall.rds"
+    # )
+    # lapply(
+    #   analysisDirs,
+    #   readRDS
+    # ) %>%
+    #   dplyr::bind_rows() %>%
+    #   saveRDS(
+    #     file.path(
+    #       saveDir,
+    #       "incidenceOverall.rds"
+    #     )
+    #   )
     analysisDirs <- sapply(
         pathList,
         createAnlysisPath,
@@ -141,6 +158,24 @@ prepareMultipleRseeViewer <- function(
                 "predictionPerformance.rds"
             )
         )
+
+    # analysisDirs <- sapply(
+    #   pathList,
+    #   createAnlysisPath,
+    #   file = "mappedOverallResults.rds"
+    # )
+    # lapply(
+    #   analysisDirs,
+    #   readRDS
+    # ) %>%
+    #   dplyr::bind_rows() %>%
+    #   saveRDS(
+    #     file.path(
+    #       saveDir,
+    #       "mappedOverallResults.rds"
+    #     )
+    #   )
+
     analysisDirs <- sapply(
         pathList,
         createAnlysisPath,
@@ -192,7 +227,7 @@ prepareMultipleRseeViewer <- function(
     for (path in pathList) {
         filesToCopy <- list.files(
             path,
-            pattern = "^auc|^bal|^ps|cal",
+            pattern = "^overall|^auc|^bal|^ps|cal",
             full.names = TRUE
         )
         file.copy(

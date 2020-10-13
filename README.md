@@ -83,5 +83,4 @@ RiskStratifiedEstimation is being developed in R Studio.
 
 RiskStratifiedEstimation is ready for use.
 
-### Development status
-[![Build Status](https://travis-ci.org/OHDSI/RiskStratifiedEstimation.svg?branch=master)](https://travis-ci.org/OHDSI/RiskStratifiedEstimation)
+

@@ -31,38 +31,53 @@ fitOutcomeModels <- function(outcomeId,
     outcomeId
   )
 
-  ps <- readRDS(
-    file.path(
-      analysisPath,
-      "ps.rds"
-    )
+  ps <- tryCatch(
+    {
+      readRDS(
+        file.path(
+          analysisPath,
+          "ps.rds"
+        )
+      )
+    },
+    error = function(e)
+    {
+      e$message
+    }
   )
+
   cohortMethodData <- CohortMethod::loadCohortMethodData(
     file = getDataSettings$cohortMethodDataFolder
   )
+
   ParallelLogger::logInfo(
     "Read PS and CohortMethod data"
   )
+
   ParallelLogger::logInfo(
     "Starting estimation of treatment effects"
   )
 
-  treatmentEffects <- tryCatch({
-    estimateTreatmentEffect(
-      ps = ps,
-      runSettings = runSettings
-    )
-  },
-  error = function(e){
-    e$message
-  })
+  treatmentEffects <- tryCatch(
+    {
+      estimateTreatmentEffect(
+        ps = ps,
+        runSettings = runSettings
+      )
+    },
+    error = function(e)
+    {
+      e$message
+    }
+  )
 
 
   ParallelLogger::logInfo(
     "Done estimating treatment effects"
   )
 
-  if (!is.character(treatmentEffects)) {
+  if (!is.character(treatmentEffects))
+  {
 
     saveRDS(
       treatmentEffects$relativeRiskReduction,
@@ -99,13 +114,25 @@ fitOutcomeModels <- function(outcomeId,
         'ps.rds'
       )
     )
+
   }
+
+  failed <- data.frame(
+    outcomeId = outcomeId,
+    resultsFailed = ifelse(
+      is.character(
+        treatmentEffects
+      ),
+      TRUE,
+      FALSE
+    )
+  )
 
   ParallelLogger::logInfo(
     'Saved results'
   )
 
-  return(NULL)
+  return(failed)
 }
 
 
@@ -128,17 +155,21 @@ fitOutcomeModels <- function(outcomeId,
 #' @importFrom dplyr %>%
 #' @export
 
-fitPsModelSwitch <- function(predictOutcome,
-                             compareOutcome,
-                             analysisSettings,
-                             getDataSettings,
-                             populationSettings,
-                             runSettings){
+fitPsModelSwitch <- function(
+  predictOutcome,
+  compareOutcome,
+  analysisSettings,
+  getDataSettings,
+  populationSettings,
+  runSettings
+)
+{
 
   analysisPath <- file.path(
     analysisSettings$saveDirectory,
     analysisSettings$analysisId
   )
+
 
   predictions <- readRDS(
     file.path(
@@ -171,15 +202,35 @@ fitPsModelSwitch <- function(predictOutcome,
       )
     )
 
+  dummy <- tryCatch(
+    {
+      plpData <-
+        PatientLevelPrediction::loadPlpData(
+          getDataSettings$plpDataFolder
+        )
 
-  plpData <-
-    PatientLevelPrediction::loadPlpData(
-      getDataSettings$plpDataFolder
+      cohortMethodData <-
+        CohortMethod::loadCohortMethodData(
+          getDataSettings$cohortMethodDataFolder
+        )
+    },
+    error = function(e)
+    {
+      e$message
+    }
+  )
+
+  if (is.character(dummy))
+  {
+    return(
+      data.frame(
+        stratOutcome = predictOutcome,
+        estOutcome = compareOutcome,
+        psFailed = TRUE
+      )
     )
-  cohortMethodData <-
-    CohortMethod::loadCohortMethodData(
-      getDataSettings$cohortMethodDataFolder
-    )
+  }
+
   cohorts <- plpData$cohorts
 
   ParallelLogger::logInfo(
@@ -201,6 +252,11 @@ fitPsModelSwitch <- function(predictOutcome,
       riskWindowEnd = populationSettings$populationCmSettings$riskWindowEnd,
       endAnchor = populationSettings$populationCmSettings$endAnchor,
       censorAtNewRiskWindow = populationSettings$populationCmSettings$censorAtNewRiskWindow
+    ) %>%
+    dplyr::mutate(
+      cohortStartDate = lubridate::as_date(
+        cohortStartDate
+      )
     ) %>%
     dplyr::left_join(
       cohorts,
@@ -273,10 +329,10 @@ fitPsModelSwitch <- function(predictOutcome,
     )
   )
 
-  ParallelLogger::logInfo('Switch outcome test')
+  ps <- list()
+  failed <- FALSE
   riskStrata = runSettings$runCmSettings$riskStrata
 
-  ps <- list()
   for (i in 1:riskStrata) {
     ParallelLogger::logInfo(
       paste(
@@ -301,37 +357,67 @@ fitPsModelSwitch <- function(predictOutcome,
       'Fitting ps'
     )
 
-    ps[[i]] <- CohortMethod::createPs(
-      cohortMethodData = cohortMethodData,
-      population = population,
-      excludeCovariateIds = runSettings$runCmSettings$psSettings$excludeCovariateIds,
-      stopOnError = TRUE,
-      errorOnHighCorrelation = TRUE,
-      control = runSettings$runCmSettings$psSettings$control,
-      prior = runSettings$runCmSettings$psSettings$prior
+    ps[[i]] <- tryCatch(
+      {
+        CohortMethod::createPs(
+          cohortMethodData = cohortMethodData,
+          population = population,
+          excludeCovariateIds = runSettings$runCmSettings$psSettings$excludeCovariateIds,
+          stopOnError = TRUE,
+          errorOnHighCorrelation = TRUE,
+          control = runSettings$runCmSettings$psSettings$control,
+          prior = runSettings$runCmSettings$psSettings$prior
+        )
+      },
+      error = function(e)
+      {
+        e$message
+      }
     )
+
+    if (is.character(ps[[i]]))
+    {
+      failed <- TRUE
+      break()
+    }
+
     ParallelLogger::logInfo(
       'Done'
     )
   }
-  saveDir <- file.path(
-    analysisPath,
-    "Estimation",
-    predictOutcome,
-    compareOutcome
-  )
-  if (!dir.exists(saveDir)) {
-    dir.create(
-      saveDir,
-      recursive = TRUE
+
+  if (!failed)
+  {
+
+    saveDir <- file.path(
+      analysisPath,
+      "Estimation",
+      predictOutcome,
+      compareOutcome
+    )
+
+    if (!dir.exists(saveDir))
+    {
+      dir.create(
+        saveDir,
+        recursive = TRUE
+      )
+    }
+
+    saveRDS(
+      ps,
+      file.path(
+        saveDir,
+        "ps.rds"
+      )
     )
   }
 
-  saveRDS(
-    ps,
-    file.path(
-      saveDir,
-      "ps.rds"
+  return(
+    data.frame(
+      stratOutcome = predictOutcome,
+      estOutcome = compareOutcome,
+      psFailed = failed
     )
   )
 
@@ -376,7 +462,8 @@ absoluteRiskReduction <- function(population,
     data = population
   )
 
-  if (psMethod == "matchOnPs") {
+  if (psMethod == "matchOnPs")
+  {
 
     summaryKM <- summary(
       kaplanMeier,
@@ -400,8 +487,8 @@ absoluteRiskReduction <- function(population,
     )
 
   }
-  else if (psMethod == "stratifyByPs") {
-
+  else if (psMethod == "stratifyByPs")
+  {
     kaplanMeier <- list()
     kk <- sort(
       unique(
@@ -409,8 +496,8 @@ absoluteRiskReduction <- function(population,
       )
     )
 
-    for (i in kk) {
-
+    for (i in kk)
+    {
       kaplanMeier[[i]] <- survival::survfit(
         S ~ treatment,
         data = subset(
@@ -451,11 +538,10 @@ absoluteRiskReduction <- function(population,
       arr - 1.96*pooledStandardError,
       arr + 1.96*pooledStandardError
     )
-
   }
 
-  else if (psMethod == "inversePtWeighted") {
-
+  else if (psMethod == "inversePtWeighted")
+  {
     kaplanMeier <-  survival::survfit(
       S ~ treatment,
       data = population,
@@ -480,7 +566,6 @@ absoluteRiskReduction <- function(population,
       arr - 1.96*standardError,
       arr + 1.96*standardError
     )
-
   }
 
   return(res)
@@ -502,13 +587,16 @@ absoluteRiskReduction <- function(population,
 
 relativeRiskReduction <- function(model){
 
-  if (class(model) == "outcomeModel") {
+  if (class(model) == "OutcomeModel")
+  {
     return(
       exp(
         model$outcomeModelTreatmentEstimate[1:3]
       )
     )
-  } else {
+  }
+  else
+  {
     return(
       summary(model)$conf.int[c(1, 3:4)]
     )
@@ -583,27 +671,28 @@ outcomeModelWeighted <- function(ps,
 #'
 #' @export
 
-createIPW <- function(ps,
-                      weightsType = 'ATE',
-                      useStabilizedWeights = TRUE,
-                      truncationLevels = c(.01, .99)){
+createIPW <- function(
+  ps,
+  weightsType = 'ATE',
+  useStabilizedWeights = TRUE,
+  truncationLevels = c(.01, .99)
+)
+{
 
-  if (weightsType == 'ATE') {
-
+  if (weightsType == 'ATE')
+  {
     ps$weights <- ps$treatment / ps$propensityScore + (1 - ps$treatment) / (1 - ps$propensityScore)
-
-  } else {
-
+  }
+  else
+  {
     ps$weights <- ps$treatment + ps$propensityScore*(1 - ps$treatment) / (1 - ps$propensityScore)
-
   }
 
-  if (useStabilizedWeights) {
-
+  if (useStabilizedWeights)
+  {
     ps$stability <- mean(
       ps$treatment
     )
-
     ps$weights <- ps$treatment*ps$weights*ps$stability + (1 - ps$treatment)*ps$weights*(1 - ps$stability)
     ps <- dplyr::select(
       ps,
@@ -646,8 +735,8 @@ stratifiedKaplanMeier <- function(population, timePoint) {
 
   kaplanMeier <- list()
 
-  for (i in unique(population$stratumId)) {
-
+  for (i in unique(population$stratumId))
+  {
     kaplanMeier[[i]] <- survival::survfit(
       S ~ treatment,
       data = subset(
@@ -655,7 +744,6 @@ stratifiedKaplanMeier <- function(population, timePoint) {
         stratumId == i
       )
     )
-
   }
 
   summaryKMList <- lapply(
@@ -720,8 +808,8 @@ stratifiedKaplanMeier <- function(population, timePoint) {
 estimateTreatmentEffect <- function(ps,
                                     runSettings) {
 
-  if (runSettings$runCmSettings$psMethod == "matchOnPs") {
-
+  if (runSettings$runCmSettings$psMethod == "matchOnPs")
+  {
     ps <- lapply(
       ps,
       CohortMethod::matchOnPs,
@@ -808,8 +896,9 @@ estimateTreatmentEffect <- function(ps,
       1:riskStrata
     )
 
-  } else if (runSettings$runCmSettings$psMethod == "stratifyByPs") { # Need to fix the cases variable for stratification on ps!!!!
-
+  }
+  else if (runSettings$runCmSettings$psMethod == "stratifyByPs")
+  {
     ps <- lapply(
       ps,
       CohortMethod::stratifyByPs,
@@ -901,8 +990,9 @@ estimateTreatmentEffect <- function(ps,
       1:riskStrata
     )
 
-  } else if (runSettings$runCmSettings$psMethod == "inversePtWeighted") {
-
+  }
+  else if (runSettings$runCmSettings$psMethod == "inversePtWeighted")
+  {
     ps <- lapply(
       ps,
       createIPW,
@@ -1020,12 +1110,14 @@ estimateTreatmentEffect <- function(ps,
 #'
 #' @export
 
-fitPsModelOverall <- function(outcomeId,
-                              getDataSettings,
-                              populationSettings,
-                              analysisSettings,
-                              runCmSettings){
-
+fitPsModelOverall <- function(
+  outcomeId,
+  getDataSettings,
+  populationSettings,
+  analysisSettings,
+  runCmSettings
+)
+{
   cohortMethodData <- CohortMethod::loadCohortMethodData(
     file = getDataSettings$cohortMethodDataFolder
   )
@@ -1034,8 +1126,37 @@ fitPsModelOverall <- function(outcomeId,
     file = getDataSettings$plpDataFolder
   )
 
+  populationCm <- CohortMethod::createStudyPopulation(
+    cohortMethodData = cohortMethodData,
+    outcomeId = outcomeId,
+    firstExposureOnly = populationSettings$populationCmSettings$firstExposureOnly,
+    restrictToCommonPeriod = populationSettings$populationCmSettings$restrictToCommonPeriod,
+    washoutPeriod = populationSettings$populationCmSettings$washoutPeriod,
+    removeDuplicateSubjects = populationSettings$populationCmSettings$removeDuplicateSubjects,
+    removeSubjectsWithPriorOutcome = populationSettings$populationCmSettings$removeSubjectsWithPriorOutcome,
+    priorOutcomeLookback = populationSettings$populationCmSettings$priorOutcomeLookback,
+    minDaysAtRisk = populationSettings$populationCmSettings$minDaysAtRisk,
+    riskWindowStart = populationSettings$populationCmSettings$riskWindowStart,
+    startAnchor = populationSettings$populationCmSettings$startAnchor,
+    riskWindowEnd = populationSettings$populationCmSettings$riskWindowEnd,
+    endAnchor = populationSettings$populationCmSettings$endAnchor,
+    censorAtNewRiskWindow = populationSettings$populationCmSettings$censorAtNewRiskWindow
+  ) %>%
+    dplyr::mutate(
+      cohortStartDate = lubridate::as_date(
+        cohortStartDate
+      )
+    )
+
+  startingPop <- populationCm %>%
+    dplyr::left_join(
+      plpData$cohorts
+    )
+
+
   populationPlp <- PatientLevelPrediction::createStudyPopulation(
     plpData = plpData,
+    # population = as.data.frame(startingPop),
     outcomeId = outcomeId,
     binary = populationSettings$populationPlpSettings$binary,
     includeAllOutcomes = populationSettings$populationPlpSettings$includeAllOutcomes,
@@ -1052,14 +1173,19 @@ fitPsModelOverall <- function(outcomeId,
     verbosity = populationSettings$populationPlpSettings$verbosity
   )
 
-  populationSubset <- cohortMethodData$cohorts %>%
-    dplyr::filter(
-      subjectId %in% populationPlp$subjectId
+  pop <- populationCm %>%
+    dplyr::select(
+      "rowId",
+      "subjectId",
+      "treatment"
+    ) %>%
+    dplyr::left_join(
+      populationPlp
     )
 
   ps <- CohortMethod::createPs(
     cohortMethodData = cohortMethodData,
-    population = populationSubset,
+    population = as.data.frame(pop),
     includeCovariateIds = runCmSettings$psSettings$includeCovariateIds,
     maxCohortSizeForFitting = runCmSettings$psSettings$maxCohortSizeForFitting,
     errorOnHighCorrelation = runCmSettings$psSettings$errorOnHighCorrelation,
@@ -1120,11 +1246,13 @@ fitPsModelOverall <- function(outcomeId,
 #'
 #' @export
 
-fitOutcomeModelsOverall <- function(outcomeId,
-                                    analysisSettings,
-                                    getDataSettings,
-                                    runCmSettings){
-
+fitOutcomeModelsOverall <- function(
+  outcomeId,
+  analysisSettings,
+  getDataSettings,
+  runCmSettings
+)
+{
   ParallelLogger::logInfo(
     paste(
       "Calculating main results for outcome:",
@@ -1146,8 +1274,8 @@ fitOutcomeModelsOverall <- function(outcomeId,
     file = getDataSettings$cohortMethodDataFolder
   )
 
-  if (runCmSettings$psMethod == "matchOnPs") {
-
+  if (runCmSettings$psMethod == "matchOnPs")
+  {
     matchedPop <-  CohortMethod::matchOnPs(
       ps,
       caliper = runCmSettings$effectEstimationSettings$caliper,
@@ -1172,8 +1300,9 @@ fitOutcomeModelsOverall <- function(outcomeId,
       outcomeModel
     )
 
-  } else if (runCmSettings$psMethod == "stratifyByPs") {
-
+  }
+  else if (runCmSettings$psMethod == "stratifyByPs")
+  {
     stratifiedPop <- CohortMethod::stratifyByPs(
       ps,
       numberOfStrata = runCmSettings$effectEstimationSettings$numberOfStrata,
@@ -1198,8 +1327,8 @@ fitOutcomeModelsOverall <- function(outcomeId,
     )
 
   }
-  else if (psMethod == "inversePtWeighted") {
-
+  else if (psMethod == "inversePtWeighted")
+  {
     ps <- createIPW(
       ps,
       weightsType = runCmSettings$effectEstimationSettings$weightsType,
@@ -1280,11 +1409,14 @@ fitOutcomeModelsOverall <- function(outcomeId,
 #'
 #' @importFrom dplyr %>%
 
-fitPsModel <- function(outcomeId,
-                       getDataSettings,  # For cohortMethodDataFolder, plpDataFolder
-                       populationSettings, # For populationCmSettings, populationPlpSettings
-                       runSettings,
-                       analysisSettings){
+fitPsModel <- function(
+  outcomeId,
+  getDataSettings,
+  populationSettings,
+  runSettings,
+  analysisSettings
+)
+{
 
   analysisPath <- file.path(
     analysisSettings$saveDirectory,
@@ -1366,12 +1498,13 @@ fitPsModel <- function(outcomeId,
 
   pathToPlpResult <- runSettings$runPlpSettings$plpResults %>%
     dplyr::filter(
-      outcomeId == outcomeId
+      outcomeId == !!outcomeId
     ) %>%
     dplyr::select(
-      directory
+      "directory"
     ) %>%
-    unlist()
+    unlist() %>%
+    as.character()
 
   predictionResult <- PatientLevelPrediction::loadPlpResult(
     file.path(
@@ -1414,9 +1547,9 @@ fitPsModel <- function(outcomeId,
   )
 
   ps <- list()
-  for (i in 1:nRiskStrata) {
-    population <- populationCm[populationCm$subjectId %in% mapMatrix[mapMatrix$riskStratum == i,]$subjectId, ] # dplyr!!
-
+  for (i in 1:nRiskStrata)
+  {
+    population <- populationCm[populationCm$subjectId %in% mapMatrix[mapMatrix$riskStratum == i,]$subjectId, ]
     ps[[i]] <- CohortMethod::createPs(
       cohortMethodData = cohortMethodData,
       population = population,
@@ -1521,8 +1654,8 @@ getCounts <- function(population,
     data = population
   )
 
-  if (psMethod == "matchOnPs") {
-
+  if (psMethod == "matchOnPs")
+  {
     summaryKM <- summary(
       kaplanMeier,
       times = timePoint
@@ -1530,8 +1663,9 @@ getCounts <- function(population,
 
     res <- 1 - summaryKM$surv
 
-  } else if (psMethod == "stratifyByPs") {
-
+  }
+  else if (psMethod == "stratifyByPs")
+  {
     kaplanMeier <- list()
     stratId <- sort(
       unique(
@@ -1539,8 +1673,8 @@ getCounts <- function(population,
       )
     )
 
-    for (i in stratId) {
-
+    for (i in stratId)
+    {
       kaplanMeier[[i]] <- survival::survfit(
         S ~ treatment,
         data = subset(
@@ -1567,8 +1701,9 @@ getCounts <- function(population,
         )
       )
     )
-  } else if (psMethod == "inversePtWeighted") {
-
+  }
+  else if (psMethod == "inversePtWeighted")
+  {
     kaplanMeier <-  survival::survfit(
       S ~ treatment,
       data = population,
@@ -1591,7 +1726,8 @@ getCounts <- function(population,
 
 
 
-getStandadrdError <- function(summaryKmList){
+getStandadrdError <- function(summaryKmList)
+{
 
   sqrt(sum(summaryKmList$std.err^2))
 }
@@ -1599,6 +1735,7 @@ getStandadrdError <- function(summaryKmList){
 
 
 
-getAbsoluteDifference <- function(summaryKMList){
+getAbsoluteDifference <- function(summaryKMList)
+{
   diff(summaryKMList$surv)
 }
