@@ -11,6 +11,9 @@ r_packages:
   - drat
   - devtools
 
+before_install:
+  - sudo $(which R) CMD javareconf
+
 r_github_packages:
   - OHDSI/ParallelLogger
   - OHDSI/SqlRender
