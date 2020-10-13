@@ -9,9 +9,9 @@ branches:
 r_packages:
   - covr
   - drat
+  - devtools
 
 r_github_packages:
-  - OHDSI/OhdsiRTools
   - OHDSI/ParallelLogger
   - OHDSI/SqlRender
   - OHDSI/DatabaseConnector
@@ -32,8 +32,7 @@ script:
 
 notifications:
   recipients:
-    - p.rijnbeek@erasmusmc.nl
-    - a.rekkas@lumc.nl
+    - a.rekkas@erasmusmc.nl
   email:
     on_success: change
     on_failure: change
