@@ -61,9 +61,8 @@ Getting Started
 3. In R, use the following commands to download and install RiskStratifiedEstimation:
 
   ```r
-  install.packages("drat")
-  drat::addRepo("OHDSI")
-  install.packages("RiskStratifiedEstimation")
+  install.packages("devtools")
+  devtools::install_github("OHDSI/RiskStratifiedEstimation")
   ```
 
 Getting Involved
