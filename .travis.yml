@@ -11,6 +11,11 @@ r_packages:
   - drat
   - devtools
 
+branches:
+  only:
+    - master
+    - develop
+
 before_install:
   - sudo $(which R) CMD javareconf
 
