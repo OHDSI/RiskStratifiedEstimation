@@ -4,7 +4,7 @@
 \alias{fitOutcomeModels}
 \title{Fit outcome models}
 \usage{
-fitOutcomeModels(outcomeId, getDataSettings, pathToPs, runSettings)
+fitOutcomeModels(outcomeId, getDataSettings, pathToPs, runCmSettings)
 }
 \arguments{
 \item{outcomeId}{The outcome of interest for which the esitmation is performed. That is the outcome
@@ -15,11 +15,9 @@ for which risk stratification is performed.}
 
 \item{pathToPs}{The path to the \code{RSEE} analysis results.}
 
-\item{runSettings}{An R object of type \code{runSettings} created using the function
-\code{\link[RiskStratifiedEstimation]{createRunSettings}}.}
-}
-\value{
-\code{NULL}. The results are all saved.
+\item{runSettings}{The settings for running a \code{CohortMethod}
+analysis created from
+\code{\link[RiskStratifiedEstimation]{createRunCmSettings}}.}
 }
 \description{
 Fits outcome models within risk strata, estimating relative and absolute differences. Designed to be performed within

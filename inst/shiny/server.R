@@ -105,6 +105,8 @@ shiny::shinyServer(
 
         table <- res %>%
           dplyr::select(
+            stratOutcome,
+            analysisType,
             treatmentPersons,
             treatmentDays,
             treatmentOutcomes,
@@ -122,6 +124,7 @@ shiny::shinyServer(
             table,
             colnames = c(
               "Outcome",
+              "Analysis",
               "Treatment subjects",
               "Treatment years",
               "Treatment events",
@@ -156,7 +159,6 @@ shiny::shinyServer(
                 )
               )
             )
-
           ) %>%
           DT::formatCurrency(
             columns =  "treatmentPersons",
@@ -219,6 +221,7 @@ shiny::shinyServer(
         table <- res %>%
           dplyr::select(
             estOutcome,
+            analysisType,
             riskStratum,
             treatmentPersons,
             treatmentDays,
@@ -237,6 +240,7 @@ shiny::shinyServer(
             table,
             colnames = c(
               "Outcome",
+              "Analysis",
               "Risk stratum",
               "Treatment subjects",
               "Treatment years",
@@ -420,6 +424,7 @@ shiny::shinyServer(
           dplyr::select(
             Outcome,
             riskStratum,
+            analysisType,
             combined
           ) %>%
           tidyr::spread(riskStratum, combined) %>%
@@ -488,7 +493,8 @@ shiny::shinyServer(
           dplyr::select(
             Outcome,
             riskStratum,
-            combined
+            combined,
+            analysisType
           ) %>%
           tidyr::spread(riskStratum, combined) %>%
           DT::datatable(
@@ -595,6 +601,7 @@ shiny::shinyServer(
           ) %>%
           dplyr::select(
             c(
+              "covariateId",
               "riskStratum",
               "covariateName",
               "beforeMatchingStdDiff",
@@ -605,10 +612,17 @@ shiny::shinyServer(
         DT::datatable(
           res,
           colnames = c(
+            "Covariate Id",
             "Risk stratum",
             "Covariate name",
             "Before",
             "After"
+          ),
+          options = list(
+            order = list(
+              5,
+              "desc"
+            )
           )
         ) %>%
           return()
@@ -653,7 +667,7 @@ shiny::shinyServer(
 
     output$overallBalanceTable <- DT::renderDataTable(
       {
-        res <- balanceSubset() %>%
+        res <- overallBalanceSubset() %>%
           dplyr::mutate(
             afterMatchingStdDiff = abs(
               round(
@@ -670,6 +684,7 @@ shiny::shinyServer(
           ) %>%
           dplyr::select(
             c(
+              "covariateId",
               "covariateName",
               "beforeMatchingStdDiff",
               "afterMatchingStdDiff"
@@ -679,9 +694,16 @@ shiny::shinyServer(
         DT::datatable(
           res,
           colnames = c(
+            "Covariate Id",
             "Covariate name",
             "Before",
             "After"
+          ),
+          options = list(
+            order = list(
+              4,
+              "desc"
+            )
           )
         ) %>%
           return()

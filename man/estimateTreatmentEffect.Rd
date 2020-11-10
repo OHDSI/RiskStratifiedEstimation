@@ -4,14 +4,13 @@
 \alias{estimateTreatmentEffect}
 \title{Estimate treatment effects within risk strata}
 \usage{
-estimateTreatmentEffect(ps, runSettings)
+estimateTreatmentEffect(ps, runCmSettings)
 }
 \arguments{
 \item{ps}{A list of objects created from \code{\link[CohortMethod]{createPs}} estimated within risk
 strata.}
 
-\item{runSettings}{An R object of type \code{runSettings} created using the function
-\code{\link[RiskStratifiedEstimation]{createRunSettings}}}
+\item{runCmSettings}{The settings for running a \code{CohortMethod} analysis.}
 }
 \value{
 A list containing :

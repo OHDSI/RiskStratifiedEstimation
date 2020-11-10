@@ -7,7 +7,6 @@
 createAnalysisSettings(
   analysisId = NULL,
   databaseName,
-  analysisType,
   treatmentCohortId,
   comparatorCohortId,
   outcomeIds,
@@ -22,9 +21,6 @@ createAnalysisSettings(
 \item{analysisId}{The analysis ID.}
 
 \item{databaseName}{The name of the database.}
-
-\item{analysisType}{The type of the analysis. Could be "matching", "stratifyByPs" or
-"inversePtWeighted".}
 
 \item{treatmentCohortId}{The cohort definition id of the treatment cohort in the cohortTable.}
 

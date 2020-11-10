@@ -2,29 +2,32 @@
 % Please edit documentation in R/CreateArgFuns.R
 \name{createRunCmSettingsArgs}
 \alias{createRunCmSettingsArgs}
-\title{Create a parameter object for running the estimation step Create a parameter object for running the
-estimation step. This function is used to create part of the input of
-\code{\link[RiskStratifiedEstimation]{createRunSettings}}.}
+\title{Create a parameter object for running the estimation step Create a parameter
+object for running the estimation step. This function is used to create part
+of the input of \code{\link[RiskStratifiedEstimation]{createRunSettings}}.}
 \usage{
 createRunCmSettingsArgs(
-  psMethod = "inversePtWeighted",
-  effectEstimationSettings = createCreateIPWArgs(),
+  psMethod = "stratifyByPs",
+  label = NULL,
+  effectEstimationSettings = createStratifyByPsArgs(),
   psSettings = createCreatePsArgs(),
   createPsThreads = 1,
   fitOutcomeModelsThreads = 1,
-  createPsThreadsNegativeControls = 1,
-  estimateOverallResults = FALSE,
   timePoint = 365,
   riskStrata = 4
 )
 }
 \arguments{
-\item{psMethod}{How should the propensity scores be used? Can be one of
-"inversePtWeighted", "stratifyByPs" or "matchOnPs".}
+\item{psMethod}{How should the propensity scores be used? Can
+be one of "inversePtWeighted", "stratifyByPs"
+ or "matchOnPs".}
 
-\item{effectEstimationSettings}{Parameter object providing further settings for the
-implementation of selected \code{psMethod} to the
-estimation process. Can be created using one of
+\item{label}{A single-word description of the analysis.}
+
+\item{effectEstimationSettings}{Parameter object providing further settings
+for the implementation of selected \code{psMethod}
+to the estimation process. Can be created using
+one of
 \code{\link[RiskStratifiedEstimation]{createCreateIPWArgs}},
 when \code{inversePtWeighted} is selected,
 \code{\link[RiskStratifiedEstimation]{createStratifyByPsArgs}}
@@ -32,19 +35,14 @@ when \code{stratifyByPs} is selected or
 \code{\link[RiskStratifiedEstimation]{createMatchOnPsArgs}}
 when \code{matchOnPs} is selected.}
 
-\item{psSettings}{Parameter object for \code{\link[CohortMethod]{createPs}}}
+\item{psSettings}{Parameter object for
+\code{\link[CohortMethod]{createPs}}}
 
-\item{createPsThreads}{The number of parallel threads for the estimation of the
-propensity scores. Default is 1.}
+\item{createPsThreads}{The number of parallel threads for the
+estimation of the propensity scores. Default is 1.}
 
 \item{fitOutcomeModelsThreads}{The number of parallel threads for the estimation of the
-outcome models}
-
-\item{createPsThreadsNegativeControls}{The number of parallel threads for the estimation of the
-negative control outcomes}
-
-\item{estimateOverallResults}{Should overall results be estimated? Default is
-\code{FALSE}}
+outcome models.}
 
 \item{timePoint}{The time point after cohort start that absolute differences
 should be estimated.}
@@ -55,7 +53,7 @@ should be estimated.}
 A parameter object for running the the estimation step.
 }
 \description{
-Create a parameter object for running the estimation step Create a parameter object for running the
-estimation step. This function is used to create part of the input of
-\code{\link[RiskStratifiedEstimation]{createRunSettings}}.
+Create a parameter object for running the estimation step Create a parameter
+object for running the estimation step. This function is used to create part
+of the input of \code{\link[RiskStratifiedEstimation]{createRunSettings}}.
 }

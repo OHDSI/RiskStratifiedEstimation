@@ -15,16 +15,16 @@ shiny::shinyUI(
         )
       ),
       shinydashboard::sidebarMenu(
-        tags$head(
-          tags$style(
-            HTML(
+        shiny::tags$head(
+          shiny::tags$style(
+            shiny::HTML(
               '#estOutcomeEstimation+ div>.selectize-dropdown{bottom: 100% !important; top:auto!important;}'
             )
           )
         ),
-        tags$head(
-          tags$style(
-            HTML(
+        shiny::tags$head(
+          shiny::tags$style(
+            shiny::HTML(
               '#predictionPopulation+ div>.selectize-dropdown{bottom: 100% !important; top:auto!important;}'
             )
           )
@@ -43,14 +43,14 @@ shiny::shinyUI(
         shiny::selectInput(
           "treatment",
           "Treatment",
-          unique(mapExposures$exposure_name),
-          selected = unique(mapExposures$exposure_name)[1]
+          unique(analyses$treatment),
+          selected = unique(analyses$treatment)[1]
         ),
         shiny::selectInput(
           "comparator",
           "Comparator",
-          unique(mapExposures$exposure_name),
-          selected = unique(mapExposures$exposure_name)[2]
+          unique(analyses$comparator),
+          selected = unique(analyses$comparator)[1]
         ),
         shiny::selectInput(
           "stratOutcome",
