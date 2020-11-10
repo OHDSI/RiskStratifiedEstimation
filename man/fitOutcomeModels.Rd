@@ -15,9 +15,9 @@ for which risk stratification is performed.}
 
 \item{pathToPs}{The path to the \code{RSEE} analysis results.}
 
-\item{runSettings}{The settings for running a \code{CohortMethod}
+\item{runCmSettings}{The settings for running a \code{CohortMethod}
 analysis created from
-\code{\link[RiskStratifiedEstimation]{createRunCmSettings}}.}
+\code{\link[RiskStratifiedEstimation]{createRunCmSettingsArgs}}.}
 }
 \description{
 Fits outcome models within risk strata, estimating relative and absolute differences. Designed to be performed within

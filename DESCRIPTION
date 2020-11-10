@@ -10,29 +10,24 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1
 Depends:
-    R (>= 3.2.2),
+    R (>= 4.0.3),
     DatabaseConnector (>= 2.2.0),
     Cyclops,
     FeatureExtraction  (>= 2.2.3),
 Imports: PatientLevelPrediction, 
-         DatabaseConnector,
-         Cyclops,
-         data.table,
-         FeatureExtraction,
          CohortMethod, 
          ParallelLogger,
          SqlRender,
-         foreach,
+         stats,
+         data.table,
          dplyr, 
          shiny,
+         shinydashboard,
          reshape,
-         caret,
-         ffbase, 
          ggplot2,
          gridExtra,
          survival,
          tidyr,
-         doSNOW,
          formatR
 Suggests: knitr,
     rmarkdown
