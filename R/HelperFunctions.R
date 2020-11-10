@@ -118,7 +118,7 @@ switchOutcome <- function(
 #' @importFrom dplyr %>%
 #' @export
 
-createOverallResults <- function(analysisSettings){
+createOverallResults <- function(analysisSettings) {
 
   predictOutcomes <-
     analysisSettings$outcomeIds[which(colSums(analysisSettings$analysisMatrix) != 0)]
@@ -187,15 +187,8 @@ createOverallResults <- function(analysisSettings){
     "Comparator"
   )
 
-  for (predictOutcome in predictOutcomes)
-  {
-
-    # failedAnalyses <- analysisSettings$failedAnalyses %>%
-    #   dplyr::filter(.$stratOutcome == predictOutcome) %>%
-    #   unlist()
-
-    for (predictionPopulation in predictionPopulations)
-    {
+  for (predictOutcome in predictOutcomes) {
+    for (predictionPopulation in predictionPopulations) {
       prediction <- readRDS(
         file.path(
           pathToPrediction,
@@ -217,25 +210,24 @@ createOverallResults <- function(analysisSettings){
           stratOutcome = predictOutcome,
           treatmentId = analysisSettings$treatmentCohortId,
           comparatorId = analysisSettings$comparatorCohortId,
-          analysisType = analysisSettings$analysisType
         )
       saveRDS(
         data,
         file.path(
           saveDir,
-         paste0(
-           paste(
-             "auc",
-             predictionPopulation,
-             analysisSettings$databaseName,
-             analysisSettings$analysisType,
-             analysisSettings$treatmentCohortId,
-             analysisSettings$comparatorCohortId,
-             predictOutcome,
-             sep = "_"
-           ),
-           ".rds"
-         )
+          paste0(
+            paste(
+              "auc",
+              predictionPopulation,
+              analysisSettings$analysisId,
+              analysisSettings$databaseName,
+              analysisSettings$treatmentCohortId,
+              analysisSettings$comparatorCohortId,
+              predictOutcome,
+              sep = "_"
+            ),
+            ".rds"
+          )
         )
       )
 
@@ -266,8 +258,7 @@ createOverallResults <- function(analysisSettings){
           analysisId = analysisSettings$analysisId,
           stratOutcome = predictOutcome,
           treatmentId = analysisSettings$treatmentCohortId,
-          comparatorId = analysisSettings$comparatorCohortId,
-          analysisType = analysisSettings$analysisType
+          comparatorId = analysisSettings$comparatorCohortId
         ) %>%
         as.data.frame() %>%
         saveRDS(
@@ -277,8 +268,8 @@ createOverallResults <- function(analysisSettings){
               paste(
                 "calibration",
                 predictionPopulation,
+                analysisSettings$analysisId,
                 analysisSettings$databaseName,
-                analysisSettings$analysisType,
                 analysisSettings$treatmentCohortId,
                 analysisSettings$comparatorCohortId,
                 predictOutcome,
@@ -288,8 +279,6 @@ createOverallResults <- function(analysisSettings){
             )
           )
         )
-
-
     }
 
     absoluteResult <- readRDS(
@@ -305,7 +294,6 @@ createOverallResults <- function(analysisSettings){
       stratOutcome = predictOutcome,
       estOutcome = predictOutcome,
       database = analysisSettings$databaseName,
-      analysisType = analysisSettings$analysisType,
       treatment = analysisSettings$treatmentCohortId,
       comparator = analysisSettings$comparatorCohortId)
     absolute <- rbind(absolute, absoluteResult
@@ -324,7 +312,6 @@ createOverallResults <- function(analysisSettings){
       stratOutcome = predictOutcome,
       estOutcome = predictOutcome,
       database = analysisSettings$databaseName,
-      analysisType = analysisSettings$analysisType,
       treatment = analysisSettings$treatmentCohortId,
       comparator = analysisSettings$comparatorCohortId
     )
@@ -344,40 +331,10 @@ createOverallResults <- function(analysisSettings){
       stratOutcome = predictOutcome,
       estOutcome = predictOutcome,
       database = analysisSettings$databaseName,
-      analysisType = analysisSettings$analysisType,
       treatment = analysisSettings$treatmentCohortId,
       comparator = analysisSettings$comparatorCohortId
     )
     cases <- rbind(cases, casesResult)
-
-    # psFailed <- analysisSettings$failed$ps %>%
-    #   dplyr::filter(
-    #     .$stratOutcome == predictOutcome
-    #   ) %>%
-    #   dplyr::select(
-    #     "estOutcome"
-    #   ) %>%
-    #   unlist(
-    #     use.names = FALSE
-    #   )
-    #
-    # resFailed <- analysisSettings$failed$results %>%
-    #   dplyr::filter(
-    #     .$stratOutcome == predictOutcome
-    #   ) %>%
-    #   dplyr::select(
-    #     "estOutcome"
-    #   ) %>%
-    #   unlist(
-    #     use.names = FALSE
-    #   )
-    #
-    # failed <- unique(
-    #   c(
-    #     psFailed,
-    #     resFailed
-    #   )
-    # )
 
     predLoc <- which(analysisSettings$outcomeIds == predictOutcome)
     compLoc <- analysisSettings$analysisMatrix[, predLoc]
@@ -387,16 +344,9 @@ createOverallResults <- function(analysisSettings){
     compareOutcomes <- sort(
       compareOutcomes[compareOutcomes != predictOutcome]
     )
-    # predLoc <- which(analysisSettings$outcomeIds == predictOutcome)
-    # compLoc <- analysisSettings$analysisMatrix[, predLoc]
-    # compareOutcomes <- analysisSettings$outcomeIds[as.logical(compLoc)]
-    # compareOutcomes <- compareOutcomes[compareOutcomes != predictOutcome]
-    # compareOutcomes <- compareOutcomes[!compareOutcomes %in% failedAnalyses]
 
-    if (length(compareOutcomes) != 0)
-    {
-      for (compareOutcome in compareOutcomes)
-      {
+    if (length(compareOutcomes) != 0) {
+      for (compareOutcome in compareOutcomes) {
         absoluteResult <- tryCatch(
           {
             absoluteResult <- readRDS(
@@ -415,14 +365,12 @@ createOverallResults <- function(analysisSettings){
           }
         )
 
-        if (!is.character(absoluteResult))
-        {
+        if (!is.character(absoluteResult)) {
           absoluteResult <- data.frame(
             absoluteResult,
             stratOutcome = predictOutcome,
             estOutcome = compareOutcome,
             database = analysisSettings$databaseName,
-            analysisType = analysisSettings$analysisType,
             treatment = analysisSettings$treatmentCohortId,
             comparator = analysisSettings$comparatorCohortId
           )
@@ -448,21 +396,17 @@ createOverallResults <- function(analysisSettings){
           }
         )
 
-        if (!is.character(relativeResult))
-        {
+        if (!is.character(relativeResult)) {
 
           relativeResult <- data.frame(
             relativeResult,
             stratOutcome = predictOutcome,
             estOutcome = compareOutcome,
             database = analysisSettings$databaseName,
-            analysisType = analysisSettings$analysisType,
             treatment = analysisSettings$treatmentCohortId,
             comparator = analysisSettings$comparatorCohortId
           )
-
           relative <- rbind(relative, relativeResult)
-
         }
 
         casesResult <- tryCatch(
@@ -477,21 +421,18 @@ createOverallResults <- function(analysisSettings){
             ) %>%
               dplyr::rename("casesComparator" = "comparator") %>%
               dplyr::rename("casesTreatment" = "treatment")
-
           },
           error = function(e){
             e$message
           }
         )
 
-        if (!is.character(casesResult))
-        {
+        if (!is.character(casesResult)) {
           casesResult <- data.frame(
             casesResult,
             stratOutcome = predictOutcome,
             estOutcome = compareOutcome,
             database = analysisSettings$databaseName,
-            analysisType = analysisSettings$analysisType,
             treatment = analysisSettings$treatmentCohortId,
             comparator = analysisSettings$comparatorCohortId
           )
@@ -530,9 +471,10 @@ createOverallResults <- function(analysisSettings){
     analysis_id = analysisSettings$analysisId,
     description = analysisSettings$description,
     database = analysisSettings$databaseName,
-    analysis_type = analysisSettings$analysisType,
+    analysis_label = analysisSettings$analysisLabels,
     treatment_id = analysisSettings$treatmentCohortId,
-    comparator_id = analysisSettings$comparatorCohortId
+    comparator_id = analysisSettings$comparatorCohortId,
+    row.names = NULL
   ) %>%
     saveRDS(
       file.path(
@@ -592,6 +534,49 @@ fitMultiplePsModelOverall <- function(
       showWarnings = FALSE
     )
   )
+
+}
+
+
+
+#' @importFrom dplyr %>%
+#' @export
+mergeTempFiles <- function(
+  pathToPs,
+  outcomeId,
+  fileName
+) {
+
+  path <- file.path(
+    pathToPs,
+    outcomeId
+  )
+
+  files <- list.files(
+    path = path,
+    pattern = paste(
+      "temp",
+      fileName,
+      sep = "_"
+    ),
+    full.names = TRUE
+  )
+
+  files %>%
+    lapply(readRDS) %>%
+    dplyr::bind_rows() %>%
+    saveRDS(
+      file.path(
+        path,
+        paste(
+          fileName,
+          "rds",
+          sep = "."
+        )
+      )
+    )
+
+  file.remove(files)
 
 }
 

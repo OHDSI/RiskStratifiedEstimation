@@ -145,9 +145,7 @@ computeMeansPerGroupFast <- function(cohorts, covariates) {
             )
             ]
 
-  }
-  else
-  {
+  } else {
     data.table::setkey(covariates, rowId)
 
     cohortCounts <- cohorts[
@@ -385,7 +383,7 @@ computeCovariateBalance4 <- function(population, cohorts, covariates, covariateR
 #' @export
 computeCovariatebalanceBase <- function(
   analysisSettings,
-  runSettings,
+  runCmSettings,
   covariates,
   covariateRef,
   cohorts,
@@ -424,8 +422,7 @@ computeCovariatebalanceBase <- function(
 
   ps <- tryCatch(
     {
-      if (stratOutcome == estOutcome)
-      {
+      if (stratOutcome == estOutcome) {
 
         readRDS(
           file.path(
@@ -435,9 +432,7 @@ computeCovariatebalanceBase <- function(
             "ps.rds"
           )
         )
-      }
-      else
-      {
+      } else {
         readRDS(
           file.path(
             analysisPath,
@@ -450,8 +445,7 @@ computeCovariatebalanceBase <- function(
 
       }
     },
-    error = function(e)
-    {
+    error = function(e) {
       e$message
     }
   )
@@ -459,6 +453,23 @@ computeCovariatebalanceBase <- function(
   if (is.character(ps)) {
     return(NULL)
   } else {
+
+    if (runCmSettings$psMethod == "matchOnPs") {
+      ps <- lapply(
+        ps,
+        CohortMethod::matchOnPs,
+        caliper      = runCmSettings$effectEstimationSettings$caliper,
+        caliperScale = runCmSettings$effectEstimationSettings$caliperScale,
+        maxRatio     = runCmSettings$effectEstimationSettings$maxRatio
+      )
+    } else if (runCmSettings$psMethod == "stratifyByPs") {
+      ps <- lapply(
+        ps,
+        CohortMethod::stratifyByPs,
+        numberOfStrata = runCmSettings$effectEstimationSettings$numberOfStrata,
+        baseSelection  = runCmSettings$effectEstimationSettings$baseSelection
+      )
+    }
 
     ps <- lapply(
       ps,
@@ -473,7 +484,7 @@ computeCovariatebalanceBase <- function(
           covariateRef = covariateRef,
           cohorts = cohorts,
           analysisSettings = analysisSettings,
-          runSettings = runSettings
+          runCmSettings = runCmSettings
         )
       },
       error = function(e) {
@@ -490,7 +501,7 @@ computeCovariatebalanceBase <- function(
           estOutcome = estOutcome,
           treatmentId = analysisSettings$treatmentCohortId,
           comparatorId = analysisSettings$comparatorCohortId,
-          analysisType = analysisSettings$analysisType
+          analysisType = runCmSettings$label
         ) %>%
         dplyr::select(
           c(
@@ -515,6 +526,8 @@ computeCovariatebalanceBase <- function(
               paste(
                 "balance",
                 analysisSettings$analysisId,
+                runCmSettings$label,
+                analysisSettings$databaseName,
                 analysisSettings$treatmentCohortId,
                 analysisSettings$comparatorCohortId,
                 stratOutcome,
@@ -535,7 +548,7 @@ computeCovariatebalanceBase <- function(
 #' @export
 computeCovariateBalanceAnalysis2 <- function(
   analysisSettings,
-  runSettings,
+  runCmSettings,
   getDataSettings = NULL,
   balanceThreads = 1
 )
@@ -619,7 +632,7 @@ computeCovariateBalanceAnalysis2 <- function(
       x = estOutcomes,
       fun = computeCovariatebalanceBase,
       analysisSettings = analysisSettings,
-      runSettings = runSettings,
+      runCmSettings = runCmSettings,
       covariates = covariates,
       covariateRef = covariateRef,
       cohorts = cohorts,
@@ -640,41 +653,14 @@ computeCovariateBalanceOverall <- function(
   covariateRef,
   cohorts,
   analysisSettings,
-  runSettings
+  runCmSettings
 )
 {
 
 
-  psMethod <- runSettings$runCmSettings$psMethod
+  psMethod <- runCmSettings$psMethod
 
-  if (psMethod == "inversePtWeighted") {
-    covariateBalanceList <-
-      lapply(
-        ps,
-        computeCovariateBalanceWeighted,
-        cohortMethodData = cohortMethodData
-      )  %>%
-      dplyr::bind_rows(
-        .id = "riskStratum"
-      ) %>%
-      dplyr::mutate(
-        riskStratum = paste0(
-          "Q",
-          riskStratum
-        )
-      )
-
-  } else if (psMethod == "stratifyByPs" | psMethod == "matchOnPs") {
-
-    # for (i in 1:4)
-    # {
-    #   computeCovariateBalance4(
-    #     population = ps[[i]],
-    #     covariates = covariates,
-    #     covariateRef = covariateRef,
-    #     cohorts = cohorts
-    #   )
-    # }
+  if (psMethod == "stratifyByPs" | psMethod == "matchOnPs") {
 
     covariateBalanceList <- lapply(
       ps,

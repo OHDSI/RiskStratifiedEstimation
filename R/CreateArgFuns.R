@@ -34,20 +34,23 @@
 #'
 #' @export
 
-createPopulationCmSettingsArgs <- function(firstExposureOnly = FALSE,
-                                           restrictToCommonPeriod = FALSE,
-                                           washoutPeriod = 0,
-                                           removeDuplicateSubjects = FALSE,
-                                           removeSubjectsWithPriorOutcome = TRUE,
-                                           priorOutcomeLookback = 99999,
-                                           minDaysAtRisk = 1,
-                                           riskWindowStart = 0,
-                                           addExposureDaysToStart = NULL,
-                                           startAnchor = "cohort start",
-                                           riskWindowEnd = 0,
-                                           addExposureDaysToEnd = NULL,
-                                           endAnchor = "cohort end",
-                                           censorAtNewRiskWindow = FALSE) {
+createPopulationCmSettingsArgs <- function(
+  firstExposureOnly = FALSE,
+  restrictToCommonPeriod = FALSE,
+  washoutPeriod = 0,
+  removeDuplicateSubjects = FALSE,
+  removeSubjectsWithPriorOutcome = TRUE,
+  priorOutcomeLookback = 99999,
+  minDaysAtRisk = 1,
+  riskWindowStart = 0,
+  addExposureDaysToStart = NULL,
+  startAnchor = "cohort start",
+  riskWindowEnd = 0,
+  addExposureDaysToEnd = NULL,
+  endAnchor = "cohort end",
+  censorAtNewRiskWindow = FALSE
+) {
+
   # First: get default values:
   analysis <- list()
   for (name in names(formals(createPopulationCmSettingsArgs))) {
@@ -429,58 +432,63 @@ createCreatePsArgs <- function(excludeCovariateIds = c(),
 
 
 
-#' Create a parameter object for running the estimation step Create a parameter object for running the
-#' estimation step. This function is used to create part of the input of
-#' \code{\link[RiskStratifiedEstimation]{createRunSettings}}.
+#' Create a parameter object for running the estimation step Create a parameter
+#' object for running the estimation step. This function is used to create part
+#' of the input of \code{\link[RiskStratifiedEstimation]{createRunSettings}}.
 #'
-#' @param psMethod                          How should the propensity scores be used? Can be one of
-#'                                          "inversePtWeighted", "stratifyByPs" or "matchOnPs".
-#' @param effectEstimationSettings          Parameter object providing further settings for the
-#'                                          implementation of selected \code{psMethod} to the
-#'                                          estimation process. Can be created using one of
-#'                                          \code{\link[RiskStratifiedEstimation]{createCreateIPWArgs}},
-#'                                          when \code{inversePtWeighted} is selected,
-#'                                          \code{\link[RiskStratifiedEstimation]{createStratifyByPsArgs}}
-#'                                          when \code{stratifyByPs} is selected or
-#'                                          \code{\link[RiskStratifiedEstimation]{createMatchOnPsArgs}}
-#'                                          when \code{matchOnPs} is selected.
-#' @param psSettings                        Parameter object for \code{\link[CohortMethod]{createPs}}
-#' @param createPsThreads                   The number of parallel threads for the estimation of the
-#'                                          propensity scores. Default is 1.
-#' @param fitOutcomeModelsThreads           The number of parallel threads for the estimation of the
-#'                                          outcome models
-#' @param createPsThreadsNegativeControls   The number of parallel threads for the estimation of the
-#'                                          negative control outcomes
-#' @param estimateOverallResults            Should overall results be estimated? Default is
-#'                                          \code{FALSE}
-#' @param timePoint                         The time point after cohort start that absolute differences
-#'                                          should be estimated.
-#' @param riskStrata                        The number of risk strata. Default is 4.
+#' @param psMethod                 How should the propensity scores be used? Can
+#'                                 be one of "inversePtWeighted", "stratifyByPs"
+#'                                  or "matchOnPs".
+#' @param label                    A single-word description of the analysis.
+#' @param effectEstimationSettings Parameter object providing further settings
+#'                                 for the implementation of selected \code{psMethod}
+#'                                 to the estimation process. Can be created using
+#'                                 one of
+#'                                 \code{\link[RiskStratifiedEstimation]{createCreateIPWArgs}},
+#'                                 when \code{inversePtWeighted} is selected,
+#'                                 \code{\link[RiskStratifiedEstimation]{createStratifyByPsArgs}}
+#'                                 when \code{stratifyByPs} is selected or
+#'                                 \code{\link[RiskStratifiedEstimation]{createMatchOnPsArgs}}
+#'                                 when \code{matchOnPs} is selected.
+#' @param psSettings               Parameter object for
+#'                                 \code{\link[CohortMethod]{createPs}}
+#' @param createPsThreads          The number of parallel threads for the
+#'                                 estimation of the propensity scores. Default is 1.
+#' @param fitOutcomeModelsThreads  The number of parallel threads for the estimation of the
+#'                                 outcome models.
+#' @param timePoint                The time point after cohort start that absolute differences
+#'                                 should be estimated.
+#' @param riskStrata               The number of risk strata. Default is 4.
 #'
 #' @return
 #' A parameter object for running the the estimation step.
 #' @export
 
-createRunCmSettingsArgs <- function(psMethod = "inversePtWeighted",
-                                    effectEstimationSettings = createCreateIPWArgs(),
-                                    psSettings = createCreatePsArgs(),
-                                    createPsThreads = 1,
-                                    fitOutcomeModelsThreads = 1,
-                                    createPsThreadsNegativeControls = 1,
-                                    estimateOverallResults = FALSE,
-                                    timePoint = 365,
-                                    riskStrata = 4) {
+createRunCmSettingsArgs <- function(
+  psMethod                 = "stratifyByPs",
+  label                    = NULL,
+  effectEstimationSettings = createStratifyByPsArgs(),
+  psSettings               = createCreatePsArgs(),
+  createPsThreads          = 1,
+  fitOutcomeModelsThreads  = 1,
+  timePoint                = 365,
+  riskStrata               = 4
+) {
 
+  if (is.null(label)) {
+    label <- psMethod
+  }
 
-  res <- list(psMethod = psMethod,
-              psSettings = psSettings,
-              effectEstimationSettings = effectEstimationSettings,
-              createPsThreads = createPsThreads,
-              fitOutcomeModelsThreads = fitOutcomeModelsThreads,
-              createPsThreadsNegativeControls = createPsThreadsNegativeControls,
-              estimateOverallResults = estimateOverallResults,
-              riskStrata = riskStrata,
-              timePoint = timePoint)
+  res <- list(
+    psMethod                        = psMethod,
+    label                           = label,
+    psSettings                      = psSettings,
+    effectEstimationSettings        = effectEstimationSettings,
+    createPsThreads                 = createPsThreads,
+    fitOutcomeModelsThreads         = fitOutcomeModelsThreads,
+    riskStrata                      = riskStrata,
+    timePoint                       = timePoint
+  )
 
   class(res) <- "args"
 
@@ -614,8 +622,6 @@ createCreateIPWArgs <- function(weightsType = "ATE",
 #'
 #' @param analysisId           The analysis ID.
 #' @param databaseName         The name of the database.
-#' @param analysisType         The type of the analysis. Could be "matching", "stratifyByPs" or
-#'                             "inversePtWeighted".
 #' @param treatmentCohortId    The cohort definition id of the treatment cohort in the cohortTable.
 #' @param comparatorCohortId   The cohort definition id of the comparator cohort in the cohortTable.
 #' @param outcomeIds           The cohort definition ids of the outcome cohorts in the outcomeTable.
@@ -650,7 +656,6 @@ createCreateIPWArgs <- function(weightsType = "ATE",
 
 createAnalysisSettings <- function(analysisId = NULL,
                                    databaseName,
-                                   analysisType,
                                    treatmentCohortId,
                                    comparatorCohortId,
                                    outcomeIds,

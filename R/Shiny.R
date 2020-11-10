@@ -109,6 +109,7 @@ prepareMultipleRseeViewer <- function(
                 "map_outcomes.rds"
             )
         )
+
     analysisDirs <- sapply(
         pathList,
         createAnlysisPath,
@@ -126,22 +127,23 @@ prepareMultipleRseeViewer <- function(
             )
         )
 
-    # analysisDirs <- sapply(
-    #   pathList,
-    #   createAnlysisPath,
-    #   file = "incidenceOverall.rds"
-    # )
-    # lapply(
-    #   analysisDirs,
-    #   readRDS
-    # ) %>%
-    #   dplyr::bind_rows() %>%
-    #   saveRDS(
-    #     file.path(
-    #       saveDir,
-    #       "incidenceOverall.rds"
-    #     )
-    #   )
+    analysisDirs <- sapply(
+      pathList,
+      createAnlysisPath,
+      file = "incidenceOverall.rds"
+    )
+    lapply(
+      analysisDirs,
+      readRDS
+    ) %>%
+      dplyr::bind_rows() %>%
+      saveRDS(
+        file.path(
+          saveDir,
+          "incidenceOverall.rds"
+        )
+      )
+
     analysisDirs <- sapply(
         pathList,
         createAnlysisPath,
@@ -159,22 +161,22 @@ prepareMultipleRseeViewer <- function(
             )
         )
 
-    # analysisDirs <- sapply(
-    #   pathList,
-    #   createAnlysisPath,
-    #   file = "mappedOverallResults.rds"
-    # )
-    # lapply(
-    #   analysisDirs,
-    #   readRDS
-    # ) %>%
-    #   dplyr::bind_rows() %>%
-    #   saveRDS(
-    #     file.path(
-    #       saveDir,
-    #       "mappedOverallResults.rds"
-    #     )
-    #   )
+    analysisDirs <- sapply(
+        pathList,
+        createAnlysisPath,
+        file = "mappedOverallResults.rds"
+    )
+    lapply(
+        analysisDirs,
+        readRDS
+    ) %>%
+        dplyr::bind_rows() %>%
+        saveRDS(
+            file.path(
+                saveDir,
+                "mappedOverallResults.rds"
+            )
+        )
 
     analysisDirs <- sapply(
         pathList,
@@ -192,6 +194,7 @@ prepareMultipleRseeViewer <- function(
                 "mappedOverallAbsoluteResults.rds"
             )
         )
+
     analysisDirs <- sapply(
         pathList,
         createAnlysisPath,
@@ -208,6 +211,7 @@ prepareMultipleRseeViewer <- function(
                 "mappedOverallRelativeResults.rds"
             )
         )
+
     analysisDirs <- sapply(
         pathList,
         createAnlysisPath,
@@ -224,6 +228,7 @@ prepareMultipleRseeViewer <- function(
                 "mappedOverallCasesResults.rds"
             )
         )
+
     for (path in pathList) {
         filesToCopy <- list.files(
             path,

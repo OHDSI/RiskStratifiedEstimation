@@ -131,8 +131,7 @@ runRiskStratifiedEstimation <- function(
 
 
 
-  if (is.null(getDataSettings$plpDataFolder))
-  {
+  if (is.null(getDataSettings$plpDataFolder)) {
     prepareForPlpData(
       treatmentCohortId = analysisSettings$treatmentCohortId,
       comparatorCohortId = analysisSettings$comparatorCohortId,
@@ -189,29 +188,26 @@ runRiskStratifiedEstimation <- function(
       "Data",
       "plpData"
     )
-  }
-  else
-  {
+  } else {
     plpData <- PatientLevelPrediction::loadPlpData(
       getDataSettings$plpDataFolder
     )
   }
 
-  if (is.null(getDataSettings$cohortMethodDataFolder))
-  {
+  if (is.null(getDataSettings$cohortMethodDataFolder)) {
 
     dataPath <- file.path(
       analysisPath,
       "Data"
     )
 
-    if (!dir.exists(dataPath))
-    {
+    if (!dir.exists(dataPath)) {
       dir.create(
         dataPath,
         recursive = TRUE
       )
     }
+
     cohortMethodData <- CohortMethod::getDbCohortMethodData(
       connectionDetails = connectionDetails,
       cdmDatabaseSchema = databaseSettings$cdmDatabaseSchema,
@@ -233,6 +229,7 @@ runRiskStratifiedEstimation <- function(
       maxCohortSize = getDataSettings$getCmDataSettings$maxCohortSize,
       covariateSettings = covariateSettings$covariateSettingsCm
     )
+
     CohortMethod::saveCohortMethodData(
       cohortMethodData,
       file.path(
@@ -246,9 +243,7 @@ runRiskStratifiedEstimation <- function(
       "Data",
       "cmData"
     )
-  }
-  else
-  {
+  } else {
     cohortMethodData <- CohortMethod::loadCohortMethodData(
       getDataSettings$cohortMethodDataFolder
     )
@@ -260,7 +255,7 @@ runRiskStratifiedEstimation <- function(
 
 
   cluster <- ParallelLogger::makeCluster(
-    runSettings$runCmSettings$createPsThreads
+    runSettings$runCmSettings[[1]]$createPsThreads
   )
 
   ParallelLogger::clusterRequire(
@@ -271,6 +266,7 @@ runRiskStratifiedEstimation <- function(
     cluster,
     "CohortMethod"
   )
+
   dummy <- ParallelLogger::clusterApply(
     cluster = cluster,
     x = predictOutcomes,
@@ -278,7 +274,7 @@ runRiskStratifiedEstimation <- function(
     getDataSettings = getDataSettings,
     populationSettings = populationSettings,
     analysisSettings = analysisSettings,
-    runCmSettings = runSettings$runCmSettings
+    runCmSettings = runSettings$runCmSettings[[1]]
   )
   ParallelLogger::stopCluster(cluster)
 
@@ -301,8 +297,7 @@ runRiskStratifiedEstimation <- function(
     logger
   )
 
-  for (id in predictOutcomes)
-  {
+  for (id in predictOutcomes) {
     ps <- readRDS(
       file.path(
         analysisSettings$saveDirectory,
@@ -430,7 +425,7 @@ runRiskStratifiedEstimation <- function(
   )
 
   cluster <- ParallelLogger::makeCluster(
-    runSettings$runCmSettings$createPsThreads
+    runSettings$runCmSettings[[1]]$createPsThreads
   )
 
   ParallelLogger::clusterRequire(
@@ -460,8 +455,7 @@ runRiskStratifiedEstimation <- function(
     "Starting propensity score estimation for secondary outcomes"
   )
 
-  for (predictOutcome in predictOutcomes)
-  {
+  for (predictOutcome in predictOutcomes) {
     predLoc <- which(analysisSettings$outcomeIds == predictOutcome)
     compLoc <- analysisSettings$analysisMatrix[, predLoc]
     compareOutcomes <- analysisSettings$outcomeIds[as.logical(compLoc)]
@@ -477,7 +471,7 @@ runRiskStratifiedEstimation <- function(
     if (!is.null(compareOutcomes))
     {
       cluster <- ParallelLogger::makeCluster(
-        runSettings$runCmSettings$createPsThreads
+        runSettings$runCmSettings[[1]]$createPsThreads
       )
 
       ParallelLogger::clusterRequire(
@@ -507,18 +501,9 @@ runRiskStratifiedEstimation <- function(
         }
       )
 
-
       ParallelLogger::stopCluster(
         cluster
       )
-
-      # psFailed <- do.call(
-      #   rbind,
-      #   dummy
-      # ) %>%
-      #   dplyr::bind_rows(
-      #     psFailed
-      #   )
     }
   }
 
@@ -530,10 +515,33 @@ runRiskStratifiedEstimation <- function(
     "Starting estimation of results for main outcomes"
   )
 
+  analysisLabels <- unlist(
+    rlist::list.map(                     # extract the second element of a
+      runSettings$runCmSettings,         # list of lists (here the label)
+      .[2]
+    )
+  )
+
+  names(analysisLabels) <- NULL
+  analysisSettings$analysisLabels <- analysisLabels
+
+  mergeMultipleTempFiles <- function(
+    pathToPs,
+    outcomeId,
+    mergeTempFiles,
+    fileNames
+  ) {
+    lapply(
+      fileNames,
+      mergeTempFiles,
+      pathToPs = pathToPs,
+      outcomeId = outcomeId
+    )
+  }
 
   cluster <- ParallelLogger::makeCluster(
-    runSettings$runCmSettings$createPsThreads
-  )
+    runSettings$runCmSetting[[1]]$fitOutcomeModelsThreads      # only the first is used
+  )                                                            # for the cluster
 
   ParallelLogger::clusterRequire(
     cluster,
@@ -543,39 +551,109 @@ runRiskStratifiedEstimation <- function(
     )
   )
 
+  for (i in seq_along(analysisLabels)) {
+
+    ParallelLogger::logInfo(
+      paste(
+        "Estimating results for the analysis:",
+        analysisLabels[i]
+      )
+    )
+    settings <- runSettings$runCmSettings[[i]]
+
+    pathToPs <- file.path(
+      analysisSettings$saveDirectory,
+      analysisSettings$analysisId,
+      "Estimation"
+    )
+
+    dummy <- tryCatch(
+      {
+        ParallelLogger::clusterApply(
+          cluster = cluster,
+          x = predictOutcomes,
+          fun = fitOutcomeModels,
+          getDataSettings = getDataSettings,
+          pathToPs = pathToPs,
+          runCmSettings = settings
+        )
+      },
+      error = function(e)
+      {
+        e$message
+      }
+    )
+
+
+    ParallelLogger::logInfo(
+      "Starting estimation of results for secondary outcomes"
+    )
+
+    for (predictOutcome in predictOutcomes) {
+      predLoc <- which(analysisSettings$outcomeIds == predictOutcome)
+      compLoc <- analysisSettings$analysisMatrix[, predLoc]
+      compareOutcomes <- analysisSettings$outcomeIds[as.logical(compLoc)]
+      compareOutcomes <- sort(
+        compareOutcomes[compareOutcomes != predictOutcome]
+      )
+
+      if (length(compareOutcomes) == 0) {
+        compareOutcomes <- NULL
+      }
+
+      if (!is.null(compareOutcomes)) {
+
+        pathToPs <- file.path(
+          analysisSettings$saveDirectory,
+          analysisSettings$analysisId,
+          "Estimation",
+          predictOutcome
+        )
+
+        dummy <- tryCatch(
+          {
+            ParallelLogger::clusterApply(
+              cluster = cluster,
+              x = compareOutcomes,
+              fun = fitOutcomeModels,
+              getDataSettings = getDataSettings,
+              pathToPs = pathToPs,
+              runCmSettings = settings
+            )
+          },
+          error = function(e)
+          {
+            e$message
+          }
+        )
+      }
+    }
+  }
+
+  ParallelLogger::logInfo(
+    "Merging temporary files"
+  )
+
   pathToPs <- file.path(
     analysisSettings$saveDirectory,
     analysisSettings$analysisId,
     "Estimation"
   )
 
-  dummy <- tryCatch(
-    {
-      ParallelLogger::clusterApply(
-        cluster = cluster,
-        x = predictOutcomes,
-        fun = fitOutcomeModels,
-        getDataSettings = getDataSettings,
-        pathToPs = pathToPs,
-        runSettings = runSettings
-      )
-    },
-    error = function(e)
-    {
-      e$message
-    }
+  dummy <- ParallelLogger::clusterApply(
+    cluster = cluster,
+    x = predictOutcomes,
+    fun = mergeMultipleTempFiles,
+    fileNames = list(
+      "relativeRiskReduction",
+      "absoluteRiskReduction",
+      "cases"
+    ),
+    mergeTempFiles = mergeTempFiles,
+    pathToPs = pathToPs
   )
 
-  ParallelLogger::stopCluster(
-    cluster
-  )
-
-  ParallelLogger::logInfo(
-    "Starting estimation of results for secondary outcomes"
-  )
-
-  for (predictOutcome in predictOutcomes)
-  {
+  for (predictOutcome in predictOutcomes) {
     predLoc <- which(analysisSettings$outcomeIds == predictOutcome)
     compLoc <- analysisSettings$analysisMatrix[, predLoc]
     compareOutcomes <- analysisSettings$outcomeIds[as.logical(compLoc)]
@@ -583,22 +661,11 @@ runRiskStratifiedEstimation <- function(
       compareOutcomes[compareOutcomes != predictOutcome]
     )
 
-    if (length(compareOutcomes) == 0)
-    {
+    if (length(compareOutcomes) == 0) {
       compareOutcomes <- NULL
     }
-    if (!is.null(compareOutcomes))
-    {
-      cluster <- ParallelLogger::makeCluster(
-        runSettings$runCmSettings$fitOutcomeModelsThreads
-      )
-      ParallelLogger::clusterRequire(
-        cluster,
-        c(
-          "RiskStratifiedEstimation",
-          "CohortMethod"
-        )
-      )
+
+    if (!is.null(compareOutcomes)) {
       pathToPs <- file.path(
         analysisSettings$saveDirectory,
         analysisSettings$analysisId,
@@ -606,37 +673,33 @@ runRiskStratifiedEstimation <- function(
         predictOutcome
       )
 
-      dummy <- tryCatch(
-        {
-          ParallelLogger::clusterApply(
-            cluster = cluster,
-            x = compareOutcomes,
-            fun = fitOutcomeModels,
-            getDataSettings = getDataSettings,
-            pathToPs = pathToPs,
-            runSettings = runSettings
-          )
-        },
-        error = function(e)
-        {
-          e$message
-        }
-      )
-
-      ParallelLogger::stopCluster(
-        cluster
+      dummy <- ParallelLogger::clusterApply(
+        cluster = cluster,
+        x = compareOutcomes,
+        fun = mergeMultipleTempFiles,
+        fileNames = list(
+          "relativeRiskReduction",
+          "absoluteRiskReduction",
+          "cases"
+        ),
+        mergeTempFiles = mergeTempFiles,
+        pathToPs = pathToPs
       )
     }
   }
+
+  ParallelLogger::stopCluster(
+    cluster
+  )
 
   ParallelLogger::logInfo(
     "Evaluating prediction models"
   )
 
   nThreads <- ifelse(
-    runSettings$runCmSettings$createPsThreads > runSettings$runCmSettings$riskStrata,
-    yes = runSettings$runCmSettings$riskStrata,
-    no = runSettings$runCmSettings$createPsThreads
+    runSettings$runCmSetting[[1]]$fitOutcomeModelsThreads > runSettings$runCmSettings[[1]]$riskStrata,
+    yes = runSettings$runCmSettings[[1]]$riskStrata,
+    no = runSettings$runCmSettings[[1]]$createPsThreads
   )
 
   cluster <- ParallelLogger::makeCluster(
@@ -682,32 +745,55 @@ runRiskStratifiedEstimation <- function(
     "Computing and saving incidence"
   )
 
-  computeIncidenceAnalysis(
-    analysisSettings = analysisSettings,
-    secondaryOutcomes = TRUE,
-    threads = nThreads
+  for (i in seq_along(analysisLabels)) {
+    computeIncidenceAnalysis(
+      analysisSettings = analysisSettings,
+      analysisType = analysisLabels[i],
+      secondaryOutcomes = TRUE,
+      threads = nThreads
+    )
+  }
+
+  ParallelLogger::logInfo(
+    "Merging..."
+  )
+  mergeTempFiles(
+    file.path(
+      analysisSettings$saveDirectory,
+      analysisSettings$analysisId,
+      "shiny"
+    ),
+    outcomeId = "",
+    fileName = "incidence"
   )
 
   ParallelLogger::logInfo(
     "Computing and saving propensity score density"
   )
 
-  psDensityAnalysis(
-    analysisSettings = analysisSettings,
-    secondaryOutcomes = TRUE,
-    threads = nThreads
-  )
+  for (i in seq_along(analysisLabels)) {
+    subsetRunCmSettings <- runSettings$runCmSettings[[i]]
+    psDensityAnalysis(
+      analysisSettings = analysisSettings,
+      secondaryOutcomes = TRUE,
+      threads = nThreads,
+      runCmSettings = subsetRunCmSettings
+    )
+  }
 
   ParallelLogger::logInfo(
     "Computing and saving covariate balance. This may take a while..."
   )
 
-  computeCovariateBalanceAnalysis2(
-    analysisSettings = analysisSettings,
-    runSettings = runSettings,
-    getDataSettings = getDataSettings,
-    balanceThreads = analysisSettings$balanceThreads
-  )
+  for (i in seq_along(analysisLabels)) {
+    subsetRunCmSettings <- runSettings$runCmSettings[[i]]
+    computeCovariateBalanceAnalysis2(
+      analysisSettings = analysisSettings,
+      runCmSettings = subsetRunCmSettings,
+      getDataSettings = getDataSettings,
+      balanceThreads = analysisSettings$balanceThreads
+    )
+  }
 
   ParallelLogger::logInfo(
     "Creating and saving overall results"
@@ -724,6 +810,29 @@ runRiskStratifiedEstimation <- function(
     covariateSettings = covariateSettings,
     populationSettings = populationSettings,
     runSettings = runSettings
+  )
+
+  for (i in seq_along(analysisLabels)) {
+    includeOverallResults(
+      analysisSettings = analysisSettings,
+      getDataSettings = getDataSettings,
+      runCmSettings = runSettings$runCmSettings[[i]]
+    )
+  }
+
+  ParallelLogger::logInfo(
+    "Merging..."
+  )
+
+  lapply(
+    c("mappedOverallResults", "incidenceOverall"),
+    mergeTempFiles,
+    pathToPs = file.path(
+      analysisSettings$saveDirectory,
+      analysisSettings$analysisId,
+      "shiny"
+    ),
+    outcomeId = ""
   )
 
   saveRDS(
