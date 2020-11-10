@@ -1,6 +1,6 @@
 # Copyright 2020 Observational Health Data Sciences and Informatics
 #
-# This file is part of CohortMethod
+# This file is part of RiskStratifiedEstimation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,9 +15,8 @@
 # limitations under the License.
 #
 # @author Observational Health Data Sciences and Informatics
-# @author Patrick Ryan
-# @author Marc Suchard
-# @author Martijn Schuemie
+# @author Alexandros Rekkas
+# @author Peter Rijnbeek
 
 
 #' @import data.table
