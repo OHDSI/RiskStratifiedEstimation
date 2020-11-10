@@ -4,86 +4,44 @@
 \alias{runRiskStratifiedEstimation}
 \title{Runs a risk stratified analysis}
 \usage{
-runRiskStratifiedEstimation(cohortMethodData, population, modelSettings, save,
-  testSplit = "person", testFraction = 0.3, nfold = 10, riskStrata = 4,
-  weightsType = "ATE", useStabilizedWeights = TRUE, truncationLevels,
-  timePoint, excludeCovariateIds = NULL, binary = TRUE,
-  includeAllOutcomes = TRUE, requireTimeAtRisk = TRUE,
-  savePlpPlots = FALSE, psThreads = 1, priorType = "laplace",
-  verbosity = "INFO", analysisId = NULL, savePlpResult = TRUE,
-  saveMapMatrix = TRUE, savePs = TRUE, saveDataKM = TRUE,
-  saveAbsoluteRiskRreduction = TRUE, saveRelativeRiskReduction = TRUE)
+runRiskStratifiedEstimation(
+  connectionDetails,
+  analysisSettings,
+  databaseSettings,
+  getDataSettings,
+  covariateSettings,
+  populationSettings,
+  runSettings
+)
 }
 \arguments{
-\item{cohortMethodData}{A cohortMethodData object}
+\item{connectionDetails}{An R object of type \code{connectionDetails} created using the function
+\code{\link[DatabaseConnector]{createConnectionDetails}}.}
 
-\item{population}{The study population to perform the analysis}
+\item{analysisSettings}{An R object of type \code{analysisSettings} created using the function
+\code{\link[RiskStratifiedEstimation]{createAnalysisSettings}}.}
 
-\item{modelSettings}{The model settings for the prediction step}
+\item{databaseSettings}{An R object of type \code{databaseSettings} created using the function
+\code{\link[RiskStratifiedEstimation]{createDatabaseSettings}}.}
 
-\item{save}{The save directory}
+\item{getDataSettings}{An R object of type \code{getDataSettings} created using the function
+\code{\link[RiskStratifiedEstimation]{createGetDataSettings}}.}
 
-\item{testSplit}{The type of split for the cross validation. Should be either 'person' or 'time'}
+\item{covariateSettings}{An R object of type \code{covariateSettings} created using the function
+\code{\link[FeatureExtraction]{createCovariateSettings}}.}
 
-\item{testFraction}{The size of the test set}
+\item{populationSettings}{An R object of type \code{populationSettings} created using the function
+\code{\link[RiskStratifiedEstimation]{createPopulationSettings}}.}
 
-\item{nfold}{The number of folds for cross validation}
-
-\item{riskStrata}{The number of risk strata on which to perform the analysis}
-
-\item{weightsType}{The type of weights for the balancing of covariates. Should be either 'ATE' or 'ATT'}
-
-\item{useStabilizedWeights}{Should stabilized weights be used?}
-
-\item{truncationLevels}{The level of truncation expressed in percentiles of the propensity score.}
-
-\item{timePoint}{The time point of interest for the calculation of the absolute risk reduction}
-
-\item{excludeCovariateIds}{Covariate Ids to be excluded from calculation of propensity scores}
-
-\item{binary}{Forces the outcomeCount to be 0 or 1 in the prediction step}
-
-\item{includeAllOutcomes}{(binary) indicating whether to include people with outcomes who are not observed for the whole at risk period}
-
-\item{requireTimeAtRisk}{Should subjects without time at risk be removed at the prediction step?}
-
-\item{savePlpPlots}{(binary) Should plots for the prediction step be generated?}
-
-\item{psThreads}{The number of cores to use for the estimation of the propensity score. If 1 then serial approach is implemented}
-
-\item{priorType}{The prior for the propensity score model}
-
-\item{verbosity}{Sets the level of the verbosity. If the log level is at or higher in priority than the logger threshold, a message will print. The levels are:
-\itemize{
-\item{DEBUG}{Highest verbosity showing all debug statements}
-                    \item{TRACE}{Showing information about start and end of steps}
-                    \item{INFO}{Show informative information (Default)}
-                    \item{WARN}{Show warning messages}
-                    \item{ERROR}{Show error messages}
-                    \item{FATAL}{Be silent except for fatal errors}}}
-
-\item{analysisId}{Identifier of the analysis}
-
-\item{savePlpResult}{Should the prediction result be saved?}
-
-\item{saveMapMatrix}{Should the map matrix with the risk sratum allocations be saved?}
-
-\item{savePs}{Should the propensity scores be saved?}
-
-\item{saveDataKM}{Should the weighted Kaplan-Meier estimates be saved?}
-
-\item{saveAbsoluteRiskRreduction}{Should the absolute risk reduction estimates be saved?}
-
-\item{saveRelativeRiskReduction}{Should the hazard ratios be saved?}
+\item{runSettings}{An R object of type \code{runSettings} created using the function
+\code{\link[RiskStratifiedEstimation]{createRunSettings}}.}
 }
 \value{
-\item{ps}{The propensity scores within risk strata along with patient weights}
-\item{mapMatrix}{The matrix that maps the patients to risk strata}
-\item{dataKM}{The weighted Kaplan-Meier estimates within risk strata}
-\item{absoluteRiskReduction}{The absolute risk reduction within risk strata}
-\item{relativeRiskReduction}{The relative risk reduction within risk strata}
-\item{predictionResult}{The result of the prediction step}
+The function saves all results based on \code{analysisSettings}. No
+                                  results are returned.
 }
 \description{
-Runs a risk stratified analysis
+Runs a risk stratified analysis in two stages. It first runs a prediction algorithm using
+\code{PatientLevelPrediction} to derive baseline patient risks and then derives estimates
+within risk strata incorporating functionality from \code{CohortMethod} package.
 }

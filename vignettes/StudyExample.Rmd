@@ -1,16 +1,17 @@
 ---
-title: "RiskStratifiedEstimation manual"
+title: "Study example"
 author: "Alexandros Rekkas and Peter R. Rijnbeek"
 date: "`r Sys.Date()`"
 output:
   pdf_document:
     number_sections: yes
     toc: yes
+    toc_depth: 3
   html_document:
     number_sections: yes
     toc: yes
 vignette: >
-  %\VignetteIndexEntry{RiskStratifiedEstimation manual}
+  %\VignetteIndexEntry{Study example}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -26,195 +27,200 @@ knitr::opts_chunk$set(
 ```
 
 # Introduction
-This vignette describes the application of a risk modeling approach to predictive heterogeneity of treatment effect (HTE) using the `RiskStratifiedEstimation` package. More specifically, this method involves stratifying the population into strata of predicted risk and performing comparisons of relative and absolute measures of treatment effect within these risk strata. Our package combines functionality of the `CohortMethod` and the `PatientLevelPrediction` packages to perform such a risk stratified effect estimation (RSEE) analysis. To date, only time to event response variables are conisdered. We will walk through all the important steps needed to perform an exemplar study. For the demonstration we will consider the comparison of coxibs to non-steroidal anti-inflammatory drugs (NSAIDs) in arthritis patients with established cardiovascular disease with respect to clinically sigificant gastrointestinal events (CSGIE). For simplicity we focus only in one coxib -- celecoxib -- and one non-selective NSAID -- naproxen.
+Generalizability of an overall result found in a study and applicability to a specific patient move in opposite directions. When patients differ from one another in many key determinants of the outcome of interest--and consequently in the potential benefits and harms of therapy--it can be unclear to whom the overall average benefit-harm trade-offs actually apply. Precision medicine aims to tailor treatment to individual patients. As such, analysis of heterogeneity of treatment effect (HTE), i.e. non-random variation in the direction or magnitude of a treatment effect for individuals within a population, is the cornerstone of precision medicine; its goal is to predict the optimal treatments at the individual level, accounting for an individual’s risk for harm and benefit outcomes.
 
-# Installation instructions
+This vignette describes the application of a risk modeling predictive approach to the assessment of treatment effect heterogeneity (HTE) using the `RiskStratifiedEstimation` package. The method involves 4 main steps summarized in Figure \ref{workflow}:
 
-# Data extraction
+- **Definition of the problem:** For this step we need to define (at least) 3 essential cohorts: (1) the treatment cohort, containing the set of patients receiving the treatment treatment interest; (2) the comparator cohort, containing the set of patients receiving the comparator cohort; (3) the outcome cohort(s), containing the set of patients having the outcome(s) of interest.
+- **Identification of the database:** We need to define the database(s) on which we will assess treatment effect heterogeneity. We need to make sure that the cohorts created contain enough patients to proceed with the application of the method.
+- **Prediction step:** Combine the treatment and comparator cohorts into a single cohort for prediction and then provide the settings required for prediction based on the `PatientLevelPrediction` package. This means that we need to define the time-at-risk (time interval within which we want to predict), the set of predictive covariates and the prediction algorithm to be used (along with its settings).
+- **Estimation step:** Divide the treatment population in a pre-specified number of equal-sized strata based on baseline risk and estimate the absolute and relative treatment effects.
+
+
+![RiskStratifiedEstimation package workflow \label{workflow}](rsee_workflow.JPG)
+
+# Study specification and database selection
+For the current demonstration we consider some of the treatments and outcomes assessed in the Large-scale Evidence Generation in Network of Databases (LEGEND) study for hypertension. The treatment cohort contains patients with a hypertension diagnosis within the database that receive angiotensin-converting enzyme (ACE) inhibitors, followed from the time of initiation until the time of cessation. The comaparator cohort contains the set of patients within the database with a hypertension diagnosis that receive beta blockers. We also consider 2 outcome cohorts. The first contains all patients found in the database that have at least one occurrence of cardiovascular disease (CVD). The second contains all patients with an occurrence of cough. We consider CVD as the main outcome of interest that we are trying to prevent in the study and cough as a common side-effect of ACE-inhibitors. Cohort definitions are available online [here](https://github.com/OHDSI/Legend).
+
+After the defining the problem we need to define the database on which we will assess treatment effect heterogeneity. We need to make sure that the defined cohorts are of adequate size to perform the analysis. This is relevant to all cohorts defined. Very small treatment or comparator cohorts reduce the power of our analyses restricting the minimum detectable differences. Due to the stratified approach of the framework this aspect is very relevant. The size of the outcome cohorts is also very important for both the prediction and the estimation steps. In the former case, low events per variable may limit the prediction performance, while in the latter case, risk stratification may result to in very few or even no observed cases in the lower strata.
+
+# Study implementation
+
+## Cohort instantiation
+Similar to PLP package
+
+## Study script creation
+In this section we assume that our cohorts have been created and have been extracted using a specific database. Then  we can proceed with the creation of the script that will perform the defined study. For this part 7 types of input need to be created:
+
+- connection details
+- anlaysis settings
+- database settings
+- Settnigs for getting the data
+- covariate settings
+- population settings
+- run settings
+
+### Analysis settnigs
+The analysis settings refer to information that define the structure of the study and can be used to identify it. The analysis id is a--pereferably--unique identifier of the present study. The treatment cohort id refers to the unique identifier of the treatment cohort definition. In our case, that is $1001$ and refers to the extracted hypertensive patients receving ACE-inhibitors. The comparator cohort id refers to the unique identifier of the comparator cohort. In our case this is $1002$ and refers to the extracted cohort of hypertensive patients receiving beta blockers; the outcome ids that refer to the unique identifiers of the outcome cohorts. A very important characteristic of the analysis settings is the analysis matrix, that dictates which comparisons are to be made. The columns of this square boolean matrix refer to risk stratification outcomes and the rows to estimation outcomes. Therefore, the default diagonal matrix defines the following analyses:
+
+- Within strata of CVD risk estimate relative and absolute treatment effects of CVD events.
+- Within strata of acute myocardial infarction risk estimate relative and absolute treatment effects of acute myocardial infarction events.
+
+We can create the analysis settings using the following code:
 
 ```{r tidy=FALSE, eval=FALSE}
-connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "postgresql",
-                                             server = "localhost/ohdsi",
-                                             user = "joe",
-                                             password = "supersecret")
-
-cdmDatabaseSchema <- "my_cdm_data"
+analysisSettings <- createAnalysisSettings (
+  analysisId = "vignette_demonstration",
+  analysisType = "stratifyByPs",
+  description = "description text",
+  treatmentCohortId = 1001,
+  comparatorCohortId = 1002,
+  outcomeIds = c(131, 102),
+  analysisMatrix = diag(2)),
+verbosity = "INFO",
+saveDirectory = "path/to/save/directory"
+)
 ```
 
-Covariate settings are defined using
-```{r eval = FALSE}
-covariateSettings <-
-  createCovariateSettings(
+
+### Connection details
+We need to define our connection details that will be used to connect to the database we have access to in order to construct extract the data objects required for our analyses. They can be created from:
+
+```{r tidy=FALSE, eval=FALSE}
+connectionDetails <- DatabaseConnector::createConnectionDetails(
+  dbms = dbms,
+  server = server,
+  user = "joe",
+  password = "secret",
+  port = port
+)
+```
+
+### Database settings
+The database settings contain relevant information on the database we want to access. These refer to the database schema based on which we extract our data along with the tables where the cohorts of interest are stored. Note that we also need to create a table containing the merged treatment and comparator cohorts that will be used to derive the prediction models (requires write permission). Database settings can be created from:
+
+```{r tidy=FALSE, eval=FALSE}
+databaseSettings <- createDatabaseSettings(
+  cdmDatabaseSchema = "cdm_truven_mdcd_v780.dbo",
+  cohortDatabaseSchema = "Scratch.dbo",
+  outcomeDatabaseSchema = "Scratch.dbo",
+  resultsDatabaseSchema = "Scratch.dbo",
+  exposureDatabaseSchema = "Scratch.dbo",
+  cohortTable = "ace_beta_cohorts",
+  outcomeTable = "ace_beta_outcomes",
+  exposureTable = "ace_beta_cohorts",
+  mergedCohortTable = "ace_beta_merged",
+  attributeDefinitionTable = "ace_beta_def",
+  cohortAttributeTable = "ace_beta_attr"
+)
+```
+
+### Settings for getting the data
+There are two data objects that need to be defined. The prediction data object that will be used for the derivation of the prediction models used to risk stratify patients and the estimation data object that will be used to estimate propensity scores and estimate treatment effects within risk strata.
+
+```{r tidy=FALSE, eval=FALSE}
+getDataSettings <- createGetDataSettings(
+  getPlpDataSettings = createGetPlpDataArgs(
+    washoutPeriod = 365
+  ),
+  getCmDataSettings = createGetCmDataArgs(
+    washoutPeriod = 365
+  )
+)
+```
+
+### Covariate settings
+The purpose of the covariate settings is twofold. In the prediction step they define the set of candidate predictors for the develppment of the model. In the estimation step they define the set of candidate confounders to be considered for the esitmation of the propensity scores. In both cases we use the same covariate settings using a large set of standardized covariates:
+
+```{r tidy=FALSE, eval=FALSE}
+covariateSettings <- createGetCovariateSettings(
+  covariateSettingsCm = FeatureExtraction::createCovariateSettings(
     useDemographicsGender = TRUE,
-    useDemographicsAgeGroup = TRUE,
-    useDemographicsIndexMonth = TRUE,
+    useDemographicsAge = TRUE,
     useConditionOccurrenceLongTerm = TRUE,
+    useConditionOccurrenceShortTerm = TRUE,
     useDrugExposureLongTerm = TRUE,
-    useProcedureOccurrenceLongTerm = TRUE,
-    useMeasurementLongTerm = TRUE,
+    useDrugExposureShortTerm = TRUE,
+    useDrugEraLongTerm = TRUE,
+    useDrugEraShortTerm = TRUE,
     useCharlsonIndex = TRUE,
-    useDistinctConditionCountLongTerm = TRUE,
-    useDistinctIngredientCountLongTerm = TRUE,
-    useDistinctProcedureCountLongTerm = TRUE,
-    useDistinctMeasurementCountLongTerm = TRUE,
-    useVisitCountLongTerm = TRUE,
-    longTermStartDays = -365,
-    mediumTermStartDays = -180,
-    shortTermStartDays = -30,
-    endDays = 0,
-    excludedCovariateConceptIds = list(1118084, 1115008),
+    addDescendantsToExclude = TRUE,
+    excludedCovariateConceptIds = 
+      excludedCovariateConceptIds,
+    addDescendantsToInclude = TRUE
+  ),
+  covariateSettingsPlp = FeatureExtraction::createCovariateSettings(
+    useDemographicsGender = TRUE,
+    useDemographicsAge = TRUE,
+    useConditionOccurrenceLongTerm = TRUE,
+    useConditionOccurrenceShortTerm = TRUE,
+    useDrugExposureLongTerm = TRUE,
+    useDrugExposureShortTerm = TRUE,
+    useDrugEraLongTerm = TRUE,
+    useDrugEraShortTerm = TRUE,
+    useCharlsonIndex = TRUE,
     addDescendantsToExclude = TRUE
   )
+)
 ```
-There are many parameters, but they are all documented in the `CohortMethod` manual. The `createCovariateSettings` function is described in the `FeatureExtraction` package.
 
-**IMPORTANT:** Make sure to remove the drugs from the covariates in order to avoid including them in the prediction step. In this case, we remove the ingredients (1118084 for celecoxib and 1115008 for naproxen) and all their descendants from the covariate settings.
+### Population settings
+The population settings contain additional restrictions for the definitive target populations. Again in this case we need to define the target population in the prediction step, based on which we will actually develop the prediction models. In the estimation step the population settings will define the population from which the propensity score models will be derived and the treatment effects will be estimated. The final populations may contain slightly different patients. We can define the population settings from:
 
-```{r eval = FALSE}
-cohortMethodData <- 
-  getDbCohortMethodData(connectionDetails = connectionDetails,
-                        cdmDatabaseSchema = cdmDatabaseSchema,
-                        oracleTempSchema = NULL,
-                        targetId = 5613,
-                        comparatorId = 5614,
-                        outcomeIds = 5622,  
-                        studyStartDate = '',
-                        studyEndDate = '',
-                        exposureDatabaseSchema = cdmDatabaseSchema,
-                        exposureTable = 'cohort',
-                        outcomeDatabaseSchema = cdmDatabaseSchema,
-                        outcomeTable = 'cohort',
-                        cdmVersion = '5',
-                        excludeDrugsFromCovariates = FALSE,
-                        firstExposureOnly = FALSE,
-                        removeDuplicateSubjects = TRUE,
-                        restrictToCommonPeriod = FALSE,
-                        washoutPeriod = 0,
-                        covariateSettings = covariateSettings)
-```
-# Define study population
-
-```{r eval = FALSE}
-populationCSGIE <- createStudyPopulation(cohortMethodData = cohortMethodData,
-                                         outcomeId = 5622,
-                                         firstExposureOnly = TRUE, 
-                                         restrictToCommonPeriod = FALSE,
-                                         washoutPeriod = 0, 
-                                         removeDuplicateSubjects = 'remove all',
-                                         removeSubjectsWithPriorOutcome = FALSE, 
-                                         riskWindowEnd = 30,
-                                         addExposureDaysToEnd = TRUE, 
-                                         minDaysAtRisk = 1)
-```
-Note that we’ve set `firstExposureOnly` to TRUE to get only the first of the recorded exposures. We set `removeDuplicateSubjects` to 'remove all', and `washoutPeriod` to zero because we already filtered on these arguments when using the `getDbCohortMethodData` function.
-During loading we set `restrictToCommonPeriod` to FALSE, and we do the same here because we do not want to force the comparison to restrict only to time when both drugs are recorded. We specify the outcome ID we
-will use, and that people with outcomes prior to the risk window start date will not be removed. The risk window
-is defined as starting at the index date (`riskWindowStart` = 0 and `addExposureDaysToStart` = FALSE),
-and the risk windows ends 30 days after exposure ends (`riskWindowEnd` = 30 and `addExposureDaysToEnd`
-= TRUE). Note that the risk windows are truncated at the end of observation or the study end date. We also
-remove subjects who have no time at risk. 
-
-# Running an RSEE analysis
-To run an RSEE analysis two steps need to be performed. First, a prediction step where the individual patient risks are estimated. These estimates are used to stratify patients into strata with similar risk. In the second step, treament effect estimates are calculated within the risk strata. In our case, these steps are performed by calling the following function:
-
-```{r eval = FALSE}
-modelSettings <-
-  PatientLevelPrediction::setLassoLogisticRegression(variance = 0.01,
-                                                     seed = NULL)
-
-result <- runRiskStratifiedEstimation(cohortMethodData = cohortMethodData, 
-                                      population = populationCSGIE, 
-                                      modelSettings = modelSettings,
-                                      nfold = 10,
-                                      testSplit = 'person',
-                                      testFraction = 0.3,
-                                      savePlpPlots = TRUE,
-                                      save = 'save_folder',
-                                      riskStrata = 4,
-                                      weightsType = 'ATE',
-                                      useStabilizedWeights = TRUE,
-                                      truncationLevels = c(.025, .975),
-                                      timePoint = 365,
-                                      psThreads = 4)
+```{r tidy=FALSE, eval=FALSE}
+populationSettings <- createPopulationSettings(
+  populationPlpSettings = createPopulationPlpSettingsArgs(
+    riskWindowEnd = 365,
+    minTimeAtRisk = 364
+  ),
+  populationCmSettings = createPopulationCmSettingsArgs(
+    removeDuplicateSubjects = "keep first",
+    removeSubjectsWithPriorOutcome = TRUE,
+    riskWindowStart = 1,
+    riskWindowEnd = 9999,
+    minDaysAtRisk = 1
+  )
+)
 
 ```
 
-## Prediction step
-In this section we demonstrate how to tune the `runRiskStratifiedEstimation` function to the desired prediction settings. First, we need to decide which prediction method we are going to use. In this specific case, we have selected a LASSO logistic regression approach. However, one can select any of the several other approaches described in the `PatientLevelPrediction` package vignettes. Next, we need to define the number of folds for tuning the hyperparameters of the prediction algorithm. In our case we have set this number to 10. Here, we also split the data in a 70%-30% split, where 70% of the data are used for training the LASSO regression model and 30% is used for evaluating its performance. This split is based on a random selection of patient IDs (`testSplit` = "person"). Finally, one can choose to generate the default plots provided by the  `PatientLevelPrediction` package. Note that the result of the RSEE analysis provides the prediction result, allowing for further processing, after the run is finished. For more information, consult the `PatientLevelPrediction` [manual and vignettes](https://github.com/OHDSI/PatientLevelPrediction).
+### Run settings
+Finally, we need to define the settings based on which the algorithms in the prediction and estimation steps will be run. For example, in the prediction step we need to define the prediction algorithm to be used along with the hyperparameter parameter search strategy. In the estimation step some of the settings we need to define the propensity score method to be used for the estimation of the effects within risk strata or the time point at which we will assess absolute and relative risk differences. Since we mostly deal with time-to-event data this means that absolute risk reduction is esimtated absed on the difference on the Kaplan-Meier estimates at the specific time point. The run settings can be created from:
 
-## Estimation step
-In this section we demonstrate the tuning of the estimation step of our process. Using the risk estimates of the prediction step described earlier, we can stratify patients into groups based on the quantiles of the prediction distribution. Here we divide patients into quartiles of predicted risk (`riskStrata` = 4). Since treatment assignment is not random within risk strata, we need to estimate propensity scores and apply one of the several available methods in the literature to balance the covariates. To date, only the inverse probability of treatment weighting approach can be considered in the package. This means that patients are weighted by the inverse of the probability to receive the treamtent they actually received. Two weighting schemes are allowed, i.e. "ATE" that allows the estimation of the average treatment effect and "ATT" that allows the estiamtion of the average treatment effect on the treated. In order to deal with the presence of very large weights, we allow for stabilization (`useStabilizedWeights` = TRUE). Finally, fixed truncation of the weights can be also considered in order to set an upper and a lower bound to the permitted size of the weights. We define these bounds using quantiles of the weight distribution. here, these bouds are the 2.5% and the 97.5% quantiles.
-
-As was mentioned earlier, only time to event response data can be analyzed with the package. We need to define a period of follow-up for our study, which in this case, this period is one year (`timePoint` = 365). The `runRiskStratifiedEstimation` function fits a weighted Cox proportional hazards model to generate unbiased estimates of the hazard ratios within risk strata. It also generates weighted Kaplan-Meier estimates within risk strata. 
-
-We can allow for parallelization of the propensity score estimation, which tends to be rather slow when the size of the data is large. In this case we set the threads to 4, one thread for each risk stratum.
-
-Finally, we can save the result of the analysis to a selected folder. This folder will then include the prediction result, the hazard ratios within risk strata along with 95% confidence intervals, the weighted Kaplan-Meier estimates within risk strata and the propensity scores. 
-
-# Plots
-The `RiskStratifiedEstimation` package allows for the construction of several plots. We have already mentioned that we can obtain the default plots provided from the `PatientLevelPrediction` package for model evaulation. Additionally, we can derive the propensity score diagnostics described in the `CohortMethod` package vignette.
-
-## Balance diagnostics
-![Covariate Balance plot](balancePlot.jpeg)
-Using the code presented below we can plot the covariate balance in the weighted population of the 4th (highest) risk stratum.
-
-```{r eval = FALSE}
-plotCovariateBalance(ps = result$ps[[4]],
-                     cohortMethodData = cohortMethodData,
-                     calculateWeights = FALSE,
-                     showNotBalancedCovariateIds = TRUE)
-```
-
-## Weighted Kaplan-Meier
-![Weighted Kaplan Meier plot](KMPlot.jpeg)
-Using the code presented below we can produce plots of the weighted Kaplan-Meier estimates within risk strata. The time interval of interest is one year (365 days). Again, we consider the case of the 4th risk stratum. 
-
-```{r eval = FALSE}
-plotWeightedKM(dataKM = result$dataKM[[4]], 
-               xlim = c(0, 365), 
-               ylim = c(.7, 1),
-               ci = FALSE)
-```
-```{r echo = FALSE, message = FALSE, eval = TRUE}
-if(file.exists('S:\\arekkas\\celecoxib-naproxen-vignette\\20180924053516 RSEE\\dataKM.rds')){
-  dataKM <- readRDS('S:\\arekkas\\celecoxib-naproxen-vignette\\20180924053516 RSEE\\dataKM.rds')
-  plotWeightedKM(dataKM = result$dataKM[[4]], 
-               xlim = c(0, 365), 
-               ylim = c(.7, 1),
-               ci = FALSE)
-}
-
+```{r tidy=FALSE, eval=FALSE}
+runSettings <- createRunSettings(
+  runPlpSettings = createRunPlpSettingsArgs(),
+  runCmSettings = createRunCmSettingsArgs(
+    psMethod = "stratifyByPs",
+    effectEstimationSettings = createStratifyByPsAndCovariatesArgs(),
+    psSettings = createCreatePsArgs(),
+    fitOutcomeModelsThreads = 2,
+    timePoint = 365
+  )
+)
 
 ```
 
-## Analysis result
-![Analysis result plot](comparisonPlot.jpeg)
-Finally, we can produce an analysis summary plot using the code below. This plot contains the outcome rates in the propensity weighted populations along with the absolute and relative (hazard ratios) risk differences.
-```{r eval = FALSE}
-comparisonPlot(dataARR = result$absoluteRiskReduction, 
-               dataRRR = result$relativeRiskReduction,
-               cases = result$cases,
-               ylimRRR = c(.4, 1.1), 
-               ylimARR = c(-.01, .05),
-               ylimCases = c(0, .125))
+### Perform the analysis
+Now that we have defined all the required settings objects, we can proceed with running the actual analysis. One last setting that is required is the location where the temporary files will be stored. The user needs to have read and write permission. Run the analysis as follows:
+```{r tidy=FALSE, eval=FALSE}
+result <- runRiskStratifiedEstimation(
+  connectionDetails = connectionDetails,
+  analysisSettings = analysisSettings,
+  databaseSettings = databaseSettings,
+  getDataSettings = getDataSettings,
+  covariateSettings = covariateSettings,
+  populationSettings = populationSettings,
+  runSettings = runSettings,
+  tempDir = "path/to/temporary/directory"
+)
 ```
-```{r eval = TRUE, message = FALSE, echo = FALSE}
-if(file.exists('S:\\arekkas\\celecoxib-naproxen-vignette\\20180924053516 RSEE\\absoluteRiskReduction.rds')&
-   file.exists('S:\\arekkas\\celecoxib-naproxen-vignette\\20180924053516 RSEE\\relativeRiskReduction.rds')&
-   file.exists('S:\\arekkas\\celecoxib-naproxen-vignette\\20180924053516 RSEE\\cases.rds')){
-  
-  
-  dataKM <- readRDS('S:\\arekkas\\celecoxib-naproxen-vignette\\20180924053516 RSEE\\dataKM.rds')
-  relativeRiskReduction <- readRDS('S:\\arekkas\\celecoxib-naproxen-vignette\\20180924053516 RSEE\\relativeRiskReduction.rds')
-  absoluteRiskReduction <- readRDS('S:\\arekkas\\celecoxib-naproxen-vignette\\20180924053516 RSEE\\relativeRiskReduction.rds')
-  cases <- readRDS('S:\\arekkas\\celecoxib-naproxen-vignette\\20180924053516 RSEE\\cases.rds')
-  comparisonPlot(dataARR = absoluteRiskReduction, 
-                 dataRRR = relativeRiskReduction,
-                 cases = cases,
-                 ylimRRR = c(.4, 1.1), 
-                 ylimARR = c(-.01, .05),
-                 ylimCases = c(0, .125))
-}
 
+The analysis will usually take smome time to complete. All results are saved on the hard drive in `analysisSettings$saveDirectory`/`analysisSettings$analysisId`
+
+# Evaluation of results
+The overall results are saved in a sub-directory called "shiny". The user can interactively explore the results of the performed analysis using a shiny application. To launch it, the following command can be used:
+
+```{r tidy=FALSE, eval=FALSE}
+rseeViewer("path/to/shiny/directory")
 ```
-We can use such a plot to provide insight to the presence of HTE and draw useful conclusions on treatment assignment.

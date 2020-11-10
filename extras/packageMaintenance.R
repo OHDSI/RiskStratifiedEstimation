@@ -1,6 +1,6 @@
 # @file PackageMaintenance
 #
-# Copyright 2018 Observational Health Data Sciences and Informatics
+# Copyright 2020 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortMethod
 #
@@ -24,6 +24,19 @@ OhdsiRTools::updateCopyrightYearFolder()
 # Create manual and vignettes:
 shell("rm extras/RiskStratifiedEstimation-manual.pdf")
 shell("R CMD Rd2pdf ./ --output=extras/RiskStratifiedEstimation-manual.pdf")
+
+if (!dir.exists("inst/doc")) {
+
+  dir.create(
+    file.path(
+      "inst",
+      "doc"
+    ),
+    recursive = TRUE
+  )
+
+}
+
 
 rmarkdown::render("vignettes/StudyExample.Rmd",
                   output_file = "../inst/doc/StudyExample.pdf",
