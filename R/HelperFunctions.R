@@ -137,6 +137,7 @@ switchOutcome <- function(
 #'                                   application in the `shiny` directory
 
 #' @importFrom dplyr %>%
+#' @importFrom stats binom.test density filter quantile sd weights
 #' @export
 
 createOverallResults <- function(analysisSettings) {

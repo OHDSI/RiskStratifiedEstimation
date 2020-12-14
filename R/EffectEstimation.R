@@ -29,9 +29,9 @@
 #' @param getDataSettings         An R object of type \code{getDataSettings} created using the function
 #'                                \code{\link[RiskStratifiedEstimation]{createGetDataSettings}}.
 #' @param pathToPs                The path to the \code{RSEE} analysis results.
-#' @param runSettings             The settings for running a \code{CohortMethod}
+#' @param runCmSettings             The settings for running a \code{CohortMethod}
 #'                                analysis created from
-#'                                \code{\link[RiskStratifiedEstimation]{createRunCmSettings}}.
+#'                                \code{\link[RiskStratifiedEstimation]{createRunCmSettingsArgs}}.
 #'
 #' @importFrom dplyr %>%
 #' @export

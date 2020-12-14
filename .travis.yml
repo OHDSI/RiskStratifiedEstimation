@@ -11,8 +11,14 @@ r_packages:
   - drat
   - devtools
 
+branches:
+  only:
+    - master
+    - develop
+
 before_install:
   - sudo $(which R) CMD javareconf
+  - sudo apt-get install libgit2-dev
 
 r_github_packages:
   - OHDSI/ParallelLogger
@@ -47,3 +53,4 @@ after_success:
 env:
   global:
   - secure: PiXvBNIYwsoV6XRx9MLNu2MOI6sgk/xgJO/T4FCCRC+0zBuNUUkvDN2mEKO8y2p+CgwXDq/JVq9gJb6NvwBf2lj7PDQwEuxU3j0Tinx56IdIrWbia98QW91b8F8+dg8M3FEt0BEPlbiDKqSjhqcv3fXOOoxT9QbQjaZaA1zkCAk=
+  - _R_CHECK_FORCE_SUGGESTS_:false
