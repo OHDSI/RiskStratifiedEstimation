@@ -229,6 +229,7 @@ fitPsModelSwitch <- function(
       predictOutcome,
       analysisSettings$analysisId,
       "plpResult",
+      "EntirePopulation",
       "prediction.rds"
     )
   )
