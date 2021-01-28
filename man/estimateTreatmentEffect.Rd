@@ -4,7 +4,7 @@
 \alias{estimateTreatmentEffect}
 \title{Estimate treatment effects within risk strata}
 \usage{
-estimateTreatmentEffect(ps, runCmSettings)
+estimateTreatmentEffect(ps, analysis)
 }
 \arguments{
 \item{ps}{A list of objects created from \code{\link[CohortMethod]{createPs}} estimated within risk

@@ -129,21 +129,23 @@ createPopulationCmSettingsArgs <- function(
 #'                                         except for fatal errors
 #'
 #' @export
-createPopulationPlpSettingsArgs <- function(binary = T,
-                                            includeAllOutcomes = T,
-                                            firstExposureOnly = FALSE,
-                                            washoutPeriod = 0,
-                                            removeSubjectsWithPriorOutcome = TRUE,
-                                            priorOutcomeLookback = 99999,
-                                            requireTimeAtRisk = F,
-                                            minTimeAtRisk = 365,
-                                            riskWindowStart = 0,
-                                            startAnchor = "cohort start",
-                                            addExposureDaysToStart = NULL,
-                                            riskWindowEnd = 365,
-                                            endAnchor = "cohort start",
-                                            addExposureDaysToEnd = NULL,
-                                            verbosity = "INFO") {
+createPopulationPlpSettingsArgs <- function(
+  binary = T,
+  includeAllOutcomes = T,
+  firstExposureOnly = FALSE,
+  washoutPeriod = 0,
+  removeSubjectsWithPriorOutcome = TRUE,
+  priorOutcomeLookback = 99999,
+  requireTimeAtRisk = F,
+  minTimeAtRisk = 365,
+  riskWindowStart = 0,
+  startAnchor = "cohort start",
+  addExposureDaysToStart = NULL,
+  riskWindowEnd = 365,
+  endAnchor = "cohort start",
+  addExposureDaysToEnd = NULL,
+  verbosity = "INFO"
+) {
   # First: get default values:
   analysis <- list()
   for (name in names(formals(createPopulationPlpSettingsArgs))) {
@@ -222,25 +224,30 @@ createPopulationPlpSettingsArgs <- function(binary = T,
 #'                               Automatically switched on for TRACE level.
 #' @param analysisId             Identifier for the analysis. It is used to create, e.g., the result
 #'                               folder. Default is a timestamp.
+#' @param matchingSettings       The settings for the construction of the population on which the
+#'                               prediction model will be developed.
 #'
 #' @export
 
-createRunPlpSettingsArgs <- function(plpResults = NULL,
-                                     minCovariateFraction = 0.001,
-                                     normalizeData = TRUE,
-                                     modelSettings = PatientLevelPrediction::setLassoLogisticRegression(),
-                                     testSplit = "person",
-                                     testFraction = 0.25,
-                                     trainFraction = NULL,
-                                     splitSeed = NULL,
-                                     nfold = 3,
-                                     indexes = NULL,
-                                     savePlpData = FALSE,
-                                     savePlpPlots = TRUE,
-                                     saveEvaluation = TRUE,
-                                     verbosity = "INFO",
-                                     timeStamp = FALSE,
-                                     analysisId = NULL) {
+createRunPlpSettingsArgs <- function(
+  plpResults = NULL,
+  minCovariateFraction = 0.001,
+  normalizeData = TRUE,
+  modelSettings = PatientLevelPrediction::setLassoLogisticRegression(),
+  testSplit = "person",
+  testFraction = 0.25,
+  trainFraction = NULL,
+  splitSeed = NULL,
+  nfold = 3,
+  indexes = NULL,
+  savePlpData = FALSE,
+  savePlpPlots = TRUE,
+  saveEvaluation = TRUE,
+  verbosity = "INFO",
+  timeStamp = FALSE,
+  analysisId = NULL,
+  matchingSettings = createMatchOnPsArgs()
+) {
   # First: get default values:
   analysis <- list()
   for (name in names(formals(createRunPlpSettingsArgs))) {
@@ -421,19 +428,25 @@ createGetCmDataArgs <- function(studyStartDate = "",
 #'
 #' @export
 
-createCreatePsArgs <- function(excludeCovariateIds = c(),
-                               includeCovariateIds = c(),
-                               maxCohortSizeForFitting = 250000,
-                               errorOnHighCorrelation = TRUE,
-                               stopOnError = TRUE,
-                               prior = createPrior("laplace",
-                                                   exclude = c(0),
-                                                   useCrossValidation = TRUE),
-                               control = createControl(noiseLevel = "silent",
-                                                       cvType = "auto",
-                                                       tolerance = 2e-07,
-                                                       cvRepetitions = 10,
-                                                       startingVariance = 0.01)) {
+createCreatePsArgs <- function(
+  excludeCovariateIds = c(),
+  includeCovariateIds = c(),
+  maxCohortSizeForFitting = 250000,
+  errorOnHighCorrelation = TRUE,
+  stopOnError = TRUE,
+  prior = createPrior(
+    "laplace",
+    exclude = c(0),
+    useCrossValidation = TRUE
+  ),
+  control = createControl(
+    noiseLevel = "silent",
+    cvType = "auto",
+    tolerance = 2e-07,
+    cvRepetitions = 10,
+    startingVariance = 0.01
+  )
+) {
   # First: get default values:
   analysis <- list()
   for (name in names(formals(createCreatePsArgs))) {
@@ -453,9 +466,7 @@ createCreatePsArgs <- function(excludeCovariateIds = c(),
 
 
 
-#' Create a parameter object for running the estimation step Create a parameter
-#' object for running the estimation step. This function is used to create part
-#' of the input of \code{\link[RiskStratifiedEstimation]{createRunSettings}}.
+#' Create a parameter object for defining the estimation analyses.
 #'
 #' @param psMethod                 How should the propensity scores be used? Can
 #'                                 be one of "inversePtWeighted", "stratifyByPs"
@@ -473,27 +484,19 @@ createCreatePsArgs <- function(excludeCovariateIds = c(),
 #'                                 when \code{matchOnPs} is selected.
 #' @param psSettings               Parameter object for
 #'                                 \code{\link[CohortMethod]{createPs}}
-#' @param createPsThreads          The number of parallel threads for the
-#'                                 estimation of the propensity scores. Default is 1.
-#' @param fitOutcomeModelsThreads  The number of parallel threads for the estimation of the
-#'                                 outcome models.
 #' @param timePoint                The time point after cohort start that absolute differences
 #'                                 should be estimated.
-#' @param riskStrata               The number of risk strata. Default is 4.
 #'
 #' @return
 #' A parameter object for running the the estimation step.
 #' @export
 
-createRunCmSettingsArgs <- function(
+createRunCmAnalysesArgs <- function(
   psMethod                 = "stratifyByPs",
   label                    = NULL,
   effectEstimationSettings = createStratifyByPsArgs(),
   psSettings               = createCreatePsArgs(),
-  createPsThreads          = 1,
-  fitOutcomeModelsThreads  = 1,
-  timePoint                = 365,
-  riskStrata               = 4
+  timePoint                = 365
 ) {
 
   if (is.null(label)) {
@@ -505,9 +508,6 @@ createRunCmSettingsArgs <- function(
     label                           = label,
     psSettings                      = psSettings,
     effectEstimationSettings        = effectEstimationSettings,
-    createPsThreads                 = createPsThreads,
-    fitOutcomeModelsThreads         = fitOutcomeModelsThreads,
-    riskStrata                      = riskStrata,
     timePoint                       = timePoint
   )
 
@@ -515,6 +515,56 @@ createRunCmSettingsArgs <- function(
 
   return(res)
 
+}
+
+
+
+
+#' Create a parameter object for running the estimation step Create a parameter
+#' object for running the estimation step. This function is used to create part
+#' of the input of \code{\link[RiskStratifiedEstimation]{createRunSettings}}.
+#'
+#' @param analyses                 A list of the analyses to run. Each element of
+#'                                 the list can be creaeted using
+#'                                 \code{\link[RiskStratifiedEstimation]{createRunCmAnalysesArgs}}
+#'                                 \code{\link[CohortMethod]{createPs}}
+#' @param psSettings               The settings for estimating the propensity scores
+#' @param riskStrata               The number of risk strata
+#' @param createPsThreads          The number of parallel threads for the
+#'                                 estimation of the propensity scores. Default is 1.
+#' @param fitOutcomeModelsThreads  The number of parallel threads for the estimation of the
+#'                                 outcome models.
+#' @param balanceThreads           The number of parallel threads for the estimation
+#'                                 of covariate balance
+#' @param negativeControlThreads   The number of parallel threads for the negative
+#'                                 control analyses
+#'
+#' @return
+#' A parameter object for running the the estimation step.
+#' @export
+
+createRunCmSettingsArgs <- function(
+  analyses,
+  psSettings              = createCreatePsArgs(),
+  riskStrata              = 4,
+  createPsThreads         = 1,
+  fitOutcomeModelsThreads = 1,
+  balanceThreads          = 1,
+  negativeControlThreads  = 1
+) {
+
+  res <- list(
+    analyses                = analyses,
+    psSettings              = psSettings,
+    riskStrata              = riskStrata,
+    createPsThreads         = createPsThreads,
+    fitOutcomeModelsThreads = fitOutcomeModelsThreads,
+    balanceThreads          = balanceThreads,
+    negativeControlThreads  = negativeControlThreads
+  )
+  class(res) <- "args"
+
+  return(res)
 }
 
 

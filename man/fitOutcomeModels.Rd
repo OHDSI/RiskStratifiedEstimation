@@ -4,7 +4,7 @@
 \alias{fitOutcomeModels}
 \title{Fit outcome models}
 \usage{
-fitOutcomeModels(outcomeId, getDataSettings, pathToPs, runCmSettings)
+fitOutcomeModels(outcomeId, getDataSettings, pathToPs, analysis)
 }
 \arguments{
 \item{outcomeId}{The outcome of interest for which the esitmation is performed. That is the outcome

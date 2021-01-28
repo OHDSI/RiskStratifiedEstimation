@@ -9,7 +9,8 @@ fitPsModelOverall(
   getDataSettings,
   populationSettings,
   analysisSettings,
-  runCmSettings
+  runCmSettings,
+  isNegativeControl = FALSE
 )
 }
 \arguments{
@@ -26,6 +27,8 @@ fitPsModelOverall(
 
 \item{runCmSettings}{A parameter object of type \code{runCmSettingsArgs} defined using the function
 \code{\link[RiskStratifiedEstimation]{createRunCmSettingsArgs}}}
+
+\item{isNegativeControl}{Is the analysis performed for a negative control?}
 }
 \value{
 \code{NULL}. The results are all saved.

@@ -114,6 +114,36 @@ if (!is.null(overallAnalysisFiles))
     dplyr::rename("comparator" = "exposure_name")
 }
 
+if (file.exists(file.path(analysisPath, "mappedOverallResultsNegativeControls.rds"))) {
+  overallNegativeControls <- readRDS(
+    file.path(
+      analysisPath,
+      "mappedOverallResultsNegativeControls.rds"
+    )
+  ) %>%
+    dplyr::left_join(
+      mapExposures,
+      by = c(
+        "treatmentId" = "exposure_id"
+      )
+    ) %>%
+    dplyr::select(-"treatmentId") %>%
+    dplyr::rename(
+      "treatment" = "exposure_name"
+    ) %>%
+    dplyr::left_join(
+      mapExposures,
+      by = c(
+        "comparatorId" = "exposure_id"
+      )
+    ) %>%
+    dplyr::select(-"comparatorId") %>%
+    dplyr::rename("comparator" = "exposure_name") %>%
+    dplyr::mutate(
+      logRr = log(estimate)
+    )
+}
+
 analyses <- readRDS(
 	file.path(
 		analysisPath,
@@ -374,6 +404,45 @@ mappedOverallCasesResults <-
 		"comparator" = "exposure_name"
 	)
 
+if (file.exists(file.path(analysisPath, "negativeControls.rds"))) {
+  negativeControls <- readRDS(
+    file.path(
+      analysisPath,
+      "negativeControls.rds"
+    )
+  ) %>%
+    dplyr::left_join(
+      mapOutcomes,
+      by = c(
+        "stratOutcome" = "outcome_id"
+      )
+    ) %>%
+    dplyr::select(-"stratOutcome") %>%
+    dplyr::rename(
+      "stratOutcome" = "outcome_name"
+    ) %>%
+    dplyr::left_join(
+      mapExposures,
+      by = c(
+        "treatment" = "exposure_id"
+      )
+    ) %>%
+    dplyr::select(-"treatment") %>%
+    dplyr::rename(
+      "treatment" = "exposure_name"
+    ) %>%
+    dplyr::left_join(
+      mapExposures,
+      by = c(
+        "comparator" = "exposure_id"
+      )
+    ) %>%
+    dplyr::select(-"comparator") %>%
+    dplyr::rename(
+      "comparator" = "exposure_name"
+    )
+}
+
 databaseOptions <- unique(
   analyses$database
 )
@@ -422,12 +491,18 @@ getResults <- function(
 getResultsOverall <- function(
   treat, comp, strat, db, anal,
   overallMappedOverallRelativeResults
-)
-{
+) {
   result <- overallMappedOverallRelativeResults %>%
     dplyr::filter(
-      .$stratOutcome %in% strat & .$treatment %in% treat & .$comparator %in% comp & .$database %in% db & .$analysisType %in% anal
+      .$treatment %in% treat & .$comparator %in% comp & .$database %in% db & .$analysisType %in% anal
     )
+  if (!missing(strat)) {
+    result <- result %>%
+      dplyr::filter(
+        .$stratOutcome %in% strat
+      )
+  }
+  return(result)
 }
 
 
@@ -1166,14 +1241,13 @@ addInfo <- function(item, infoId) {
 
 
 
-combinedPlot123w12 <- function(
+combinedPlot <- function(
   cases,
   relative,
   absolute,
   treatment,
   comparator
-)
-{
+) {
 
   cases <- cases %>%
     dplyr::mutate(
@@ -1356,7 +1430,7 @@ combinedPlot123w12 <- function(
       x = ~risk + m,
       y = ~estimate,
       color = ~estOutcome,
-      colors = customColors[1:nOutcomes],
+      colors = customColors[1:numberOfPoints],
       type = "scatter",
       error_y = list(
         type = "data",
@@ -1417,7 +1491,7 @@ combinedPlot123w12 <- function(
       x = ~risk + m,
       y = ~estimate,
       color = ~estOutcome,
-      colors = customColors[1:nOutcomes],
+      colors = customColors[1:numberOfPoints],
       type = "scatter",
       error_y = list(
         type = "data",
@@ -1457,5 +1531,49 @@ combinedPlot123w12 <- function(
 
   plotly::subplot(p1, p2, p3, shareX = TRUE, nrows = 3, titleY = T)
 
+}
 
+
+getNegativeControls <- function(
+  treat, comp, strat, db, anal,
+  negativeControls
+) {
+  res <- negativeControls %>%
+    dplyr::filter(
+      .$stratOutcome %in% strat & .$treatment %in% treat & .$comparator %in% comp & .$database %in% db & .$analysisType %in% anal
+    ) %>%
+    dplyr::mutate(
+      logRr = log(HR)
+    )
+  return(res)
+}
+
+
+plotRiskStratifiedNegativeControls <- function(
+  negativeControls,
+  positiveControls
+) {
+  riskStrata <- unique(negativeControls$riskStratum)
+  plots <- list()
+  for (i in seq_along(riskStrata)) {
+    null <- EmpiricalCalibration::fitNull(
+      logRr = negativeControls$logRr,
+      seLogRr = negativeControls$seLogRr
+    )
+    positiveControlsSubset <- positiveControls %>%
+      dplyr::filter(
+        riskStratum == paste0("Q", i)
+      )
+    plots[[i]] <- EmpiricalCalibration::plotCalibrationEffect(
+      logRrNegatives = negativeControls$logRr,
+      seLogRrNegatives = negativeControls$seLogRr,
+      logRrPositives = positiveControlsSubset$logRr,
+      seLogRrPositives = positiveControlsSubset$seLogRr,
+      null = null
+    )
+  }
+  gridExtra::grid.arrange(
+    plots[[1]], plots[[2]], plots[[3]], plots[[4]],
+    nrow = 1
+  )
 }

@@ -20,7 +20,8 @@ createRunPlpSettingsArgs(
   saveEvaluation = TRUE,
   verbosity = "INFO",
   timeStamp = FALSE,
-  analysisId = NULL
+  analysisId = NULL,
+  matchingSettings = createMatchOnPsArgs()
 )
 }
 \arguments{
@@ -90,6 +91,9 @@ Automatically switched on for TRACE level.}
 
 \item{analysisId}{Identifier for the analysis. It is used to create, e.g., the result
 folder. Default is a timestamp.}
+
+\item{matchingSettings}{The settings for the construction of the population on which the
+prediction model will be developed.}
 }
 \description{
 Create a parameter object for the function runPlp

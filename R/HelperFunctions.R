@@ -145,6 +145,8 @@ createOverallResults <- function(analysisSettings) {
   predictOutcomes <-
     analysisSettings$outcomeIds[which(colSums(analysisSettings$analysisMatrix) != 0)]
 
+  negativeControls <- analysisSettings$negativeControlOutcomes
+
   pathToResults <- file.path(
     analysisSettings$saveDirectory,
     analysisSettings$analysisId,
@@ -163,8 +165,7 @@ createOverallResults <- function(analysisSettings) {
     "shiny"
   )
 
-  if (!dir.exists(saveDir))
-  {
+  if (!dir.exists(saveDir)) {
     dir.create(saveDir, recursive = T)
   }
 
@@ -200,6 +201,19 @@ createOverallResults <- function(analysisSettings) {
     analysisType = character(),
     treatment = numeric(),
     comparator = numeric()
+  )
+  negativeControlsRelative <- data.frame(
+    HR = numeric(),
+    lower = numeric(),
+    upper = numeric(),
+    seLogRr = numeric(),
+    riskStratum = character(),
+    analysisType = character(),
+    stratOutcome = numeric(),
+    estOutcome = numeric(),
+    treatment = numeric(),
+    comparator = numeric(),
+    database = character()
   )
 
   predictionPopulations <- c(
@@ -463,6 +477,50 @@ createOverallResults <- function(analysisSettings) {
         }
       }
     }
+
+    if (!is.null(negativeControls)) {
+      for (i in seq_along(negativeControls)) {
+        tmp <- tryCatch(
+          {
+            readRDS(
+              file = file.path(
+                analysisSettings$saveDirectory,
+                analysisSettings$analysisId,
+                "Estimation",
+                predictOutcome,
+                negativeControls[i],
+                "relativeRiskReduction.rds"
+              )
+            )
+          },
+          error = function(e) {
+            e$message
+          }
+        )
+        if (!is.character(tmp) & nrow(tmp) != 0) {
+          negativeControlsRelative <- rbind(
+            negativeControlsRelative,
+            data.frame(
+              tmp,
+              stratOutcome = predictOutcome,
+              estOutcome = negativeControls[i],
+              treatment = analysisSettings$treatmentCohortId,
+              comparator = analysisSettings$comparatorCohortId,
+              database = analysisSettings$databaseName
+            )
+          )
+        }
+      }
+      saveRDS(
+        negativeControlsRelative,
+        file = file.path(
+          analysisSettings$saveDirectory,
+          analysisSettings$analysisId,
+          "shiny",
+          "negativeControls.rds"
+        )
+      )
+    }
   }
 
   absolute %>%
@@ -564,15 +622,17 @@ fitMultiplePsModelOverall <- function(
 #' @importFrom dplyr %>%
 #' @export
 mergeTempFiles <- function(
-  pathToPs,
+  path,
   outcomeId,
   fileName
 ) {
 
-  path <- file.path(
-    pathToPs,
-    outcomeId
-  )
+  if (!missing(outcomeId)) {
+    path <- file.path(
+      path,
+      outcomeId
+    )
+  }
 
   files <- list.files(
     path = path,
@@ -602,3 +662,9 @@ mergeTempFiles <- function(
 
 }
 
+
+combineNegativeControlResults <- function(
+  analysisSettings
+) {
+
+}

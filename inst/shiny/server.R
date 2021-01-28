@@ -1,13 +1,11 @@
 library(dplyr)
+
 shiny::shinyServer(
   function(
     input,
     output,
     session
-  )
-  {
-
-
+  ) {
     shiny::observe(
       {
         stratificationOutcome <- input$stratOutcome
@@ -41,9 +39,7 @@ shiny::shinyServer(
           mappedOverallAbsoluteResults = mappedOverallAbsoluteResults,
           mappedOverallCasesResults = mappedOverallCasesResults
         )
-
         return(results)
-
       }
     )
 
@@ -57,12 +53,38 @@ shiny::shinyServer(
           db = input$database,
           overallMappedOverallRelativeResults = overallMappedOverallRelativeResults
         )
+        return(results)
+      }
+    )
+
+    negativeControlsSubset <- shiny::reactive(
+      {
+        results <- getNegativeControls(
+          treat = input$treatment,
+          comp = input$comparator,
+          strat = input$stratOutcome,
+          anal = input$analysis,
+          db = input$database,
+          negativeControls = negativeControls
+        )
+      }
+    )
+
+    overallNegativeControlsSubset <- shiny::reactive(
+      {
+        results <- getResultsOverall(
+          treat = input$treatment,
+          comp = input$comparator,
+          anal = input$analysis,
+          db = input$database,
+          overallMappedOverallRelativeResults = overallNegativeControls
+        )
+        return(results)
       }
     )
 
     incidenceSubset <- shiny::reactive(
       {
-
         res <- getIncidence(
           treat = input$treatment,
           comp = input$comparator,
@@ -211,9 +233,7 @@ shiny::shinyServer(
 
     output$mainTableIncidence <- DT::renderDataTable(
       {
-
         res <- incidenceSubset()
-
         treatment <- res$treatment[1]
         comparator <- res$comparator[1]
         outcome <- res$stratOutcome[1]
@@ -276,7 +296,6 @@ shiny::shinyServer(
                 )
               )
             )
-
           ) %>%
           DT::formatCurrency(
             columns =  "treatmentPersons",
@@ -713,7 +732,6 @@ shiny::shinyServer(
 
     output$evaluationPlotPs <- shiny::renderPlot(
       {
-
         psDensitySubset() %>%
           dplyr::left_join(
             mapExposures,
@@ -1096,6 +1114,39 @@ shiny::shinyServer(
 
         return(plot)
 
+      }
+    )
+
+    output$overallNegativeControlsPlot <- shiny::renderPlot(
+      {
+        dat <- overallResultSubset() %>%
+          dplyr::mutate(logRr = log(estimate))
+        ncs <- overallNegativeControlsSubset()
+        null <- EmpiricalCalibration::fitNull(
+          logRr = ncs$logRr,
+          seLogRr = ncs$seLogRr
+        )
+
+        EmpiricalCalibration::plotCalibrationEffect(
+          logRrNegatives = ncs$logRr,
+          seLogRrNegatives = ncs$seLogRr,
+          logRrPositives = dat$logRr,
+          seLogRrPositives = dat$seLogRr,
+          null = null
+        )
+      }
+    )
+
+    output$negativeControlsPlot <- shiny::renderPlot(
+      {
+        dat <- resultSubset()
+        relative <- dat$relative %>%
+          dplyr::mutate(logRr = log(estimate))
+        ncs <- negativeControlsSubset()
+        plotRiskStratifiedNegativeControls(
+          negativeControls = ncs,
+          positiveControls = relative
+        )
       }
     )
 

@@ -40,7 +40,7 @@ fitOutcomeModels <- function(
   outcomeId,
   getDataSettings,
   pathToPs,
-  runCmSettings
+  analysis
 ) {
 
   ParallelLogger::logInfo(
@@ -85,7 +85,7 @@ fitOutcomeModels <- function(
     {
       estimateTreatmentEffect(
         ps = ps,
-        runCmSettings = runCmSettings
+        analysis = analysis
       )
     },
     error = function(e)
@@ -109,7 +109,7 @@ fitOutcomeModels <- function(
           paste(
             "temp",
             "relativeRiskReduction",
-            runCmSettings$label,
+            analysis$label,
             sep = "_"
           ),
           ".rds"
@@ -124,7 +124,7 @@ fitOutcomeModels <- function(
           paste(
             "temp",
             "absoluteRiskReduction",
-            runCmSettings$label,
+            analysis$label,
             sep = "_"
           ),
           ".rds"
@@ -138,7 +138,7 @@ fitOutcomeModels <- function(
         paste0(
           paste(
             "models",
-            runCmSettings$label,
+            analysis$label,
             sep = "_"
           ),
           ".rds"
@@ -153,7 +153,7 @@ fitOutcomeModels <- function(
           paste(
             "temp",
             "cases",
-            runCmSettings$label,
+            analysis$label,
             sep = "_"
           ),
           ".rds"
@@ -167,14 +167,13 @@ fitOutcomeModels <- function(
         paste0(
           paste(
             "ps",
-            runCmSettings$label,
+            analysis$label,
             sep = "_"
           ),
           ".rds"
         )
       )
     )
-
   }
 
   ParallelLogger::logInfo(
@@ -214,7 +213,7 @@ fitPsModelSwitch <- function(
 )
 {
 
-  runSettings$runCmSettings <- runSettings$runCmSettings[[1]]
+  # runSettings$runCmSettings <- runSettings$runCmSettings[[1]]
 
   analysisPath <- file.path(
     analysisSettings$saveDirectory,
@@ -228,7 +227,6 @@ fitPsModelSwitch <- function(
       "Prediction",
       predictOutcome,
       analysisSettings$analysisId,
-      "plpResult",
       "EntirePopulation",
       "prediction.rds"
     )
@@ -438,8 +436,7 @@ fitPsModelSwitch <- function(
     )
   }
 
-  if (!failed)
-  {
+  if (!failed) {
 
     saveDir <- file.path(
       analysisPath,
@@ -448,8 +445,7 @@ fitPsModelSwitch <- function(
       compareOutcome
     )
 
-    if (!dir.exists(saveDir))
-    {
+    if (!dir.exists(saveDir)) {
       dir.create(
         saveDir,
         recursive = TRUE
@@ -642,8 +638,13 @@ relativeRiskReduction <- function(model){
   if (class(model) == "OutcomeModel")
   {
     return(
-      exp(
-        model$outcomeModelTreatmentEstimate[1:3]
+      unlist(
+        c(
+          exp(
+            model$outcomeModelTreatmentEstimate[1:3]
+          ),
+          model$outcomeModelTreatmentEstimate[4]
+        )
       )
     )
   }
@@ -858,17 +859,17 @@ stratifiedKaplanMeier <- function(population, timePoint) {
 
 estimateTreatmentEffect <- function(
   ps,
-  runCmSettings
+  analysis
 ) {
 
-  if (runCmSettings$psMethod == "matchOnPs") {
+  if (analysis$psMethod == "matchOnPs") {
     ps <- lapply(
       ps,
       CohortMethod::matchOnPs,
-      caliper = runCmSettings$effectEstimationSettings$caliper,
-      caliperScale = runCmSettings$effectEstimationSettings$caliperScale,
-      maxRatio = runCmSettings$effectEstimationSettings$maxRatio,
-      stratificationColumns = runCmSettings$effectEstimationSettings$stratificationColumns
+      caliper = analysis$effectEstimationSettings$caliper,
+      caliperScale = analysis$effectEstimationSettings$caliperScale,
+      maxRatio = analysis$effectEstimationSettings$maxRatio,
+      stratificationColumns = analysis$effectEstimationSettings$stratificationColumns
     )
 
     models <- lapply(
@@ -883,8 +884,8 @@ estimateTreatmentEffect <- function(
       lapply(
         ps,
         getCounts,
-        timePoint = runCmSettings$timePoint,
-        psMethod = runCmSettings$psMethod
+        timePoint = analysis$timePoint,
+        psMethod = analysis$psMethod
       )
     )
 
@@ -909,8 +910,8 @@ estimateTreatmentEffect <- function(
       lapply(
         ps,
         absoluteRiskReduction,
-        timePoint = runCmSettings$timePoint,
-        psMethod = runCmSettings$psMethod
+        timePoint = analysis$timePoint,
+        psMethod = analysis$psMethod
       )
     )
 
@@ -938,7 +939,8 @@ estimateTreatmentEffect <- function(
     colnames(rrr) <- c(
       "HR",
       "lower",
-      "upper"
+      "upper",
+      "seLogRr"
     )
 
     rrr <- as.data.frame(rrr)
@@ -949,14 +951,13 @@ estimateTreatmentEffect <- function(
     )
 
   }
-  else if (runCmSettings$psMethod == "stratifyByPs")
-  {
+  else if (analysis$psMethod == "stratifyByPs") {
     ps <- lapply(
       ps,
       CohortMethod::stratifyByPs,
-      numberOfStrata = runCmSettings$effectEstimationSettings$numberOfStrata,
-      stratificationColumns = runCmSettings$effectEstimationSettings$stratificationColumns,
-      baseSelection = runCmSettings$effectEstimationSettings$baseSelection
+      numberOfStrata = analysis$effectEstimationSettings$numberOfStrata,
+      stratificationColumns = analysis$effectEstimationSettings$stratificationColumns,
+      baseSelection = analysis$effectEstimationSettings$baseSelection
     )
 
     ParallelLogger::logInfo(
@@ -968,8 +969,8 @@ estimateTreatmentEffect <- function(
       lapply(
         ps,
         getCounts,
-        timePoint = runCmSettings$timePoint,
-        psMethod = runCmSettings$psMethod
+        timePoint = analysis$timePoint,
+        psMethod = analysis$psMethod
       )
     )
 
@@ -997,8 +998,8 @@ estimateTreatmentEffect <- function(
       lapply(
         ps,
         absoluteRiskReduction,
-        timePoint = runCmSettings$timePoint,
-        psMethod = runCmSettings$psMethod
+        timePoint = analysis$timePoint,
+        psMethod = analysis$psMethod
       )
     )
 
@@ -1033,7 +1034,8 @@ estimateTreatmentEffect <- function(
     colnames(rrr) <- c(
       "HR",
       "lower",
-      "upper"
+      "upper",
+      "seLogRr"
     )
 
     rrr <- as.data.frame(rrr)
@@ -1041,99 +1043,13 @@ estimateTreatmentEffect <- function(
       "Q",
       1:riskStrata
     )
-
-  }
-  else if (runCmSettings$psMethod == "inversePtWeighted")
-  {
-    ps <- lapply(
-      ps,
-      createIPW,
-      weightsType = runCmSettings$effectEstimationSettings$weightsType,
-      useStabilizedWeights = runCmSettings$effectEstimationSettings$useStabilizedWeights,
-      truncationLevels = runCmSettings$effectEstimationSettings$truncationLevels
-    )
-
-    models <- lapply(
-      ps,
-      outcomeModelWeighted,
-      calculateWeights = FALSE
-    )
-
-    cases <- do.call(
-      rbind,
-      lapply(
-        ps,
-        getCounts,
-        timePoint = runCmSettings$timePoint,
-        psMethod = runCmSettings$psMethod
-      )
-    )
-
-    colnames(cases) <- c(
-      "comparator",
-      "treatment"
-    )
-
-    cases <- as.data.frame(cases)
-    riskStrata <- length(ps)
-
-    cases$riskStratum <- paste0(
-      "Q",
-      1:riskStrata
-    )
-
-    arr <- do.call(
-      rbind,
-      lapply(
-        ps,
-        absoluteRiskReduction,
-        timePoint = runCmSettings$timePoint,
-        psMethod = runCmSettings$psMethod
-      )
-    )
-
-    colnames(arr) <- c(
-      "ARR",
-      "lower",
-      "upper"
-    )
-
-    arr <- as.data.frame(arr)
-    arr$riskStratum <- paste0(
-      "Q",
-      1:riskStrata
-    )
-
-    rrr <- do.call(
-      rbind,
-      lapply(
-        models,
-        relativeRiskReduction
-      )
-    )
-
-    colnames(rrr) <- c(
-      "HR",
-      "lower",
-      "upper"
-    )
-
-    rrr <- as.data.frame(
-      rrr
-    )
-
-    rrr$riskStratum <- paste0(
-      "Q",
-      1:riskStrata
-    )
-
   }
 
   return(
     list(
-      relativeRiskReduction = rrr %>% dplyr::mutate(analysisType = runCmSettings$label),
-      absoluteRiskReduction = arr %>% dplyr::mutate(analysisType = runCmSettings$label),
-      cases = cases %>% dplyr::mutate(analysisType = runCmSettings$label),
+      relativeRiskReduction = rrr %>% dplyr::mutate(analysisType = analysis$label),
+      absoluteRiskReduction = arr %>% dplyr::mutate(analysisType = analysis$label),
+      cases = cases %>% dplyr::mutate(analysisType = analysis$label),
       models = models,
       ps = ps
     )
@@ -1157,6 +1073,7 @@ estimateTreatmentEffect <- function(
 #'                                   \code{\link[RiskStratifiedEstimation]{createAnalysisSettings}}.
 #' @param runCmSettings              A parameter object of type \code{runCmSettingsArgs} defined using the function
 #'                                   \code{\link[RiskStratifiedEstimation]{createRunCmSettingsArgs}}
+#' @param isNegativeControl          Is the analysis performed for a negative control?
 #'
 #' @return                           \code{NULL}. The results are all saved.
 #'
@@ -1167,15 +1084,11 @@ fitPsModelOverall <- function(
   getDataSettings,
   populationSettings,
   analysisSettings,
-  runCmSettings
-)
-{
+  runCmSettings,
+  isNegativeControl = FALSE
+) {
   cohortMethodData <- CohortMethod::loadCohortMethodData(
     file = getDataSettings$cohortMethodDataFolder
-  )
-
-  plpData <- PatientLevelPrediction::loadPlpData(
-    file = getDataSettings$plpDataFolder
   )
 
   populationCm <- CohortMethod::createStudyPopulation(
@@ -1199,41 +1112,42 @@ fitPsModelOverall <- function(
         cohortStartDate
       )
     )
+  pop <- populationCm
 
-  startingPop <- populationCm %>%
-    dplyr::left_join(
-      plpData$cohorts
+  if (!isNegativeControl) {
+
+    plpData <- PatientLevelPrediction::loadPlpData(
+      file = getDataSettings$plpDataFolder
+    )
+    populationPlp <- PatientLevelPrediction::createStudyPopulation(
+      plpData = plpData,
+      # population = as.data.frame(startingPop),
+      outcomeId = outcomeId,
+      binary = populationSettings$populationPlpSettings$binary,
+      includeAllOutcomes = populationSettings$populationPlpSettings$includeAllOutcomes,
+      firstExposureOnly = populationSettings$populationPlpSettings$firstExposureOnly,
+      washoutPeriod = populationSettings$populationPlpSettings$washoutPeriod,
+      removeSubjectsWithPriorOutcome = populationSettings$populationPlpSettings$removeSubjectsWithPriorOutcome,
+      priorOutcomeLookback = populationSettings$populationPlpSettings$priorOutcomeLookback,
+      requireTimeAtRisk = populationSettings$populationPlpSettings$requireTimeAtRisk,
+      minTimeAtRisk = populationSettings$populationPlpSettings$minTimeAtRisk,
+      riskWindowStart = populationSettings$populationPlpSettings$riskWindowStart,
+      startAnchor = populationSettings$populationPlpSettings$startAnchor,
+      riskWindowEnd = populationSettings$populationPlpSettings$riskWindowEnd,
+      endAnchor = populationSettings$populationPlpSettings$endAnchor,
+      verbosity = populationSettings$populationPlpSettings$verbosity
     )
 
-
-  populationPlp <- PatientLevelPrediction::createStudyPopulation(
-    plpData = plpData,
-    # population = as.data.frame(startingPop),
-    outcomeId = outcomeId,
-    binary = populationSettings$populationPlpSettings$binary,
-    includeAllOutcomes = populationSettings$populationPlpSettings$includeAllOutcomes,
-    firstExposureOnly = populationSettings$populationPlpSettings$firstExposureOnly,
-    washoutPeriod = populationSettings$populationPlpSettings$washoutPeriod,
-    removeSubjectsWithPriorOutcome = populationSettings$populationPlpSettings$removeSubjectsWithPriorOutcome,
-    priorOutcomeLookback = populationSettings$populationPlpSettings$priorOutcomeLookback,
-    requireTimeAtRisk = populationSettings$populationPlpSettings$requireTimeAtRisk,
-    minTimeAtRisk = populationSettings$populationPlpSettings$minTimeAtRisk,
-    riskWindowStart = populationSettings$populationPlpSettings$riskWindowStart,
-    startAnchor = populationSettings$populationPlpSettings$startAnchor,
-    riskWindowEnd = populationSettings$populationPlpSettings$riskWindowEnd,
-    endAnchor = populationSettings$populationPlpSettings$endAnchor,
-    verbosity = populationSettings$populationPlpSettings$verbosity
-  )
-
-  pop <- populationCm %>%
-    dplyr::select(
-      "rowId",
-      "subjectId",
-      "treatment"
-    ) %>%
-    dplyr::left_join(
-      populationPlp
-    )
+    pop <- pop %>%
+      dplyr::select(
+        "rowId",
+        "subjectId",
+        "treatment"
+      ) %>%
+      dplyr::left_join(
+        populationPlp
+      )
+  }
 
   ps <- CohortMethod::createPs(
     cohortMethodData = cohortMethodData,
@@ -1354,8 +1268,7 @@ fitOutcomeModelsOverall <- function(
     )
 
   }
-  else if (runCmSettings$psMethod == "stratifyByPs")
-  {
+  else if (runCmSettings$psMethod == "stratifyByPs") {
     stratifiedPop <- CohortMethod::stratifyByPs(
       ps,
       numberOfStrata = runCmSettings$effectEstimationSettings$numberOfStrata,
@@ -1448,7 +1361,7 @@ fitPsModel <- function(
     analysisSettings$analysisId
   )
 
-  runSettings$runCmSettings <- runSettings$runCmSettings[[1]]
+  # runSettings$runCmSettings <- runSettings$runCmSettings[[1]]
 
   ParallelLogger::logInfo(
     "Reading cohort method data"
@@ -1574,8 +1487,7 @@ fitPsModel <- function(
   )
 
   ps <- list()
-  for (i in 1:nRiskStrata)
-  {
+  for (i in 1:nRiskStrata) {
     population <- populationCm[populationCm$subjectId %in% mapMatrix[mapMatrix$riskStratum == i,]$subjectId, ]
     ps[[i]] <- CohortMethod::createPs(
       cohortMethodData = cohortMethodData,
@@ -1658,36 +1570,37 @@ fitPsModel <- function(
 includeOverallResults <- function(
   analysisSettings,
   getDataSettings,
-  runCmSettings
-)
-{
+  runSettings,
+  analysis,
+  isNegativeControl = FALSE
+) {
   analysisPath <- file.path(
     analysisSettings$saveDirectory,
     analysisSettings$analysisId
   )
 
-  outcomeIds <- analysisSettings$outcomeIds[which(colSums(analysisSettings$analysisMatrix) != 0)]
+  if (isNegativeControl) {
+    outcomeIds <- analysisSettings$negativeControlOutcomes
+    nThreads <- runSettings$runCmSettings$negativeControlThreads
+  } else {
+    outcomeIds <- analysisSettings$outcomeIds
+    nThreads <- runSettings$runCmSettings$fitOutcomeModelsThreads
+  }
+
+  # outcomeIds <- analysisSettings$outcomeIds[which(colSums(analysisSettings$analysisMatrix) != 0)]
   cohortMethodData <- CohortMethod::loadCohortMethodData(
     file = file.path(
       getDataSettings$cohortMethodDataFolder
     )
   )
 
-  covariates <- cohortMethodData$covariates %>%
-    dplyr::collect()
-  data.table::setDT(covariates)
-
-  covariateRef <- cohortMethodData$covariateRef %>%
-    dplyr::collect()
-  data.table::setDT(covariateRef)
-
-  cohorts <- cohortMethodData$cohorts %>%
-    dplyr::collect()
-  data.table::setDT(cohorts)
-
-  overallTreatmentEffects <- incidence <- NULL
-
-  for (outcomeId in outcomeIds) {
+  generateSingleAnalysis <- function(
+    outcomeId,
+    analysisPath,
+    cohortMethodData = NULL,
+    analysisSettings,
+    analysis
+  ) {
     ps <- readRDS(
       file = file.path(
         analysisPath,
@@ -1697,138 +1610,110 @@ includeOverallResults <- function(
       )
     )
 
-    if (runCmSettings$psMethod == "matchOnPs") {
+    if (analysis$psMethod == "matchOnPs") {
       ps <- CohortMethod::matchOnPs(
         population = ps,
-        caliper = runCmSettings$effectEstimationSettings$caliper,
-        caliperScale = runCmSettings$effectEstimationSettings$caliperScale,
-        maxRatio = runCmSettings$effectEstimationSettings$maxRatio
+        caliper = analysis$effectEstimationSettings$caliper,
+        caliperScale = analysis$effectEstimationSettings$caliperScale,
+        maxRatio = analysis$effectEstimationSettings$maxRatio
       )
-    } else if (runCmSettings$psMethod == "stratifyByPs") {
+      if (sum(ps$outcomeCount) < 20) {
+        return(NULL)
+      }
+      model <- CohortMethod::fitOutcomeModel(
+        population = ps,
+        cohortMethodData = cohortMethodData,
+        modelType = "cox",
+        stratified = FALSE
+      )
+    } else if (analysis$psMethod == "stratifyByPs") {
       ps <- CohortMethod::stratifyByPs(
         population = ps,
-        numberOfStrata = runCmSettings$effectEstimationSettings$numberOfStrata,
-        baseSelection = runCmSettings$effectEstimationSettings$baseSelection
+        numberOfStrata = analysis$effectEstimationSettings$numberOfStrata,
+        baseSelection = analysis$effectEstimationSettings$baseSelection
+      )
+      if (sum(ps$outcomeCount) < 20) {
+        return(NULL)
+      }
+      model <- CohortMethod::fitOutcomeModel(
+        population = ps,
+        cohortMethodData = cohortMethodData,
+        modelType = "cox",
+        stratified = TRUE
       )
     }
-
-    model <- CohortMethod::fitOutcomeModel(
-      population = ps,
-      cohortMethodData = cohortMethodData,
-      modelType = "cox",
-      stratified = TRUE
+    saveRDS(
+      ps,
+      file = file.path(
+        analysisPath,
+        "Estimation",
+        outcomeId,
+        paste0(
+          paste(
+            "psFull",
+            analysis$label,
+            sep = "_"
+          ),
+          ".rds"
+        )
+      )
     )
-
-    overallTreatmentEffects <- data.frame(
-      estimate = exp(model$outcomeModelTreatmentEstimate$logRr),
-      lower = exp(model$outcomeModelTreatmentEstimate$logLb95),
-      upper = exp(model$outcomeModelTreatmentEstimate$logUb95),
-      outcomeId = outcomeId,
-      database = analysisSettings$databaseName,
-      analysisType = runCmSettings$label,
-      treatmentId = analysisSettings$treatmentCohortId,
-      comparatorId = analysisSettings$comparatorCohortId
-    ) %>%
-      dplyr::bind_rows(overallTreatmentEffects)
-
-    incidence <- computeIncidence(ps) %>%
-      dplyr::mutate(
-        database = analysisSettings$databaseName,
-        analysisId = analysisSettings$analysisId,
-        treatmentId = analysisSettings$treatmentCohortId,
-        comparatorId = analysisSettings$comparatorCohortId,
+    return(
+      data.frame(
+        estimate = exp(model$outcomeModelTreatmentEstimate$logRr),
+        lower = exp(model$outcomeModelTreatmentEstimate$logLb95),
+        upper = exp(model$outcomeModelTreatmentEstimate$logUb95),
+        seLogRr = model$outcomeModelTreatmentEstimate$seLogRr,
         outcomeId = outcomeId,
-        analysisType = runCmSettings$label
-      ) %>%
-      dplyr::bind_rows(incidence)
-
-    psDensity(ps) %>%
-      dplyr::mutate(
         database = analysisSettings$databaseName,
-        analysisId = analysisSettings$analysisId,
-        outcomeId = outcomeId,
-        treatment = ifelse(
-          treatment == 1,
-          yes = analysisSettings$treatmentCohortId,
-          no = analysisSettings$comparatorCohortId
-        ),
+        analysisType = analysis$label,
         treatmentId = analysisSettings$treatmentCohortId,
-        comparatorId = analysisSettings$comparatorCohortId,
-        analysisType = runCmSettings$label
-      ) %>%
-      saveRDS(
-        file = file.path(
-          analysisPath,
-          "shiny",
-          paste(
-            paste(
-              "overall",
-              "psDensity",
-              analysisSettings$analysisId,
-              runCmSettings$label,
-              analysisSettings$databaseName,
-              analysisSettings$treatmentCohortId,
-              analysisSettings$comparatorCohortId,
-              outcomeId,
-              sep = "_"
-            ),
-            "rds",
-            sep = "."
-          )
-        )
+        comparatorId = analysisSettings$comparatorCohortId
       )
-
-    computeCovariateBalance4(
-      population = ps,
-      cohorts = cohorts,
-      covariates = covariates,
-      covariateRef = covariateRef
-    ) %>%
-      dplyr::select(
-        covariateId,
-        covariateName,
-        beforeMatchingStdDiff,
-        afterMatchingStdDiff
-      ) %>%
-      dplyr::mutate(
-        analysisId = analysisSettings$analysisId,
-        treatmentId = analysisSettings$treatmentCohortId,
-        comparatorId = analysisSettings$comparatorCohortId,
-        outcomeId = outcomeId
-      ) %>%
-      saveRDS(
-        file = file.path(
-          analysisPath,
-          "shiny",
-          paste(
-            paste(
-              "overall",
-              "balance",
-              analysisSettings$analysisId,
-              runCmSettings$label,
-              analysisSettings$databaseName,
-              analysisSettings$treatmentCohortId,
-              analysisSettings$comparatorCohortId,
-              outcomeId,
-              sep = "_"
-            ),
-            "rds",
-            sep = "."
-          )
-        )
-      )
+    )
   }
-  rownames(overallTreatmentEffects) <- rownames(incidence) <- NULL
+
+  cluster <- ParallelLogger::makeCluster(
+    numberOfThreads = nThreads
+  )
+  ParallelLogger::clusterRequire(
+    cluster,
+    "RiskStratifiedEstimation"
+  )
+  ParallelLogger::clusterRequire(
+    cluster,
+    "CohortMethod"
+  )
+
+  ret <- ParallelLogger::clusterApply(
+    cluster = cluster,
+    x = outcomeIds,
+    fun = generateSingleAnalysis,
+    analysis = analysis,
+    analysisSettings = analysisSettings,
+    analysisPath = analysisPath
+  )
+
+  ParallelLogger::stopCluster(cluster)
+
+  combinedResults <- dplyr::bind_rows(ret)
+
+  rownames(combinedResults) <- NULL
+  fileName <- ifelse(
+    test = isNegativeControl,
+    yes = "mappedOverallResultsNegativeControls",
+    no = "mappedOverallResults"
+  )
   saveRDS(
-    object = incidence,
+    object = combinedResults,
     file = file.path(
       analysisPath,
       "shiny",
       paste0(
         paste(
           "temp",
-          "incidenceOverall",
-          runCmSettings$label,
+          fileName,
+          analysis$label,
           sep = "_"
         ),
         ".rds"
@@ -1836,22 +1721,143 @@ includeOverallResults <- function(
     )
   )
 
-  saveRDS(
-    object = overallTreatmentEffects,
-    file = file.path(
-      analysisPath,
-      "shiny",
-      paste0(
-        paste(
-          "temp",
-          "mappedOverallResults",
-          runCmSettings$label,
-          sep = "_"
-        ),
-        ".rds"
+  if (!isNegativeControl) {
+
+    incidence <- NULL
+    covariates <- cohortMethodData$covariates %>%
+      dplyr::collect()
+    data.table::setDT(covariates)
+
+    covariateRef <- cohortMethodData$covariateRef %>%
+      dplyr::collect()
+    data.table::setDT(covariateRef)
+
+    cohorts <- cohortMethodData$cohorts %>%
+      dplyr::collect()
+    data.table::setDT(cohorts)
+
+    for (outcomeId in outcomeIds) {
+      ps <- readRDS(
+        file = file.path(
+          analysisPath,
+          "Estimation",
+          outcomeId,
+          paste0(
+            paste(
+              "psFull",
+              analysis$label,
+              sep = "_"
+            ),
+            ".rds"
+          )
+        )
+      )
+      incidence <- computeIncidence(ps) %>%
+        dplyr::mutate(
+          database = analysisSettings$databaseName,
+          analysisId = analysisSettings$analysisId,
+          treatmentId = analysisSettings$treatmentCohortId,
+          comparatorId = analysisSettings$comparatorCohortId,
+          outcomeId = outcomeId,
+          analysisType = analysis$label
+        ) %>%
+        dplyr::bind_rows(incidence)
+
+      psDensity(ps) %>%
+        dplyr::mutate(
+          database = analysisSettings$databaseName,
+          analysisId = analysisSettings$analysisId,
+          outcomeId = outcomeId,
+          treatment = ifelse(
+            treatment == 1,
+            yes = analysisSettings$treatmentCohortId,
+            no = analysisSettings$comparatorCohortId
+          ),
+          treatmentId = analysisSettings$treatmentCohortId,
+          comparatorId = analysisSettings$comparatorCohortId,
+          analysisType = analysis$label
+        ) %>%
+        saveRDS(
+          file = file.path(
+            analysisPath,
+            "shiny",
+            paste(
+              paste(
+                "overall",
+                "psDensity",
+                analysisSettings$analysisId,
+                analysis$label,
+                analysisSettings$databaseName,
+                analysisSettings$treatmentCohortId,
+                analysisSettings$comparatorCohortId,
+                outcomeId,
+                sep = "_"
+              ),
+              "rds",
+              sep = "."
+            )
+          )
+        )
+
+      computeCovariateBalance4(
+        population = ps,
+        cohorts = cohorts,
+        covariates = covariates,
+        covariateRef = covariateRef
+      ) %>%
+        dplyr::select(
+          covariateId,
+          covariateName,
+          beforeMatchingStdDiff,
+          afterMatchingStdDiff
+        ) %>%
+        dplyr::mutate(
+          analysisId = analysisSettings$analysisId,
+          treatmentId = analysisSettings$treatmentCohortId,
+          comparatorId = analysisSettings$comparatorCohortId,
+          outcomeId = outcomeId
+        ) %>%
+        saveRDS(
+          file = file.path(
+            analysisPath,
+            "shiny",
+            paste(
+              paste(
+                "overall",
+                "balance",
+                analysisSettings$analysisId,
+                analysis$label,
+                analysisSettings$databaseName,
+                analysisSettings$treatmentCohortId,
+                analysisSettings$comparatorCohortId,
+                outcomeId,
+                sep = "_"
+              ),
+              "rds",
+              sep = "."
+            )
+          )
+        )
+    }
+    rownames(incidence) <- NULL
+    saveRDS(
+      object = incidence,
+      file = file.path(
+        analysisPath,
+        "shiny",
+        paste0(
+          paste(
+            "temp",
+            "incidenceOverall",
+            analysis$label,
+            sep = "_"
+          ),
+          ".rds"
+        )
       )
     )
-  )
+  }
+
   return(NULL)
 }
 

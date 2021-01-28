@@ -75,7 +75,7 @@ shiny::shinyUI(
           ),
           infoId = "testInfo"
         ),
-        shiny::checkboxGroupInput(
+        shiny::radioButtons(
           "analysis",
           "Analysis",
           unique(analysisTypeOptions),
@@ -160,6 +160,13 @@ shiny::shinyUI(
                       DT::dataTableOutput("overallBalanceTable")
                     )
                   )
+                ),
+                shiny::tabPanel(
+                  "Systematic error",
+                  shiny::plotOutput(
+                    "overallNegativeControlsPlot",
+                    height = "600px"
+                  )
                 )
               )
             ),
@@ -179,6 +186,13 @@ shiny::shinyUI(
               "Risk stratified analysis",
               plotly::plotlyOutput(
                 "combinedPlot",
+                height = "600px"
+              )
+            ),
+            shiny::tabPanel(
+              "Systematic Error",
+              shiny::plotOutput(
+                "negativeControlsPlot",
                 height = "600px"
               )
             )
