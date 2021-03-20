@@ -495,7 +495,7 @@ computeCovariatebalanceBase <- function(
       covariateBalance %>%
         dplyr::mutate(
           database = analysisSettings$databaseName,
-          analysisId = analysisSettings$analysisId,
+          analysisIdRsee = analysisSettings$analysisId,
           stratOutcome = stratOutcome,
           estOutcome = estOutcome,
           treatmentId = analysisSettings$treatmentCohortId,
@@ -507,10 +507,15 @@ computeCovariatebalanceBase <- function(
             "riskStratum",
             "covariateId",
             "covariateName",
+            "beforeMatchingMeanComparator",
+            "afterMatchingMeanComparator",
+            "beforeMatchingMeanTarget",
+            "afterMatchingMeanTarget",
             "beforeMatchingStdDiff",
             "afterMatchingStdDiff",
             "database",
             "analysisId",
+            "analysisIdRsee",
             "stratOutcome",
             "estOutcome",
             "treatmentId",
@@ -595,8 +600,7 @@ computeCovariateBalanceAnalysis2 <- function(
     )
   }
 
-  for (predictOutcome in predictOutcomes)
-  {
+  for (predictOutcome in predictOutcomes) {
 
     predLoc <- which(analysisSettings$outcomeIds == predictOutcome)
     compLoc <- analysisSettings$analysisMatrix[, predLoc]
@@ -612,7 +616,7 @@ computeCovariateBalanceAnalysis2 <- function(
     )
 
 
-    cluster <- ParallelLogger::makeCluster(analysisSettings$balanceThreads)
+    cluster <- ParallelLogger::makeCluster(balanceThreads)
     ParallelLogger::clusterRequire(
       cluster,
       "RiskStratifiedEstimation"

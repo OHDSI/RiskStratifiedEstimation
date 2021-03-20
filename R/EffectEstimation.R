@@ -210,8 +210,7 @@ fitPsModelSwitch <- function(
   getDataSettings,
   populationSettings,
   runSettings
-)
-{
+) {
 
   # runSettings$runCmSettings <- runSettings$runCmSettings[[1]]
 
@@ -1583,7 +1582,7 @@ includeOverallResults <- function(
     outcomeIds <- analysisSettings$negativeControlOutcomes
     nThreads <- runSettings$runCmSettings$negativeControlThreads
   } else {
-    outcomeIds <- analysisSettings$outcomeIds
+    outcomeIds <- analysisSettings$outcomeIds[which(colSums(analysisSettings$analysisMatrix) != 0)]
     nThreads <- runSettings$runCmSettings$fitOutcomeModelsThreads
   }
 
@@ -1809,10 +1808,15 @@ includeOverallResults <- function(
           covariateId,
           covariateName,
           beforeMatchingStdDiff,
-          afterMatchingStdDiff
+          afterMatchingStdDiff,
+          beforeMatchingMeanTarget,
+          afterMatchingMeanTarget,
+          beforeMatchingMeanComparator,
+          afterMatchingMeanComparator,
+          analysisId
         ) %>%
         dplyr::mutate(
-          analysisId = analysisSettings$analysisId,
+          analysisIdRsee = analysisSettings$analysisId,
           treatmentId = analysisSettings$treatmentCohortId,
           comparatorId = analysisSettings$comparatorCohortId,
           outcomeId = outcomeId

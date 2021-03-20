@@ -634,6 +634,8 @@ mergeTempFiles <- function(
     )
   }
 
+  if (!dir.exists(path)) return()
+
   files <- list.files(
     path = path,
     pattern = paste(

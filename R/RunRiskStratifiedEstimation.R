@@ -812,19 +812,9 @@ runRiskStratifiedEstimation <- function(
       analysisSettings = analysisSettings,
       runCmSettings = subsetRunCmSettings,
       getDataSettings = getDataSettings,
-      balanceThreads = subsetRunCmSettings$balanceThreads
+      balanceThreads = runSettings$runCmSettings$balanceThreads
     )
   }
-
-
-  settings <- list(
-    analysisSettings = analysisSettings,
-    getDataSettings = getDataSettings,
-    databaseSettings = databaseSettings,
-    covariateSettings = covariateSettings,
-    populationSettings = populationSettings,
-    runSettings = runSettings
-  )
 
   for (i in seq_along(analysisLabels)) {
     includeOverallResults(
@@ -944,45 +934,53 @@ runRiskStratifiedEstimation <- function(
         )
       }
     }
-  }
-
-  mergeTempFiles(
-    path = file.path(
-      analysisSettings$saveDirectory,
-      analysisSettings$analysisId,
-      "shiny"
-    ),
-    outcomeId = "",
-    fileName = "mappedOverallResultsNegativeControls"
-)
-  for (predictOutcome in predictOutcomes) {
-
-    pathToPs <- file.path(
-      analysisSettings$saveDirectory,
-      analysisSettings$analysisId,
-      "Estimation",
-      predictOutcome
-    )
-    dummy <- ParallelLogger::clusterApply(
-      cluster = cluster,
-      x = negativeControlIds,
-      fun = mergeMultipleTempFiles,
-      fileNames = list(
-        "relativeRiskReduction",
-        "absoluteRiskReduction",
-        "cases"
+    mergeTempFiles(
+      path = file.path(
+        analysisSettings$saveDirectory,
+        analysisSettings$analysisId,
+        "shiny"
       ),
-      mergeTempFiles = mergeTempFiles,
-      path = pathToPs
+      outcomeId = "",
+      fileName = "mappedOverallResultsNegativeControls"
+    )
+    for (predictOutcome in predictOutcomes) {
+
+      pathToPs <- file.path(
+        analysisSettings$saveDirectory,
+        analysisSettings$analysisId,
+        "Estimation",
+        predictOutcome
+      )
+      dummy <- ParallelLogger::clusterApply(
+        cluster = cluster,
+        x = negativeControlIds,
+        fun = mergeMultipleTempFiles,
+        fileNames = list(
+          "relativeRiskReduction",
+          "absoluteRiskReduction",
+          "cases"
+        ),
+        mergeTempFiles = mergeTempFiles,
+        path = pathToPs
+      )
+    }
+
+    ParallelLogger::logInfo(
+      "Creating and saving overall results"
     )
   }
-
-  ParallelLogger::logInfo(
-    "Creating and saving overall results"
-  )
 
   createOverallResults(
     analysisSettings
+  )
+
+  settings <- list(
+    analysisSettings = analysisSettings,
+    getDataSettings = getDataSettings,
+    databaseSettings = databaseSettings,
+    covariateSettings = covariateSettings,
+    populationSettings = populationSettings,
+    runSettings = runSettings
   )
 
   saveRDS(
