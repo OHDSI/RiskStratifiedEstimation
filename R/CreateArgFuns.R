@@ -512,10 +512,10 @@ createRunCmAnalysesArgs <- function(
   }
 
   res <- list(
-    psMethod                     = psMethod,
     label                        = label,
     riskStratificationMethod     = riskStratificationMethod,
     riskStratificationThresholds = riskStratificationThresholds,
+    psMethod                     = psMethod,
     effectEstimationSettings     = effectEstimationSettings,
     timePoint                    = timePoint
   )
