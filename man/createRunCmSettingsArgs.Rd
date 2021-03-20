@@ -2,14 +2,11 @@
 % Please edit documentation in R/CreateArgFuns.R
 \name{createRunCmSettingsArgs}
 \alias{createRunCmSettingsArgs}
-\title{Create a parameter object for running the estimation step Create a parameter
-object for running the estimation step. This function is used to create part
-of the input of \code{\link[RiskStratifiedEstimation]{createRunSettings}}.}
+\title{Create a parameter object for running the estimation step}
 \usage{
 createRunCmSettingsArgs(
   analyses,
   psSettings = createCreatePsArgs(),
-  riskStrata = 4,
   createPsThreads = 1,
   fitOutcomeModelsThreads = 1,
   balanceThreads = 1,
@@ -23,8 +20,6 @@ the list can be creaeted using
 \code{\link[CohortMethod]{createPs}}}
 
 \item{psSettings}{The settings for estimating the propensity scores}
-
-\item{riskStrata}{The number of risk strata}
 
 \item{createPsThreads}{The number of parallel threads for the
 estimation of the propensity scores. Default is 1.}
@@ -42,7 +37,7 @@ control analyses}
 A parameter object for running the the estimation step.
 }
 \description{
-Create a parameter object for running the estimation step Create a parameter
-object for running the estimation step. This function is used to create part
-of the input of \code{\link[RiskStratifiedEstimation]{createRunSettings}}.
+Create a parameter object for running the estimation step. This function is
+used to create the computational part of the input of
+\code{\link[RiskStratifiedEstimation]{createRunSettings}}.
 }

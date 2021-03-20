@@ -468,35 +468,43 @@ createCreatePsArgs <- function(
 
 #' Create a parameter object for defining the estimation analyses.
 #'
-#' @param psMethod                 How should the propensity scores be used? Can
-#'                                 be one of "inversePtWeighted", "stratifyByPs"
-#'                                  or "matchOnPs".
-#' @param label                    A single-word description of the analysis.
-#' @param effectEstimationSettings Parameter object providing further settings
-#'                                 for the implementation of selected \code{psMethod}
-#'                                 to the estimation process. Can be created using
-#'                                 one of
-#'                                 \code{\link[RiskStratifiedEstimation]{createCreateIPWArgs}},
-#'                                 when \code{inversePtWeighted} is selected,
-#'                                 \code{\link[RiskStratifiedEstimation]{createStratifyByPsArgs}}
-#'                                 when \code{stratifyByPs} is selected or
-#'                                 \code{\link[RiskStratifiedEstimation]{createMatchOnPsArgs}}
-#'                                 when \code{matchOnPs} is selected.
-#' @param psSettings               Parameter object for
-#'                                 \code{\link[CohortMethod]{createPs}}
-#' @param timePoint                The time point after cohort start that absolute differences
-#'                                 should be estimated.
+#' @param label                         A single-word description of the analysis.
+#' @param riskStratificationMethod      Can be "equal" for equal-sized risk strata;
+#'                                      "quantile" for user-specified risk quantiles
+#'                                      as thresholds; "custom" for user-specified risk
+#'                                      thresholds
+#' @param riskStratificationThresholds  The thresholds to be used for risk stratification.
+#'                                      If `riskStratificationMethod` is "equal" then
+#'                                      it should be a single number denoting the number
+#'                                      of equal-sized risk subgroups; if `riskStratificationMethod`
+#'                                      is "quantile", then it is a vector from 0 to 1 (increasing);
+#'                                      if `riskStratificationMethod` is "custom", then it is a vector
+#'                                      with the predicted probabilities to be used as thresholds
+#' @param psMethod                      How should the propensity scores be used? Can
+#'                                      be one of "stratifyByPs" or "matchOnPs".
+#' @param effectEstimationSettings      Parameter object providing further settings
+#'                                      for the implementation of selected \code{psMethod}
+#'                                      to the estimation process. Can be created using
+#'                                      one of
+#'                                      \code{\link[RiskStratifiedEstimation]{createStratifyByPsArgs}}
+#'                                      when \code{stratifyByPs} is selected or
+#'                                      \code{\link[RiskStratifiedEstimation]{createMatchOnPsArgs}}
+#'                                      when \code{matchOnPs} is selected.
+#' @param timePoint                     The time point after cohort start that absolute differences
+#'                                      should be estimated.
 #'
 #' @return
 #' A parameter object for running the the estimation step.
+#'
 #' @export
 
 createRunCmAnalysesArgs <- function(
-  psMethod                 = "stratifyByPs",
-  label                    = NULL,
-  effectEstimationSettings = createStratifyByPsArgs(),
-  psSettings               = createCreatePsArgs(),
-  timePoint                = 365
+  label                        = NULL,
+  riskStratificationMethod     = "equal",
+  riskStratificationThresholds = 4,
+  psMethod                     = "stratifyByPs",
+  effectEstimationSettings     = createStratifyByPsArgs(),
+  timePoint                    = 365
 ) {
 
   if (is.null(label)) {
@@ -504,11 +512,12 @@ createRunCmAnalysesArgs <- function(
   }
 
   res <- list(
-    psMethod                        = psMethod,
-    label                           = label,
-    psSettings                      = psSettings,
-    effectEstimationSettings        = effectEstimationSettings,
-    timePoint                       = timePoint
+    psMethod                     = psMethod,
+    label                        = label,
+    riskStratificationMethod     = riskStratificationMethod,
+    riskStratificationThresholds = riskStratificationThresholds,
+    effectEstimationSettings     = effectEstimationSettings,
+    timePoint                    = timePoint
   )
 
   class(res) <- "args"
@@ -520,24 +529,26 @@ createRunCmAnalysesArgs <- function(
 
 
 
-#' Create a parameter object for running the estimation step Create a parameter
-#' object for running the estimation step. This function is used to create part
-#' of the input of \code{\link[RiskStratifiedEstimation]{createRunSettings}}.
+#' Create a parameter object for running the estimation step
 #'
-#' @param analyses                 A list of the analyses to run. Each element of
-#'                                 the list can be creaeted using
-#'                                 \code{\link[RiskStratifiedEstimation]{createRunCmAnalysesArgs}}
-#'                                 \code{\link[CohortMethod]{createPs}}
-#' @param psSettings               The settings for estimating the propensity scores
-#' @param riskStrata               The number of risk strata
-#' @param createPsThreads          The number of parallel threads for the
-#'                                 estimation of the propensity scores. Default is 1.
-#' @param fitOutcomeModelsThreads  The number of parallel threads for the estimation of the
-#'                                 outcome models.
-#' @param balanceThreads           The number of parallel threads for the estimation
-#'                                 of covariate balance
-#' @param negativeControlThreads   The number of parallel threads for the negative
-#'                                 control analyses
+#' @description
+#' Create a parameter object for running the estimation step. This function is
+#' used to create the computational part of the input of
+#' \code{\link[RiskStratifiedEstimation]{createRunSettings}}.
+#'
+#' @param analyses                      A list of the analyses to run. Each element of
+#'                                      the list can be creaeted using
+#'                                      \code{\link[RiskStratifiedEstimation]{createRunCmAnalysesArgs}}
+#'                                      \code{\link[CohortMethod]{createPs}}
+#' @param psSettings                    The settings for estimating the propensity scores
+#' @param createPsThreads               The number of parallel threads for the
+#'                                      estimation of the propensity scores. Default is 1.
+#' @param fitOutcomeModelsThreads       The number of parallel threads for the estimation of the
+#'                                      outcome models.
+#' @param balanceThreads                The number of parallel threads for the estimation
+#'                                      of covariate balance
+#' @param negativeControlThreads        The number of parallel threads for the negative
+#'                                      control analyses
 #'
 #' @return
 #' A parameter object for running the the estimation step.
@@ -545,22 +556,20 @@ createRunCmAnalysesArgs <- function(
 
 createRunCmSettingsArgs <- function(
   analyses,
-  psSettings              = createCreatePsArgs(),
-  riskStrata              = 4,
-  createPsThreads         = 1,
-  fitOutcomeModelsThreads = 1,
-  balanceThreads          = 1,
-  negativeControlThreads  = 1
+  psSettings                   = createCreatePsArgs(),
+  createPsThreads              = 1,
+  fitOutcomeModelsThreads      = 1,
+  balanceThreads               = 1,
+  negativeControlThreads       = 1
 ) {
 
   res <- list(
-    analyses                = analyses,
-    psSettings              = psSettings,
-    riskStrata              = riskStrata,
-    createPsThreads         = createPsThreads,
-    fitOutcomeModelsThreads = fitOutcomeModelsThreads,
-    balanceThreads          = balanceThreads,
-    negativeControlThreads  = negativeControlThreads
+    analyses                     = analyses,
+    psSettings                   = psSettings,
+    createPsThreads              = createPsThreads,
+    fitOutcomeModelsThreads      = fitOutcomeModelsThreads,
+    balanceThreads               = balanceThreads,
+    negativeControlThreads       = negativeControlThreads
   )
   class(res) <- "args"
 
@@ -586,9 +595,11 @@ createRunCmSettingsArgs <- function(
 #'
 #' @export
 
-createStratifyByPsArgs <- function(numberOfStrata = 5,
-                                   stratificationColumns = c(),
-                                   baseSelection = "all") {
+createStratifyByPsArgs <- function(
+  numberOfStrata = 5,
+  stratificationColumns = c(),
+  baseSelection = "all"
+) {
   # First: get default values:
   analysis <- list()
   for (name in names(formals(createStratifyByPsArgs))) {
@@ -633,10 +644,12 @@ createStratifyByPsArgs <- function(numberOfStrata = 5,
 #'
 #' @export
 
-createMatchOnPsArgs <- function(caliper = 0.2,
-                                caliperScale = "standardized logit",
-                                maxRatio = 1,
-                                stratificationColumns = c()) {
+createMatchOnPsArgs <- function(
+  caliper = 0.2,
+  caliperScale = "standardized logit",
+  maxRatio = 1,
+  stratificationColumns = c()
+) {
   # First: get default values:
   analysis <- list()
   for (name in names(formals(createMatchOnPsArgs))) {

@@ -5,33 +5,41 @@
 \title{Create a parameter object for defining the estimation analyses.}
 \usage{
 createRunCmAnalysesArgs(
-  psMethod = "stratifyByPs",
   label = NULL,
+  riskStratificationMethod = "equal",
+  riskStratificationThresholds = 4,
+  psMethod = "stratifyByPs",
   effectEstimationSettings = createStratifyByPsArgs(),
-  psSettings = createCreatePsArgs(),
   timePoint = 365
 )
 }
 \arguments{
-\item{psMethod}{How should the propensity scores be used? Can
-be one of "inversePtWeighted", "stratifyByPs"
- or "matchOnPs".}
-
 \item{label}{A single-word description of the analysis.}
+
+\item{riskStratificationMethod}{Can be "equal" for equal-sized risk strata;
+"quantile" for user-specified risk quantiles
+as thresholds; "custom" for user-specified risk
+thresholds}
+
+\item{riskStratificationThresholds}{The thresholds to be used for risk stratification.
+If `riskStratificationMethod` is "equal" then
+it should be a single number denoting the number
+of equal-sized risk subgroups; if `riskStratificationMethod`
+is "quantile", then it is a vector from 0 to 1 (increasing);
+if `riskStratificationMethod` is "custom", then it is a vector
+with the predicted probabilities to be used as thresholds}
+
+\item{psMethod}{How should the propensity scores be used? Can
+be one of "stratifyByPs" or "matchOnPs".}
 
 \item{effectEstimationSettings}{Parameter object providing further settings
 for the implementation of selected \code{psMethod}
 to the estimation process. Can be created using
 one of
-\code{\link[RiskStratifiedEstimation]{createCreateIPWArgs}},
-when \code{inversePtWeighted} is selected,
 \code{\link[RiskStratifiedEstimation]{createStratifyByPsArgs}}
 when \code{stratifyByPs} is selected or
 \code{\link[RiskStratifiedEstimation]{createMatchOnPsArgs}}
 when \code{matchOnPs} is selected.}
-
-\item{psSettings}{Parameter object for
-\code{\link[CohortMethod]{createPs}}}
 
 \item{timePoint}{The time point after cohort start that absolute differences
 should be estimated.}
