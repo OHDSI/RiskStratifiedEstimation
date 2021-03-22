@@ -29,6 +29,7 @@ Imports: PatientLevelPrediction,
          gridExtra,
          survival,
          tidyr,
+         purrr,
          formatR
 Suggests: knitr,
     rmarkdown
