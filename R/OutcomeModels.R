@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 # @author Observational Health Data Sciences and Informatics
-# @author Alexandros Rekkas
+# @author Alexandros Rekkasbcemsx
 # @author Peter Rijnbeek
 
 
