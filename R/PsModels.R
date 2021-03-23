@@ -496,6 +496,8 @@ fitPsModel <- function(
     analysisSettings$analysisId
   )
 
+  analysisLabels <- names(runSettings$runCmSettings$analyses)
+
   ParallelLogger::logInfo(
     "Reading cohort method data"
   )
@@ -738,7 +740,15 @@ runPsAnalysis <- function(
   ps <- list()
   failed <- FALSE
   for (i in 1:nRiskStrata) {
-    population <- populationCm[populationCm$rowId %in% mapMatrix[mapMatrix$riskStratum == i,]$rowId, ]
+    # population <- populationCm[populationCm$rowId %in% mapMatrix[mapMatrix$riskStratum == i,]$rowId, ]
+    population <- mapMatrix %>%
+      dplyr::select(rowId, subjectId, riskStratum) %>%
+      dplyr::filter(riskStratum == i) %>%
+      dplyr::inner_join(
+        y    = cohortMethodData$cohorts,
+        by   = c("rowId", "subjectId"),
+        copy = TRUE
+      )
     ps[[i]] <- tryCatch(
       {
         CohortMethod::createPs(

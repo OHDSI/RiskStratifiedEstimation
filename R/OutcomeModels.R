@@ -53,7 +53,8 @@ fitOutcomeModels <- function(
   )
   analysisPath <- file.path(
     pathToPs,
-    outcomeId
+    outcomeId,
+    analysis$label
   )
 
   ps <- tryCatch(
