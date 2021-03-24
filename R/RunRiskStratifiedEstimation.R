@@ -521,7 +521,7 @@ runRiskStratifiedEstimation <- function(
   # Propensity score estimation secondary outcomes
   #-----------------------------------------------------------------------------
   ParallelLogger::logInfo(
-    "Starting propensity score estimation for secondary outcomes"
+    "Starting propensity score estimation for secondary outcomegimopes"
   )
 
   for (predictOutcome in predictOutcomes) {
@@ -574,7 +574,7 @@ runRiskStratifiedEstimation <- function(
     }
   }
 
-  ParallelLogger::logInfo(
+    ParallelLogger::logInfo(
     "Done estimating propensity scores"
   )
 
@@ -609,37 +609,59 @@ runRiskStratifiedEstimation <- function(
   )
 
   for (i in seq_along(analysisLabels)) {
-
     ParallelLogger::logInfo(
       paste(
         "Estimating results for the analysis:",
         analysisLabels[i]
       )
     )
-    settingsTmp <- runSettings$runCmSettings$analyses[[i]]
-
     pathToPs <- file.path(
       analysisSettings$saveDirectory,
       analysisSettings$analysisId,
-      "Estimation"
+      "Estimation",
+      analysisLabels[i]
     )
+    outcomeIds <- as.numeric(
+      list.dirs(
+        path       = pathToPs,
+        recursive  = FALSE,
+        full.names = FALSE
+      )
+    )
+    tmpSettings <- runSettings$runCmSettings$analyses[[i]]
 
-    dummy <- tryCatch(
-      {
-        ParallelLogger::clusterApply(
-          cluster = cluster,
-          x = predictOutcomes,
-          fun = fitOutcomeModels,
-          getDataSettings = getDataSettings,
-          pathToPs = pathToPs,
-          analysis = settingsTmp
+    for (j in seq_along(outcomeIds)) {
+      tmpPathToPs <- file.path(
+        pathToPs,
+        outcomeIds[j]
+      )
+      tmpOutcomeIds <- as.numeric(
+        list.dirs(
+          path       = pathToPs,
+          full.names = FALSE,
+          recursive  = FALSE
         )
-      },
-      error = function(e)
-      {
-        e$message
-      }
-    )
+      )
+
+      dummy <- tryCatch(
+        {
+          ParallelLogger::clusterApply(
+            cluster         = cluster,
+            x               = tmpOutcomeIds,
+            fun             = fitOutcomeModels,
+            getDataSettings = getDataSettings,
+            pathToPs        = tmpPathToPs,
+            analysis        = tmpSettings
+          )
+        },
+        error = function(e) {
+          e$message
+        }
+      )
+    }
+  # }
+
+
 
 
     ParallelLogger::logInfo(

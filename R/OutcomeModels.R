@@ -53,8 +53,7 @@ fitOutcomeModels <- function(
   )
   analysisPath <- file.path(
     pathToPs,
-    outcomeId,
-    analysis$label
+    outcomeId
   )
 
   ps <- tryCatch(
@@ -72,9 +71,9 @@ fitOutcomeModels <- function(
     }
   )
 
-  cohortMethodData <- CohortMethod::loadCohortMethodData(
-    file = getDataSettings$cohortMethodDataFolder
-  )
+  # cohortMethodData <- CohortMethod::loadCohortMethodData(
+  #   file = getDataSettings$cohortMethodDataFolder
+  # )
 
   ParallelLogger::logInfo(
     "Read PS and CohortMethod data"

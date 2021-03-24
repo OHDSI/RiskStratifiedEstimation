@@ -181,7 +181,7 @@ fitPsModelSwitch <- function(
 
   failed <- purrr::map(
     .x               = analysisLabels,
-    .f               = psAnalysisSwitch,
+    .f               = psAnalysis,
     cohortMethodData = cohortMethodData,
     predictOutcome   = predictOutcome,
     compareOutcome   = compareOutcome,
@@ -598,9 +598,12 @@ fitPsModel <- function(
   ) %>%
     dplyr::tibble() %>%
     dplyr::select(
-      rowId,
-      subjectId,
-      value
+      -c(
+        "cohortStartDate",
+        "daysFromObsStart",
+        "daysToCohortEnd",
+        "daysToObsEnd"
+      )
     )
 
   attr(populationCm, "metaData") <- populationCmMetaData  # Delete that?
@@ -618,9 +621,10 @@ fitPsModel <- function(
     .f               = psAnalysis,
     runSettings      = runSettings,
     riskPredictions  = riskPredictions,
-    outcomeId        = outcomeId,
     cohortMethodData = cohortMethodData,
-    analysisSettings = analysisSettings
+    analysisSettings = analysisSettings,
+    predictOutcome   = outcomeId,
+    compareOutcome   = outcomeId
   )
 
   ParallelLogger::logInfo(
@@ -630,10 +634,9 @@ fitPsModel <- function(
     )
   )
 
-  return(NULL)
+  return(tmp)
 
 }
-
 
 
 
@@ -642,71 +645,41 @@ fitPsModel <- function(
 psAnalysis <- function(
   label,
   cohortMethodData,
-  outcomeId,
+  predictOutcome,
+  compareOutcome,
   riskPredictions,
   analysisSettings,
   runSettings
 ) {
   analysis <- runSettings$runCmSettings$analyses[[label]]
-  mapMatrix <- createMapMatrix(
-    riskPredictions = riskPredictions,
-    analysis        = analysis
-  )
-
-  nRiskStrata <- ifelse(
-    analysis$riskStratificationMethod == "equal",
-    yes = analysis$riskStratificationThresholds,
-    no  = length(analysis$riskStratificationThresholds) - 1
-  )
-
-  saveDir <- file.path(
-    analysisSettings$saveDirectory,
-    analysisSettings$analysisId,
-    outcomeId,
-    label
-  )
-
-  failed <- runPsAnalysis(
-    cohortMethodData = cohortMethodData,
-    nRiskStrata      = nRiskStrata,
-    mapMatrix        = mapMatrix,
-    runSettings      = runSettings,
-    saveDir          = saveDir
-  )
-
-  return(failed)
-}
-
-
-#'@export
-psAnalysisSwitch <- function(
-  label,
-  riskPredictions,
-  cohortMethodData,
-  predictOutcome,
-  compareOutcome,
-  analysisSettings,
-  runSettings
-) {
-  analysisPath <- file.path(
+  startingPath <- file.path(
     analysisSettings$saveDirectory,
     analysisSettings$analysisId,
     "Estimation",
+    label,
     predictOutcome,
-    label
+    predictOutcome
   )
 
-  startingMapMatrix <- readRDS(
-    file = file.path(
-      analysisPath,
-      "mapMatrix.rds"
+  if (predictOutcome == compareOutcome) {
+    mapMatrix <- createMapMatrix(
+      riskPredictions = riskPredictions,
+      analysis        = analysis
     )
-  )
+  } else {
+    startingMapMatrix <- readRDS(
+      file = file.path(
+        startingPath,
+        "mapMatrix.rds"
+      )
+    ) %>%
+      dplyr::mutate(
+        cohortStartDate = lubridate::as_date(cohortStartDate)
+      )
 
-  mapMatrix <- startingMapMatrix %>%
-    dplyr::inner_join(riskPredictions)
-
-  analysis <- runSettings$runCmSettings$analyses[[label]]
+    mapMatrix <- startingMapMatrix %>%
+      dplyr::inner_join(riskPredictions)
+  }
 
   nRiskStrata <- ifelse(
     analysis$riskStratificationMethod == "equal",
@@ -715,9 +688,20 @@ psAnalysisSwitch <- function(
   )
 
   saveDir <- file.path(
-    analysisPath,
+    analysisSettings$saveDirectory,
+    analysisSettings$analysisId,
+    "Estimation",
+    label,
+    predictOutcome,
     compareOutcome
   )
+
+  if (!dir.exists(saveDir))  {
+    dir.create(
+      path      = saveDir,
+      recursive = TRUE
+    )
+  }
 
   failed <- runPsAnalysis(
     cohortMethodData = cohortMethodData,
@@ -726,8 +710,10 @@ psAnalysisSwitch <- function(
     runSettings      = runSettings,
     saveDir          = saveDir
   )
+
   return(failed)
 }
+
 
 #'@export
 runPsAnalysis <- function(
@@ -740,9 +726,8 @@ runPsAnalysis <- function(
   ps <- list()
   failed <- FALSE
   for (i in 1:nRiskStrata) {
-    # population <- populationCm[populationCm$rowId %in% mapMatrix[mapMatrix$riskStratum == i,]$rowId, ]
     population <- mapMatrix %>%
-      dplyr::select(rowId, subjectId, riskStratum) %>%
+      # dplyr::select(rowId, subjectId, riskStratum, outcomeCount) %>%
       dplyr::filter(riskStratum == i) %>%
       dplyr::inner_join(
         y    = cohortMethodData$cohorts,

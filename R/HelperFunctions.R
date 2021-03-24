@@ -875,7 +875,8 @@ createMapMatrix <- function(
           breaks = quantile(
             value,
             breaks = breaks
-          )
+          ),
+          include.lowest = TRUE
         ),
         riskStratum = as.numeric(labels)
       )
