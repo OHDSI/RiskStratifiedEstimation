@@ -29,7 +29,7 @@
 #' @param cohortDatabaseSchema The name of the database schema that is the location where the cohort data used to define the at risk cohort is available
 #' @param cohortTable The table that contains the treatment and comparator cohorts.
 #' @param resultsDatabaseSchema The name of the database schema to store the new tables. Need to have write access.
-#' @param mergedCohortTable The table that will contain the merged cohorts.
+#' @param mergedCohortTable The table that will contain the computeIncidenceAnalysis <- funcitiogmerged cohorts.
 #' @param connectionDetails The connection details required to connect to a database.
 #'
 #' @return Creates the tables resultsDatabaseSchema.mergedCohortTable, resultsDatabaseSchema.attributeDefinitionTable and resultsDatabaseSchema.cohortAttributeTable
@@ -617,6 +617,31 @@ fitMultiplePsModelOverall <- function(
 
 }
 
+
+mergeTempFiles <- function(
+  path,
+  fileName
+) {
+  paths <- list.files(
+    path = path,
+    full.names = TRUE,
+    pattern = paste("tmp", fileName, sep = "_")
+  )
+  do.call(
+    rbind,
+    lapply(paths, readRDS)
+  ) %>%
+    saveRDS(
+      file.path(
+        path,
+        paste0(
+          fileName,
+          ".rds"
+        )
+      )
+    )
+  file.remove(paths)
+}
 
 
 #' @importFrom dplyr %>%

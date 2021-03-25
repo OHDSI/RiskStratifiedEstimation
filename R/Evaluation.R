@@ -749,11 +749,13 @@ psDensity <- function(population) {
 #' @importFrom dplyr %>%
 #' @export
 
-computeIncidence <- function(population,
-                             alpha = .05,
-                             power = .8,
-                             twoSided = TRUE,
-                             modelType = "cox"){
+computeIncidence <- function(
+  population,
+  alpha = .05,
+  power = .8,
+  twoSided = TRUE,
+  modelType = "cox"
+) {
 
   population <- population %>%
     dplyr::mutate(
@@ -764,8 +766,9 @@ computeIncidence <- function(population,
       )
     )
 
-  res <-  population %>%
-    CohortMethod::computeMdrr() %>%
+  res <- CohortMethod::computeMdrr(
+    population = population
+  ) %>%
     dplyr::select(
       -c(
         "targetExposures",
@@ -775,7 +778,7 @@ computeIncidence <- function(population,
     )  %>%
     dplyr::rename(
       "treatmentPersons" = "targetPersons",
-      "treatmentDays" = "targetDays"
+      "treatmentDays"    = "targetDays"
     )
 
   treatmentArmOutcomes <- population %>%
@@ -818,11 +821,22 @@ computeIncidence <- function(population,
 
 #' @importFrom dplyr %>%
 #' @export
-computeIncidenceOverall <- function(ps,
-                                    alpha = 0.05,
-                                    power = 0.8,
-                                    twoSided = TRUE,
-                                    modelType = "cox") {
+computeIncidenceOverall <- function(
+  path,
+  alpha = 0.05,
+  power = 0.8,
+  twoSided = TRUE,
+  modelType = "cox"
+) {
+
+  analysisPath <- file.path(
+    path,
+    "ps_analysis.rds"
+  )
+  if (!file.exists(analysisPath)) {
+    return()
+  }
+  ps <- readRDS(analysisPath)
 
   lapply(
     ps,
@@ -839,12 +853,113 @@ computeIncidenceOverall <- function(ps,
       riskStratum = paste0(
         "Q",
         riskStratum
+      ),
+      estOutcome = as.numeric(
+        basename(
+          path
+        )
       )
     ) %>%
     return()
 
 }
 
+
+computeIncidenceAnalysis <- function(
+  label,
+  analysisSettings
+) {
+
+  analysisPath <- file.path(
+    analysisSettings$saveDirectory,
+    analysisSettings$analysisId,
+    "Estimation",
+    label
+  )
+
+}
+
+
+computeRseeInicidence <- function(analysisSettings) {
+  analysisPath <- file.path(
+    analysisSettings$saveDirectory,
+    analysisSettings$analysisId,
+    "Estimation"
+  )
+
+  saveDir <- file.path(
+    analysisSettings$saveDirectory,
+    analysisSettings$analysisId,
+    "shiny"
+  )
+
+  labels <- list.dirs(
+    path = analysisPath,
+    recursive = FALSE
+  )
+
+  cluster <- ParallelLogger::makeCluster(
+    runSettings$runCmSettings$fitOutcomeModelsThreads
+  )
+
+  ParallelLogger::clusterRequire(
+    cluster,
+    "RiskStratifiedEstimation"
+  )
+  for (i in seq_along(labels)) {
+    predictOutcomeDirs <- list.dirs(
+      path       = labels[i],
+      recursive  = FALSE,
+      full.names = TRUE
+    )
+
+    predictOutcomes <- as.numeric(
+      basename(
+        predictOutcomeDirs
+      )
+    )
+
+    for (j in seq_along(predictOutcomes)) {
+      compareOutcomeDirs <- list.dirs(
+        predictOutcomeDirs[j],
+        recursive = FALSE
+      )
+      tmp <- ParallelLogger::clusterApply(
+        cluster = cluster,
+        x       = compareOutcomeDirs,
+        fun     = computeIncidenceOverall
+      )
+
+      do.call(
+        rbind,
+        tmp
+      ) %>%
+        dplyr::mutate(
+          database = analysisSettings$databaseName,
+          analysisId = analysisSettings$analysisId,
+          stratOutcome = predictOutcomes[j],
+          treatmentId = analysisSettings$treatmentCohortId,
+          comparatorId = analysisSettings$comparatorCohortId,
+          analysisType = basename(labels[i])
+        ) %>%
+        dplyr::tibble() %>%
+        saveRDS(
+          file.path(
+            saveDir,
+            paste0(
+              paste(
+                "tmp",
+                incidence,
+                basename(labels[i]),
+                sep = "_"
+              ),
+              ".rds"
+            )
+          )
+        )
+    }
+  }
+}
 
 #' @importFrom dplyr %>%
 #' @export
