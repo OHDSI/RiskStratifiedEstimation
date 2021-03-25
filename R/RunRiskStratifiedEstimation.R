@@ -729,7 +729,7 @@ runRiskStratifiedEstimation <- function(
     "Computing and saving incidence"
   )
 
-  computeRseeInicidence(analysisSettings)
+  computeRseeIncidence(analysisSettings)
 
   ParallelLogger::logInfo(
     "Merging..."

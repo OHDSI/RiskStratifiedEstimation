@@ -28,7 +28,7 @@ prepareForPlpData(
 
 \item{resultsDatabaseSchema}{The name of the database schema to store the new tables. Need to have write access.}
 
-\item{mergedCohortTable}{The table that will contain the merged cohorts.}
+\item{mergedCohortTable}{The table that will contain the computeIncidenceAnalysis <- funcitiogmerged cohorts.}
 
 \item{connectionDetails}{The connection details required to connect to a database.}
 }
