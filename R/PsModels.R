@@ -488,8 +488,7 @@ fitPsModel <- function(
   getDataSettings,
   populationSettings,
   analysisSettings
-)
-{
+) {
 
   analysisPath <- file.path(
     analysisSettings$saveDirectory,
@@ -652,14 +651,6 @@ psAnalysis <- function(
   runSettings
 ) {
   analysis <- runSettings$runCmSettings$analyses[[label]]
-  startingPath <- file.path(
-    analysisSettings$saveDirectory,
-    analysisSettings$analysisId,
-    "Estimation",
-    label,
-    predictOutcome,
-    predictOutcome
-  )
 
   if (predictOutcome == compareOutcome) {
     mapMatrix <- createMapMatrix(
@@ -667,17 +658,21 @@ psAnalysis <- function(
       analysis        = analysis
     )
   } else {
-    startingMapMatrix <- readRDS(
+    startingPath <- file.path(
+      analysisSettings$saveDirectory,
+      analysisSettings$analysisId,
+      "Estimation",
+      label,
+      predictOutcome,
+      predictOutcome
+    )
+
+    mapMatrix <- readRDS(
       file = file.path(
         startingPath,
         "mapMatrix.rds"
       )
     ) %>%
-      dplyr::mutate(
-        cohortStartDate = lubridate::as_date(cohortStartDate)
-      )
-
-    mapMatrix <- startingMapMatrix %>%
       dplyr::inner_join(riskPredictions)
   }
 
@@ -723,17 +718,18 @@ runPsAnalysis <- function(
   runSettings,
   saveDir
 ) {
+
   ps <- list()
   failed <- FALSE
   for (i in 1:nRiskStrata) {
     population <- mapMatrix %>%
       # dplyr::select(rowId, subjectId, riskStratum, outcomeCount) %>%
-      dplyr::filter(riskStratum == i) %>%
-      dplyr::inner_join(
-        y    = cohortMethodData$cohorts,
-        by   = c("rowId", "subjectId"),
-        copy = TRUE
-      )
+      dplyr::filter(riskStratum == i)
+      # dplyr::inner_join(
+      #   y    = cohortMethodData$cohorts,
+      #   by   = c("rowId", "subjectId"),
+      #   copy = TRUE
+      # )
     ps[[i]] <- tryCatch(
       {
         CohortMethod::createPs(
