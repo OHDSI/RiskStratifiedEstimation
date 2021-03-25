@@ -71,10 +71,6 @@ fitOutcomeModels <- function(
     }
   )
 
-  # cohortMethodData <- CohortMethod::loadCohortMethodData(
-  #   file = getDataSettings$cohortMethodDataFolder
-  # )
-
   ParallelLogger::logInfo(
     "Read PS and CohortMethod data"
   )
@@ -107,59 +103,28 @@ fitOutcomeModels <- function(
       treatmentEffects$relativeRiskReduction,
       file = file.path(
         analysisPath,
-        paste0(
-          paste(
-            "temp",
-            "relativeRiskReduction",
-            analysis$label,
-            sep = "_"
-          ),
-          ".rds"
-        )
+        "relativeRiskReduction.rds"
       )
     )
     saveRDS(
       treatmentEffects$absoluteRiskReduction,
       file = file.path(
         analysisPath,
-        paste0(
-          paste(
-            "temp",
-            "absoluteRiskReduction",
-            analysis$label,
-            sep = "_"
-          ),
-          ".rds"
-        )
+        "absoluteRiskReduction.rds"
       )
     )
     saveRDS(
       treatmentEffects$models,
       file = file.path(
         analysisPath,
-        paste0(
-          paste(
-            "models",
-            analysis$label,
-            sep = "_"
-          ),
-          ".rds"
-        )
+        "models.rds"
       )
     )
     saveRDS(
       treatmentEffects$cases,
       file = file.path(
         analysisPath,
-        paste0(
-          paste(
-            "temp",
-            "cases",
-            analysis$label,
-            sep = "_"
-          ),
-          ".rds"
-        )
+        "cases.rds"
       )
     )
     saveRDS(

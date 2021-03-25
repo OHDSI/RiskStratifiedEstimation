@@ -637,7 +637,7 @@ runRiskStratifiedEstimation <- function(
       )
       tmpOutcomeIds <- as.numeric(
         list.dirs(
-          path       = pathToPs,
+          path       = tmpPathToPs,
           full.names = FALSE,
           recursive  = FALSE
         )
@@ -659,122 +659,75 @@ runRiskStratifiedEstimation <- function(
         }
       )
     }
+  }
+
+  # ParallelLogger::logInfo(
+  #   "Merging temporary files"
+  # )
+  #
+  # pathToPs <- file.path(
+  #   analysisSettings$saveDirectory,
+  #   analysisSettings$analysisId,
+  #   "Estimation",
+  #   analysisLabels[2]
+  # )
+  #
+  # dummy <- ParallelLogger::clusterApply(
+  #   cluster = cluster,
+  #   x = predictOutcomes,
+  #   fun = mergeMultipleTempFiles,
+  #   fileNames = list(
+  #     "relativeRiskReduction",
+  #     "absoluteRiskReduction",
+  #     "cases"
+  #   ),
+  #   mergeTempFiles = mergeTempFiles,
+  #   path = pathToPs
+  # )
+  #
+  # for (predictOutcome in predictOutcomes) {
+  #   predLoc <- which(analysisSettings$outcomeIds == predictOutcome)
+  #   compLoc <- analysisSettings$analysisMatrix[, predLoc]
+  #   compareOutcomes <- analysisSettings$outcomeIds[as.logical(compLoc)]
+  #   compareOutcomes <- sort(
+  #     compareOutcomes[compareOutcomes != predictOutcome]
+  #   )
+  #
+  #   if (length(compareOutcomes) == 0) {
+  #     compareOutcomes <- NULL
+  #   }
+  #
+  #   if (!is.null(compareOutcomes)) {
+  #     pathToPs <- file.path(
+  #       analysisSettings$saveDirectory,
+  #       analysisSettings$analysisId,
+  #       "Estimation",
+  #       predictOutcome
+  #     )
+  #
+  #     dummy <- ParallelLogger::clusterApply(
+  #       cluster = cluster,
+  #       x = compareOutcomes,
+  #       fun = mergeMultipleTempFiles,
+  #       fileNames = list(
+  #         "relativeRiskReduction",
+  #         "absoluteRiskReduction",
+  #         "cases"
+  #       ),
+  #       mergeTempFiles = mergeTempFiles,
+  #       path = pathToPs
+  #     )
+  #   }
   # }
-
-
-
-
-    ParallelLogger::logInfo(
-      "Starting estimation of results for secondary outcomes"
-    )
-
-    for (predictOutcome in predictOutcomes) {
-      predLoc <- which(analysisSettings$outcomeIds == predictOutcome)
-      compLoc <- analysisSettings$analysisMatrix[, predLoc]
-      compareOutcomes <- analysisSettings$outcomeIds[as.logical(compLoc)]
-      compareOutcomes <- sort(
-        compareOutcomes[compareOutcomes != predictOutcome]
-      )
-
-      if (length(compareOutcomes) == 0) {
-        compareOutcomes <- NULL
-      }
-
-      if (!is.null(compareOutcomes)) {
-
-        pathToPs <- file.path(
-          analysisSettings$saveDirectory,
-          analysisSettings$analysisId,
-          "Estimation",
-          predictOutcome
-        )
-
-        dummy <- tryCatch(
-          {
-            ParallelLogger::clusterApply(
-              cluster = cluster,
-              x = compareOutcomes,
-              fun = fitOutcomeModels,
-              getDataSettings = getDataSettings,
-              pathToPs = pathToPs,
-              analysis = settingsTmp
-            )
-          },
-          error = function(e)
-          {
-            e$message
-          }
-        )
-      }
-    }
-  }
-
-  ParallelLogger::logInfo(
-    "Merging temporary files"
-  )
-
-  pathToPs <- file.path(
-    analysisSettings$saveDirectory,
-    analysisSettings$analysisId,
-    "Estimation"
-  )
-
-  dummy <- ParallelLogger::clusterApply(
-    cluster = cluster,
-    x = predictOutcomes,
-    fun = mergeMultipleTempFiles,
-    fileNames = list(
-      "relativeRiskReduction",
-      "absoluteRiskReduction",
-      "cases"
-    ),
-    mergeTempFiles = mergeTempFiles,
-    path = pathToPs
-  )
-
-  for (predictOutcome in predictOutcomes) {
-    predLoc <- which(analysisSettings$outcomeIds == predictOutcome)
-    compLoc <- analysisSettings$analysisMatrix[, predLoc]
-    compareOutcomes <- analysisSettings$outcomeIds[as.logical(compLoc)]
-    compareOutcomes <- sort(
-      compareOutcomes[compareOutcomes != predictOutcome]
-    )
-
-    if (length(compareOutcomes) == 0) {
-      compareOutcomes <- NULL
-    }
-
-    if (!is.null(compareOutcomes)) {
-      pathToPs <- file.path(
-        analysisSettings$saveDirectory,
-        analysisSettings$analysisId,
-        "Estimation",
-        predictOutcome
-      )
-
-      dummy <- ParallelLogger::clusterApply(
-        cluster = cluster,
-        x = compareOutcomes,
-        fun = mergeMultipleTempFiles,
-        fileNames = list(
-          "relativeRiskReduction",
-          "absoluteRiskReduction",
-          "cases"
-        ),
-        mergeTempFiles = mergeTempFiles,
-        path = pathToPs
-      )
-    }
-  }
-
-  ParallelLogger::stopCluster(
-    cluster
-  )
-
-
-  ParallelLogger::logInfo(
-    "Computing and saving incidence"
-  )
+  #
+  # ParallelLogger::stopCluster(
+  #   cluster
+  # )
+  #
+  #
+  # ParallelLogger::logInfo(
+  #   "Computing and saving incidence"
+  # )
 
   for (i in seq_along(analysisLabels)) {
     computeIncidenceAnalysis(

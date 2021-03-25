@@ -621,50 +621,98 @@ fitMultiplePsModelOverall <- function(
 
 #' @importFrom dplyr %>%
 #' @export
-mergeTempFiles <- function(
+mergeFiles <- function(
   path,
-  outcomeId,
   fileName
 ) {
 
-  if (!missing(outcomeId)) {
-    path <- file.path(
+  if (!dir.exists(path)) return()
+  outcomeId <- as.numeric(basename(path))
+  readIfExists <- function(path, outcomeId, fileName) {
+    fileDir <- file.path(
       path,
-      outcomeId
+      paste0(fileName, ".rds")
     )
+    if (file.exists(fileDir)) {
+      readRDS(fileDir) %>%
+        dplyr::mutate(
+          stratOutcome = outcomeId,
+          estOutcome   = as.numeric(basename(path))
+        )
+    }
   }
 
-  if (!dir.exists(path)) return()
-
-  files <- list.files(
-    path = path,
-    pattern = paste(
-      "temp",
-      fileName,
-      sep = "_"
-    ),
+  outcomeDirs <- list.dirs(
+    path,
+    recursive = FALSE,
     full.names = TRUE
   )
 
-  files %>%
-    lapply(readRDS) %>%
+  file.path(outcomeDirs) %>%
+    lapply(
+      readIfExists,
+      outcomeId = outcomeId,
+      fileName  = fileName
+    ) %>%
     dplyr::bind_rows() %>%
-    saveRDS(
-      file.path(
-        path,
-        paste(
-          fileName,
-          "rds",
-          sep = "."
-        )
-      )
-    )
-
-  file.remove(files)
-
+    dplyr::tibble()
 }
 
 
+
+#' @importFrom dplyr %>%
+#' @export
+mergeAnalysisFiles <- function(
+  analysisSettings,
+  label,
+  fileName
+) {
+  analysisPath <- file.path(
+    analysisSettings$saveDirectory,
+    analysisSettings$analysisId,
+    "Estimation",
+    label
+  )
+  paths <- list.dirs(
+    path = analysisPath,
+    full.names = TRUE,
+    recursive = FALSE
+  )
+  do.call(
+    rbind,
+    lapply(paths, mergeFiles, fileName)
+  )
+}
+
+
+#' @importFrom dplyr %>%
+#' @export
+mergeRseeFiles <- function(
+  analysisSettings,
+  fileName
+) {
+  analysisPath = file.path(
+    analysisSettings$saveDirectory,
+    analysisSettings$analysisId,
+    "Estimation"
+  )
+
+  labels <- list.dirs(
+    analysisPath,
+    full.names = FALSE,
+    recursive = FALSE
+  )
+
+  do.call(
+    rbind,
+    lapply(
+      labels,
+      mergeAnalysisFiles,
+      analysisSettings = analysisSettings,
+      fileName         = fileName
+    )
+  )
+}
 
 #' Absolute risk reduction
 #'
@@ -682,9 +730,11 @@ mergeTempFiles <- function(
 #'
 #' @export
 
-absoluteRiskReduction <- function(population,
-                                  timePoint,
-                                  psMethod){
+absoluteRiskReduction <- function(
+  population,
+  timePoint,
+  psMethod
+) {
 
   population <- as.data.frame(
     population
