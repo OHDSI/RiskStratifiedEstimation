@@ -134,7 +134,7 @@ fitOutcomeModels <- function(
         paste0(
           paste(
             "ps",
-            analysis$label,
+            "analysis",
             sep = "_"
           ),
           ".rds"
