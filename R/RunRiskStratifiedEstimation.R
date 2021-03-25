@@ -637,7 +637,7 @@ runRiskStratifiedEstimation <- function(
       )
       tmpOutcomeIds <- as.numeric(
         list.dirs(
-          path       = pathToPs,
+          path       = tmpPathToPs,
           full.names = FALSE,
           recursive  = FALSE
         )
@@ -659,54 +659,6 @@ runRiskStratifiedEstimation <- function(
         }
       )
     }
-  # }
-
-
-
-
-    ParallelLogger::logInfo(
-      "Starting estimation of results for secondary outcomes"
-    )
-
-    for (predictOutcome in predictOutcomes) {
-      predLoc <- which(analysisSettings$outcomeIds == predictOutcome)
-      compLoc <- analysisSettings$analysisMatrix[, predLoc]
-      compareOutcomes <- analysisSettings$outcomeIds[as.logical(compLoc)]
-      compareOutcomes <- sort(
-        compareOutcomes[compareOutcomes != predictOutcome]
-      )
-
-      if (length(compareOutcomes) == 0) {
-        compareOutcomes <- NULL
-      }
-
-      if (!is.null(compareOutcomes)) {
-
-        pathToPs <- file.path(
-          analysisSettings$saveDirectory,
-          analysisSettings$analysisId,
-          "Estimation",
-          predictOutcome
-        )
-
-        dummy <- tryCatch(
-          {
-            ParallelLogger::clusterApply(
-              cluster = cluster,
-              x = compareOutcomes,
-              fun = fitOutcomeModels,
-              getDataSettings = getDataSettings,
-              pathToPs = pathToPs,
-              analysis = settingsTmp
-            )
-          },
-          error = function(e)
-          {
-            e$message
-          }
-        )
-      }
-    }
   }
 
   ParallelLogger::logInfo(
@@ -716,7 +668,8 @@ runRiskStratifiedEstimation <- function(
   pathToPs <- file.path(
     analysisSettings$saveDirectory,
     analysisSettings$analysisId,
-    "Estimation"
+    "Estimation",
+    analysisLabels[2]
   )
 
   dummy <- ParallelLogger::clusterApply(
