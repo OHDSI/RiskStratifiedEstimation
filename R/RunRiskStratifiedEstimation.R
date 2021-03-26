@@ -677,54 +677,6 @@ runRiskStratifiedEstimation <- function(
     analysisLabels[2]
   )
 
-  # dummy <- ParallelLogger::clusterApply(
-  #   cluster = cluster,
-  #   x = predictOutcomes,
-  #   fun = mergeMultipleTempFiles,
-  #   fileNames = list(
-  #     "relativeRiskReduction",
-  #     "absoluteRiskReduction",
-  #     "cases"
-  #   ),
-  #   mergeTempFiles = mergeTempFiles,
-  #   path = pathToPs
-  # )
-  #
-  # for (predictOutcome in predictOutcomes) {
-  #   predLoc <- which(analysisSettings$outcomeIds == predictOutcome)
-  #   compLoc <- analysisSettings$analysisMatrix[, predLoc]
-  #   compareOutcomes <- analysisSettings$outcomeIds[as.logical(compLoc)]
-  #   compareOutcomes <- sort(
-  #     compareOutcomes[compareOutcomes != predictOutcome]
-  #   )
-  #
-  #   if (length(compareOutcomes) == 0) {
-  #     compareOutcomes <- NULL
-  #   }
-  #
-  #   if (!is.null(compareOutcomes)) {
-  #     pathToPs <- file.path(
-  #       analysisSettings$saveDirectory,
-  #       analysisSettings$analysisId,
-  #       "Estimation",
-  #       predictOutcome
-  #     )
-  #
-  #     dummy <- ParallelLogger::clusterApply(
-  #       cluster = cluster,
-  #       x = compareOutcomes,
-  #       fun = mergeMultipleTempFiles,
-  #       fileNames = list(
-  #         "relativeRiskReduction",
-  #         "absoluteRiskReduction",
-  #         "cases"
-  #       ),
-  #       mergeTempFiles = mergeTempFiles,
-  #       path = pathToPs
-  #     )
-  #   }
-  # }
-
   ParallelLogger::logInfo(
     "Computing and saving incidence"
   )
