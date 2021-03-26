@@ -167,91 +167,12 @@ includeOverallResults <- function(
     nThreads <- runSettings$runCmSettings$fitOutcomeModelsThreads
   }
 
-  # outcomeIds <- analysisSettings$outcomeIds[which(colSums(analysisSettings$analysisMatrix) != 0)]
   cohortMethodData <- CohortMethod::loadCohortMethodData(
     file = file.path(
       getDataSettings$cohortMethodDataFolder
     )
   )
 
-  generateSingleAnalysis <- function(
-    outcomeId,
-    analysisPath,
-    cohortMethodData = NULL,
-    analysisSettings,
-    analysis
-  ) {
-    ps <- readRDS(
-      file = file.path(
-        analysisPath,
-        "Estimation",
-        outcomeId,
-        "psFull.rds"
-      )
-    )
-
-    if (analysis$psMethod == "matchOnPs") {
-      ps <- CohortMethod::matchOnPs(
-        population = ps,
-        caliper = analysis$effectEstimationSettings$caliper,
-        caliperScale = analysis$effectEstimationSettings$caliperScale,
-        maxRatio = analysis$effectEstimationSettings$maxRatio
-      )
-      if (sum(ps$outcomeCount) < 20) {
-        return(NULL)
-      }
-      model <- CohortMethod::fitOutcomeModel(
-        population = ps,
-        cohortMethodData = cohortMethodData,
-        modelType = "cox",
-        stratified = FALSE
-      )
-    } else if (analysis$psMethod == "stratifyByPs") {
-      ps <- CohortMethod::stratifyByPs(
-        population = ps,
-        numberOfStrata = analysis$effectEstimationSettings$numberOfStrata,
-        baseSelection = analysis$effectEstimationSettings$baseSelection
-      )
-      if (sum(ps$outcomeCount) < 20) {
-        return(NULL)
-      }
-      model <- CohortMethod::fitOutcomeModel(
-        population = ps,
-        cohortMethodData = cohortMethodData,
-        modelType = "cox",
-        stratified = TRUE
-      )
-    }
-    saveRDS(
-      ps,
-      file = file.path(
-        analysisPath,
-        "Estimation",
-        outcomeId,
-        paste0(
-          paste(
-            "psFull",
-            analysis$label,
-            sep = "_"
-          ),
-          ".rds"
-        )
-      )
-    )
-    return(
-      data.frame(
-        estimate = exp(model$outcomeModelTreatmentEstimate$logRr),
-        lower = exp(model$outcomeModelTreatmentEstimate$logLb95),
-        upper = exp(model$outcomeModelTreatmentEstimate$logUb95),
-        seLogRr = model$outcomeModelTreatmentEstimate$seLogRr,
-        outcomeId = outcomeId,
-        database = analysisSettings$databaseName,
-        analysisType = analysis$label,
-        treatmentId = analysisSettings$treatmentCohortId,
-        comparatorId = analysisSettings$comparatorCohortId
-      )
-    )
-  }
 
   cluster <- ParallelLogger::makeCluster(
     numberOfThreads = nThreads
@@ -266,12 +187,12 @@ includeOverallResults <- function(
   )
 
   ret <- ParallelLogger::clusterApply(
-    cluster = cluster,
-    x = outcomeIds,
-    fun = generateSingleAnalysis,
-    analysis = analysis,
+    cluster          = cluster,
+    x                = outcomeIds,
+    fun              = generateSingleAnalysis,
+    analysis         = analysis,
     analysisSettings = analysisSettings,
-    analysisPath = analysisPath
+    analysisPath     = analysisPath
   )
 
   ParallelLogger::stopCluster(cluster)
@@ -291,7 +212,7 @@ includeOverallResults <- function(
       "shiny",
       paste0(
         paste(
-          "temp",
+          "tmp",
           fileName,
           analysis$label,
           sep = "_"
@@ -321,6 +242,8 @@ includeOverallResults <- function(
         file = file.path(
           analysisPath,
           "Estimation",
+          analysis$label,
+          outcomeId,
           outcomeId,
           paste0(
             paste(
@@ -343,7 +266,7 @@ includeOverallResults <- function(
         ) %>%
         dplyr::bind_rows(incidence)
 
-      psDensity(ps) %>%
+      computePsDensity(ps) %>%
         dplyr::mutate(
           database = analysisSettings$databaseName,
           analysisId = analysisSettings$analysisId,
@@ -379,7 +302,7 @@ includeOverallResults <- function(
           )
         )
 
-      computeCovariateBalance4(
+      computeCovariateBalance(
         population = ps,
         cohorts = cohorts,
         covariates = covariates,
@@ -432,7 +355,7 @@ includeOverallResults <- function(
         "shiny",
         paste0(
           paste(
-            "temp",
+            "tmp",
             "incidenceOverall",
             analysis$label,
             sep = "_"
@@ -444,4 +367,88 @@ includeOverallResults <- function(
   }
 
   return(NULL)
+}
+
+
+
+
+generateSingleAnalysis <- function(
+  outcomeId,
+  analysisPath,
+  cohortMethodData = NULL,
+  analysisSettings,
+  analysis
+) {
+  ps <- readRDS(
+    file = file.path(
+      analysisPath,
+      "Prediction",
+      outcomeId,
+      "psFull.rds"
+    )
+  )
+
+  if (analysis$psMethod == "matchOnPs") {
+    ps <- CohortMethod::matchOnPs(
+      population = ps,
+      caliper = analysis$effectEstimationSettings$caliper,
+      caliperScale = analysis$effectEstimationSettings$caliperScale,
+      maxRatio = analysis$effectEstimationSettings$maxRatio
+    )
+    if (sum(ps$outcomeCount) < 20) {
+      return(NULL)
+    }
+    model <- CohortMethod::fitOutcomeModel(
+      population = ps,
+      cohortMethodData = cohortMethodData,
+      modelType = "cox",
+      stratified = FALSE
+    )
+  } else if (analysis$psMethod == "stratifyByPs") {
+    ps <- CohortMethod::stratifyByPs(
+      population = ps,
+      numberOfStrata = analysis$effectEstimationSettings$numberOfStrata,
+      baseSelection = analysis$effectEstimationSettings$baseSelection
+    )
+    if (sum(ps$outcomeCount) < 20) {
+      return(NULL)
+    }
+    model <- CohortMethod::fitOutcomeModel(
+      population = ps,
+      cohortMethodData = cohortMethodData,
+      modelType = "cox",
+      stratified = TRUE
+    )
+  }
+  saveRDS(
+    ps,
+    file = file.path(
+      analysisPath,
+      "Estimation",
+      analysis$label,
+      outcomeId,
+      outcomeId,
+      paste0(
+        paste(
+          "psFull",
+          analysis$label,
+          sep = "_"
+        ),
+        ".rds"
+      )
+    )
+  )
+  return(
+    data.frame(
+      estimate     = exp(model$outcomeModelTreatmentEstimate$logRr),
+      lower        = exp(model$outcomeModelTreatmentEstimate$logLb95),
+      upper        = exp(model$outcomeModelTreatmentEstimate$logUb95),
+      seLogRr      = model$outcomeModelTreatmentEstimate$seLogRr,
+      outcomeId    = outcomeId,
+      database     = analysisSettings$databaseName,
+      analysisType = analysis$label,
+      treatmentId  = analysisSettings$treatmentCohortId,
+      comparatorId = analysisSettings$comparatorCohortId
+    )
+  )
 }

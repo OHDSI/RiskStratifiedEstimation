@@ -720,18 +720,8 @@ runRiskStratifiedEstimation <- function(
   ParallelLogger::logInfo(
     "Merging..."
   )
-
-  # lapply(
-  #   c("mappedOverallResults", "incidenceOverall"),
-  #   mergeTempFiles,
-  #   path = file.path(
-  #     analysisSettings$saveDirectory,
-  #     analysisSettings$analysisId,
-  #     "shiny"
-  #   ),
-  #   outcomeId = ""
-  # )
-
+  mergeTempFiles(shinyDir, "incidenceOverall")
+  mergeTempFiles(shinyDir, "mappedOverallResults")
 
   #-----------------------------------------------------------------------------
   # Negative controls

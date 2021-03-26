@@ -426,7 +426,7 @@ fitPsModelOverall <- function(
   saveDir <- file.path(
     analysisSettings$saveDirectory,
     analysisSettings$analysisId,
-    "Estimation",
+    "Prediction",
     outcomeId
   )
 
