@@ -352,27 +352,29 @@ fitPsModelOverall <- function(
     file = getDataSettings$cohortMethodDataFolder
   )
 
+  populationCmSettings <- populationSettings$populationCmSettings
   populationCm <- CohortMethod::createStudyPopulation(
-    cohortMethodData = cohortMethodData,
-    outcomeId = outcomeId,
-    firstExposureOnly = populationSettings$populationCmSettings$firstExposureOnly,
-    restrictToCommonPeriod = populationSettings$populationCmSettings$restrictToCommonPeriod,
-    washoutPeriod = populationSettings$populationCmSettings$washoutPeriod,
-    removeDuplicateSubjects = populationSettings$populationCmSettings$removeDuplicateSubjects,
-    removeSubjectsWithPriorOutcome = populationSettings$populationCmSettings$removeSubjectsWithPriorOutcome,
-    priorOutcomeLookback = populationSettings$populationCmSettings$priorOutcomeLookback,
-    minDaysAtRisk = populationSettings$populationCmSettings$minDaysAtRisk,
-    riskWindowStart = populationSettings$populationCmSettings$riskWindowStart,
-    startAnchor = populationSettings$populationCmSettings$startAnchor,
-    riskWindowEnd = populationSettings$populationCmSettings$riskWindowEnd,
-    endAnchor = populationSettings$populationCmSettings$endAnchor,
-    censorAtNewRiskWindow = populationSettings$populationCmSettings$censorAtNewRiskWindow
+    cohortMethodData               = cohortMethodData,
+    outcomeId                      = outcomeId,
+    firstExposureOnly              = populationCmSettings$firstExposureOnly,
+    restrictToCommonPeriod         = populationCmSettings$restrictToCommonPeriod,
+    washoutPeriod                  = populationCmSettings$washoutPeriod,
+    removeDuplicateSubjects        = populationCmSettings$removeDuplicateSubjects,
+    removeSubjectsWithPriorOutcome = populationCmSettings$removeSubjectsWithPriorOutcome,
+    priorOutcomeLookback           = populationCmSettings$priorOutcomeLookback,
+    minDaysAtRisk                  = populationCmSettings$minDaysAtRisk,
+    riskWindowStart                = populationCmSettings$riskWindowStart,
+    startAnchor                    = populationCmSettings$startAnchor,
+    riskWindowEnd                  = populationCmSettings$riskWindowEnd,
+    endAnchor                      = populationCmSettings$endAnchor,
+    censorAtNewRiskWindow          = populationCmSettings$censorAtNewRiskWindow
   ) %>%
     dplyr::mutate(
       cohortStartDate = lubridate::as_date(
         cohortStartDate
       )
     )
+
   pop <- populationCm
 
   if (!isNegativeControl) {
@@ -380,23 +382,23 @@ fitPsModelOverall <- function(
     plpData <- PatientLevelPrediction::loadPlpData(
       file = getDataSettings$plpDataFolder
     )
+    populationPlpSettings <- populationSettings$populationPlpSettings
     populationPlp <- PatientLevelPrediction::createStudyPopulation(
-      plpData = plpData,
-      # population = as.data.frame(startingPop),
-      outcomeId = outcomeId,
-      binary = populationSettings$populationPlpSettings$binary,
-      includeAllOutcomes = populationSettings$populationPlpSettings$includeAllOutcomes,
-      firstExposureOnly = populationSettings$populationPlpSettings$firstExposureOnly,
-      washoutPeriod = populationSettings$populationPlpSettings$washoutPeriod,
-      removeSubjectsWithPriorOutcome = populationSettings$populationPlpSettings$removeSubjectsWithPriorOutcome,
-      priorOutcomeLookback = populationSettings$populationPlpSettings$priorOutcomeLookback,
-      requireTimeAtRisk = populationSettings$populationPlpSettings$requireTimeAtRisk,
-      minTimeAtRisk = populationSettings$populationPlpSettings$minTimeAtRisk,
-      riskWindowStart = populationSettings$populationPlpSettings$riskWindowStart,
-      startAnchor = populationSettings$populationPlpSettings$startAnchor,
-      riskWindowEnd = populationSettings$populationPlpSettings$riskWindowEnd,
-      endAnchor = populationSettings$populationPlpSettings$endAnchor,
-      verbosity = populationSettings$populationPlpSettings$verbosity
+      plpData                        = plpData,
+      outcomeId                      = outcomeId,
+      binary                         = populationPlpSettings$binary,
+      includeAllOutcomes             = populationPlpSettings$includeAllOutcomes,
+      firstExposureOnly              = populationPlpSettings$firstExposureOnly,
+      washoutPeriod                  = populationPlpSettings$washoutPeriod,
+      removeSubjectsWithPriorOutcome = populationPlpSettings$removeSubjectsWithPriorOutcome,
+      priorOutcomeLookback           = populationPlpSettings$priorOutcomeLookback,
+      requireTimeAtRisk              = populationPlpSettings$requireTimeAtRisk,
+      minTimeAtRisk                  = populationPlpSettings$minTimeAtRisk,
+      riskWindowStart                = populationPlpSettings$riskWindowStart,
+      startAnchor                    = populationPlpSettings$startAnchor,
+      riskWindowEnd                  = populationPlpSettings$riskWindowEnd,
+      endAnchor                      = populationPlpSettings$endAnchor,
+      verbosity                      = populationPlpSettings$verbosity
     )
 
     pop <- pop %>%
@@ -408,27 +410,28 @@ fitPsModelOverall <- function(
       dplyr::left_join(
         populationPlp
       )
+
+    saveDir <- file.path(
+      analysisSettings$saveDirectory,
+      analysisSettings$analysisId,
+      "Prediction",
+      outcomeId
+    )
   }
 
+  psSettings <- runCmSettings$psSettings
   ps <- CohortMethod::createPs(
-    cohortMethodData = cohortMethodData,
-    population = as.data.frame(pop),
-    includeCovariateIds = runCmSettings$psSettings$includeCovariateIds,
-    excludeCovariateIds = runCmSettings$psSettings$excludeCovariateIds,
-    maxCohortSizeForFitting = runCmSettings$psSettings$maxCohortSizeForFitting,
-    errorOnHighCorrelation = runCmSettings$psSettings$errorOnHighCorrelation,
-    stopOnError = runCmSettings$psSettings$stopOnError,
-    control = runCmSettings$psSettings$control,
-    prior = runCmSettings$psSettings$prior
+    cohortMethodData        = cohortMethodData,
+    population              = as.data.frame(pop),
+    includeCovariateIds     = psSettings$includeCovariateIds,
+    excludeCovariateIds     = psSettings$excludeCovariateIds,
+    maxCohortSizeForFitting = psSettings$maxCohortSizeForFitting,
+    errorOnHighCorrelation  = psSettings$errorOnHighCorrelation,
+    stopOnError             = psSettings$stopOnError,
+    control                 = psSettings$control,
+    prior                   = psSettings$prior
   )
 
-
-  saveDir <- file.path(
-    analysisSettings$saveDirectory,
-    analysisSettings$analysisId,
-    "Prediction",
-    outcomeId
-  )
 
   dir.create(
     saveDir,
@@ -452,10 +455,6 @@ fitPsModelOverall <- function(
 
   return(NULL)
 }
-
-
-
-
 
 
 

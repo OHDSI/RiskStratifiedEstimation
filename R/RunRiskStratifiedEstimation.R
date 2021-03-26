@@ -742,23 +742,23 @@ runRiskStratifiedEstimation <- function(
     negativeControlIds <- analysisSettings$negativeControlOutcomes
 
     dummy <- ParallelLogger::clusterApply(
-      cluster = cluster,
-      x = negativeControlIds,
-      fun = fitPsModelOverall,
-      getDataSettings = getDataSettings,
+      cluster            = cluster,
+      x                  = negativeControlIds,
+      fun                = fitPsModelOverall,
+      getDataSettings    = getDataSettings,
       populationSettings = populationSettings,
-      analysisSettings = analysisSettings,
-      runCmSettings = runSettings$runCmSettings,
-      isNegativeControl = TRUE
+      analysisSettings   = analysisSettings,
+      runCmSettings      = runSettings$runCmSettings,
+      isNegativeControl  = TRUE
     )
     ParallelLogger::logInfo("Fitting overall negative control outcome models")
 
     for (i in seq_along(runSettings$runCmSettings$analyses)) {
       includeOverallResults(
-        analysisSettings = analysisSettings,
-        getDataSettings = getDataSettings,
-        analysis = runSettings$runCmSettings$analyses[[i]],
-        runSettings = runSettings,
+        analysisSettings  = analysisSettings,
+        getDataSettings   = getDataSettings,
+        analysis          = runSettings$runCmSettings$analyses[[i]],
+        runSettings       = runSettings,
         isNegativeControl = TRUE
       )
     }
@@ -848,15 +848,12 @@ runRiskStratifiedEstimation <- function(
       #   path = pathToPs
       # )
     }
-
-    ParallelLogger::logInfo(
-      "Creating and saving overall results"
-    )
   }
 
-  createOverallResults(
-    analysisSettings
+  ParallelLogger::logInfo(
+    "Creating and saving overall results"
   )
+  createOverallResults(analysisSettings)
 
   settings <- list(
     analysisSettings = analysisSettings,
