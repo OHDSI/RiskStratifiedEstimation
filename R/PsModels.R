@@ -46,8 +46,6 @@ fitPsModelSwitch <- function(
   runSettings
 ) {
 
-  # runSettings$runCmSettings <- runSettings$runCmSettings[[1]]
-
   analysisPath <- file.path(
     analysisSettings$saveDirectory,
     analysisSettings$analysisId
@@ -348,6 +346,7 @@ fitPsModelOverall <- function(
   runCmSettings,
   isNegativeControl = FALSE
 ) {
+
   cohortMethodData <- CohortMethod::loadCohortMethodData(
     file = getDataSettings$cohortMethodDataFolder
   )
@@ -378,7 +377,6 @@ fitPsModelOverall <- function(
   pop <- populationCm
 
   if (!isNegativeControl) {
-
     plpData <- PatientLevelPrediction::loadPlpData(
       file = getDataSettings$plpDataFolder
     )
@@ -417,6 +415,19 @@ fitPsModelOverall <- function(
       "Prediction",
       outcomeId
     )
+  } else {
+    saveDir <- file.path(
+      analysisSettings$saveDirectory,
+      analysisSettings$analysisId,
+      "NegativeControls",
+      outcomeId
+    )
+    if (!dir.exists(saveDir)) {
+      dir.create(
+        path      = saveDir,
+        recursive = TRUE
+      )
+    }
   }
 
   psSettings <- runCmSettings$psSettings

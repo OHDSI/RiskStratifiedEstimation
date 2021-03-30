@@ -154,7 +154,6 @@ runRiskStratifiedEstimation <- function(
   analysisSettings$analysisLabels <- analysisLabels
 
 
-
   #-----------------------------------------------------------------------------
   # Overall results step
   #-----------------------------------------------------------------------------
@@ -799,7 +798,7 @@ runRiskStratifiedEstimation <- function(
         pathToPs <- file.path(
           analysisSettings$saveDirectory,
           analysisSettings$analysisId,
-          "Estimation",
+          "NegativeControls",
           predictOutcome
         )
 
