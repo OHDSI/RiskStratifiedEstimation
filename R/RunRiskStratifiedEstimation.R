@@ -336,7 +336,7 @@ runRiskStratifiedEstimation <- function(
       file.path(
         analysisSettings$saveDirectory,
         analysisSettings$analysisId,
-        "Estimation",
+        "Prediction",
         id,
         "psFull.rds"
       )
@@ -441,11 +441,7 @@ runRiskStratifiedEstimation <- function(
     "Evaluating prediction models"
   )
 
-  nThreads <- ifelse(
-    runSettings$runCmSettings$fitOutcomeModelsThreads > runSettings$runCmSettings$riskStrata,
-    yes = runSettings$runCmSettings$riskStrata,
-    no = runSettings$runCmSettings$createPsThreads
-  )
+  nThreads <- analysisSettings$balanceThreads
 
   cluster <- ParallelLogger::makeCluster(
     nThreads

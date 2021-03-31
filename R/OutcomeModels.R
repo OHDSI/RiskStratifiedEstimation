@@ -293,7 +293,7 @@ estimateTreatmentEffect <- function(
     )
 
     colnames(arr) <- c(
-      "ARR",
+      "estimate",
       "lower",
       "upper"
     )
@@ -314,7 +314,7 @@ estimateTreatmentEffect <- function(
     )
 
     colnames(rrr) <- c(
-      "HR",
+      "estimate",
       "lower",
       "upper",
       "seLogRr"
@@ -384,7 +384,7 @@ estimateTreatmentEffect <- function(
     )
 
     colnames(arr) <- c(
-      "ARR",
+      "estimate",
       "lower",
       "upper"
     )
@@ -408,7 +408,7 @@ estimateTreatmentEffect <- function(
     )
 
     colnames(rrr) <- c(
-      "HR",
+      "estimate",
       "lower",
       "upper",
       "seLogRr"

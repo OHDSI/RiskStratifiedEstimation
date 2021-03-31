@@ -51,7 +51,7 @@ evaluatePrediction <- function(
   psFull <- readRDS(
     file.path(
       saveDir,
-      "Estimation",
+      "Prediction",
       predictionId,
       "psFull.rds"
     )

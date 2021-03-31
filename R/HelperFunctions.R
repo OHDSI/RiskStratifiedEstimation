@@ -146,6 +146,7 @@ createOverallResults <- function(analysisSettings) {
     analysisSettings$outcomeIds[which(colSums(analysisSettings$analysisMatrix) != 0)]
 
   negativeControls <- analysisSettings$negativeControlOutcomes
+  analysisLabels <- analysisSettings$analysisLabels
 
   pathToResults <- file.path(
     analysisSettings$saveDirectory,
@@ -168,53 +169,6 @@ createOverallResults <- function(analysisSettings) {
   if (!dir.exists(saveDir)) {
     dir.create(saveDir, recursive = T)
   }
-
-  absolute <- data.frame(
-    estimate = numeric(),
-    lower = numeric(),
-    upper = numeric(),
-    riskStratum = character(),
-    stratOutcome = numeric(),
-    estOutcome = numeric(),
-    database = character(),
-    analysisType = character(),
-    treatment = numeric(),
-    comparator = numeric()
-  )
-  relative <- data.frame(
-    estimate = numeric(),
-    lower = numeric(),
-    upper = numeric(),
-    riskStratum = character(),
-    stratOutcome = numeric(),
-    estOutcome = numeric(),
-    database = character(),
-    analysisType = character(),
-    treatment = numeric(),
-    comparator = numeric()
-  )
-  cases <- data.frame(
-    riskStratum = character(),
-    stratOutcome = numeric(),
-    estOutcome = numeric(),
-    database = character(),
-    analysisType = character(),
-    treatment = numeric(),
-    comparator = numeric()
-  )
-  negativeControlsRelative <- data.frame(
-    HR = numeric(),
-    lower = numeric(),
-    upper = numeric(),
-    seLogRr = numeric(),
-    riskStratum = character(),
-    analysisType = character(),
-    stratOutcome = numeric(),
-    estOutcome = numeric(),
-    treatment = numeric(),
-    comparator = numeric(),
-    database = character()
-  )
 
   predictionPopulations <- c(
     "EntirePopulation",
@@ -316,221 +270,167 @@ createOverallResults <- function(analysisSettings) {
           )
         )
     }
+  }
 
-    absoluteResult <- readRDS(
-      file.path(
-        pathToResults,
-        predictOutcome,
-        "absoluteRiskReduction.rds"
-      )
-    ) %>%
-      dplyr::rename("estimate" = "ARR")
-    absoluteResult <- data.frame(
-      absoluteResult,
-      stratOutcome = predictOutcome,
-      estOutcome = predictOutcome,
-      database = analysisSettings$databaseName,
-      treatment = analysisSettings$treatmentCohortId,
-      comparator = analysisSettings$comparatorCohortId)
-    absolute <- rbind(absolute, absoluteResult
+  mergeAbsolute <- function(path, typeOfResult) {
+
+    fileName <- dplyr::case_when(
+      typeOfResult == "absolute" ~ "absoluteRiskReduction.rds",
+      typeOfResult == "relative" ~ "relativeRiskReduction.rds",
+      typeOfResult == "cases"    ~ "cases.rds"
     )
-
-    relativeResult <- readRDS(
-      file.path(
-        pathToResults,
-        predictOutcome,
-        "relativeRiskReduction.rds"
-      )
-    ) %>%
-      dplyr::rename("estimate" = "HR")
-    relativeResult <- data.frame(
-      relativeResult,
-      stratOutcome = predictOutcome,
-      estOutcome = predictOutcome,
-      database = analysisSettings$databaseName,
-      treatment = analysisSettings$treatmentCohortId,
-      comparator = analysisSettings$comparatorCohortId
-    )
-    relative <- rbind(relative, relativeResult)
-
-    casesResult <- readRDS(
-      file.path(
-        pathToResults,
-        predictOutcome,
-        "cases.rds"
-      )
-    ) %>%
-      dplyr::rename("casesComparator" = "comparator") %>%
-      dplyr::rename("casesTreatment" = "treatment")
-    casesResult <- data.frame(
-      casesResult,
-      stratOutcome = predictOutcome,
-      estOutcome = predictOutcome,
-      database = analysisSettings$databaseName,
-      treatment = analysisSettings$treatmentCohortId,
-      comparator = analysisSettings$comparatorCohortId
-    )
-    cases <- rbind(cases, casesResult)
-
-    predLoc <- which(analysisSettings$outcomeIds == predictOutcome)
-    compLoc <- analysisSettings$analysisMatrix[, predLoc]
-    compareOutcomes <- analysisSettings$outcomeIds[as.logical(compLoc)]
-    compareOutcomes <- compareOutcomes[compareOutcomes != predictOutcome]
-    # compareOutcomes <- compareOutcomes[!compareOutcomes %in% failedAnalyses]
-    compareOutcomes <- sort(
-      compareOutcomes[compareOutcomes != predictOutcome]
-    )
-
-    if (length(compareOutcomes) != 0) {
-      for (compareOutcome in compareOutcomes) {
-        absoluteResult <- tryCatch(
-          {
-            absoluteResult <- readRDS(
-              file.path(
-                pathToResults,
-                predictOutcome,
-                compareOutcome,
-                "absoluteRiskReduction.rds"
-              )
-            ) %>%
-              dplyr::rename("estimate" = "ARR")
-          },
-          error = function(e)
-          {
-            e$message
-          }
-        )
-
-        if (!is.character(absoluteResult)) {
-          absoluteResult <- data.frame(
-            absoluteResult,
-            stratOutcome = predictOutcome,
-            estOutcome = compareOutcome,
-            database = analysisSettings$databaseName,
-            treatment = analysisSettings$treatmentCohortId,
-            comparator = analysisSettings$comparatorCohortId
+    tmp <- tryCatch(
+      {
+        readRDS(
+          file.path(
+            path,
+            fileName
           )
-
-          absolute <- rbind(absolute, absoluteResult)
-        }
-
-        relativeResult <- tryCatch(
-          {
-            relativeResult <- readRDS(
-              file.path(
-                pathToResults,
-                predictOutcome,
-                compareOutcome,
-                "relativeRiskReduction.rds"
-              )
-            ) %>%
-              dplyr::rename("estimate" = "HR")
-          },
-          error = function(e)
-          {
-            e$message
-          }
-        )
-
-        if (!is.character(relativeResult)) {
-
-          relativeResult <- data.frame(
-            relativeResult,
-            stratOutcome = predictOutcome,
-            estOutcome = compareOutcome,
-            database = analysisSettings$databaseName,
-            treatment = analysisSettings$treatmentCohortId,
-            comparator = analysisSettings$comparatorCohortId
+        ) %>%
+          dplyr::mutate(
+            estOutcome = as.numeric(basename(path))
           )
-          relative <- rbind(relative, relativeResult)
-        }
-
-        casesResult <- tryCatch(
-          {
-            casesResult <- readRDS(
-              file.path(
-                pathToResults,
-                predictOutcome,
-                compareOutcome,
-                "cases.rds"
-              )
-            ) %>%
-              dplyr::rename("casesComparator" = "comparator") %>%
-              dplyr::rename("casesTreatment" = "treatment")
-          },
-          error = function(e){
-            e$message
-          }
-        )
-
-        if (!is.character(casesResult)) {
-          casesResult <- data.frame(
-            casesResult,
-            stratOutcome = predictOutcome,
-            estOutcome = compareOutcome,
-            database = analysisSettings$databaseName,
-            treatment = analysisSettings$treatmentCohortId,
-            comparator = analysisSettings$comparatorCohortId
-          )
-          cases <- rbind(cases, casesResult)
-
-        }
+      },
+      warning = function(w)
+      {
+        w$message
       }
-    }
-
-    if (!is.null(negativeControls)) {
-      for (i in seq_along(negativeControls)) {
-        tmp <- tryCatch(
-          {
-            readRDS(
-              file = file.path(
-                analysisSettings$saveDirectory,
-                analysisSettings$analysisId,
-                "Estimation",
-                predictOutcome,
-                negativeControls[i],
-                "relativeRiskReduction.rds"
-              )
-            )
-          },
-          error = function(e) {
-            e$message
-          }
-        )
-        if (!is.character(tmp) & nrow(tmp) != 0) {
-          negativeControlsRelative <- rbind(
-            negativeControlsRelative,
-            data.frame(
-              tmp,
-              stratOutcome = predictOutcome,
-              estOutcome = negativeControls[i],
-              treatment = analysisSettings$treatmentCohortId,
-              comparator = analysisSettings$comparatorCohortId,
-              database = analysisSettings$databaseName
-            )
-          )
-        }
-      }
-      saveRDS(
-        negativeControlsRelative,
-        file = file.path(
-          analysisSettings$saveDirectory,
-          analysisSettings$analysisId,
-          "shiny",
-          "negativeControls.rds"
-        )
-      )
+    )
+    if (is.character(tmp)) {
+      return(NULL)
+    } else {
+      return(tmp)
     }
   }
 
-  absolute %>%
-    saveRDS(file.path(saveDir, "mappedOverallAbsoluteResults.rds"))
+  mergePredictOutcomes <- function(
+    predictOutcome,
+    label,
+    pathToResults,
+    typeOfResult,
+    analysisSettings,
+    isNegativeControl = FALSE
+  ) {
 
-  relative %>%
-    saveRDS(file.path(saveDir, "mappedOverallRelativeResults.rds"))
+    tmpPath <- file.path(
+      pathToResults,
+      label,
+      predictOutcome
+    )
+    allOutcomes <- as.numeric(
+      list.dirs(
+        tmpPath,
+        full.names = FALSE,
+        recursive = FALSE
+      )
+    )
+    negativeControls <- analysisSettings$negativeControlOutcomes
+    if (!isNegativeControl) {
+      compareOutcomes <- allOutcomes[!allOutcomes %in% negativeControls]
+    } else {
+      compareOutcomes <- negativeControls
+    }
+    pathList <- file.path(tmpPath, compareOutcomes)
+    tmpAbsolute <- lapply(pathList, mergeAbsolute, typeOfResult = typeOfResult) %>%
+      dplyr::bind_rows() %>%
+      dplyr::mutate(
+        stratOutcome = predictOutcome,
+        database     = analysisSettings$databaseName,
+        treatment    = analysisSettings$treatmentCohortId,
+        comparator   = analysisSettings$comparatorCohortId
+      )
+    return(tmpAbsolute)
+  }
 
-  cases %>%
-    saveRDS(file.path(saveDir, "mappedOverallCasesResults.rds"))
+  relativeTmp <- absoluteTmp <- casesTmp <- list()
+  relativeNcTmp <- absoluteNcTmp <- casesNcTmp <- list()
+  for (i in seq_along(analysisLabels)) {
+    relativeTmp[[i]] <- lapply(
+      predictOutcomes,
+      mergePredictOutcomes,
+      pathToResults = pathToResults,
+      label = analysisLabels[i],
+      analysisSettings = analysisSettings,
+      typeOfResult = "relative"
+    ) %>%
+      dplyr::bind_rows()
+
+    closeAllConnections()
+    absoluteTmp[[i]] <- lapply(
+      predictOutcomes,
+      mergePredictOutcomes,
+      pathToResults = pathToResults,
+      label = analysisLabels[i],
+      analysisSettings = analysisSettings,
+      typeOfResult = "absolute"
+    ) %>%
+      dplyr::bind_rows()
+
+    closeAllConnections()
+    casesTmp[[i]] <- lapply(
+      predictOutcomes,
+      mergePredictOutcomes,
+      pathToResults = pathToResults,
+      label = analysisLabels[i],
+      analysisSettings = analysisSettings,
+      typeOfResult = "cases"
+    ) %>%
+      dplyr::bind_rows()
+    closeAllConnections()
+
+    if (!is.null(negativeControls)) {
+      relativeNcTmp[[i]] <- lapply(
+        predictOutcomes,
+        mergePredictOutcomes,
+        pathToResults = pathToResults,
+        label = analysisLabels[i],
+        analysisSettings = analysisSettings,
+        typeOfResult = "relative",
+        isNegativeControl = TRUE
+      ) %>%
+        dplyr::bind_rows()
+
+      closeAllConnections()
+    }
+  }
+
+  dplyr::bind_rows(relativeTmp) %>%
+    dplyr::tibble() %>%
+    saveRDS(
+      file.path(
+        saveDir,
+        "mappedOverallRelativeResults.rds"
+      )
+    )
+
+  dplyr::bind_rows(absoluteTmp) %>%
+    dplyr::tibble() %>%
+    saveRDS(
+      file.path(
+        saveDir,
+        "mappedOverallAbsoluteResults.rds"
+      )
+    )
+
+  dplyr::bind_rows(casesTmp) %>%
+    dplyr::tibble() %>%
+    saveRDS(
+      file.path(
+        saveDir,
+        "mappedOverallCasesResults.rds"
+      )
+    )
+
+  if (!is.null(negativeControls)) {
+    dplyr::bind_rows(relativeNcTmp) %>%
+      dplyr::tibble() %>%
+      saveRDS(
+        file.path(
+          saveDir,
+          "negativeControls.rds"
+        )
+      )
+  }
 
   analysisSettings$mapOutcomes %>%
     saveRDS(
@@ -547,7 +447,8 @@ createOverallResults <- function(analysisSettings) {
         "map_exposures.rds"
       )
     )
-  data.frame(
+
+  dplyr::tibble(
     analysis_id = analysisSettings$analysisId,
     description = analysisSettings$description,
     database = analysisSettings$databaseName,
