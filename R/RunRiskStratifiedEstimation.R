@@ -15,6 +15,7 @@
 # limitations under the License.
 #
 # @author Observational Health Data Sciences and Informatics
+
 # @author Alexandros Rekkas
 # @author Peter Rijnbeek
 
@@ -142,9 +143,12 @@ runRiskStratifiedEstimation <- function(
 
   predictOutcomes <- analysisSettings$outcomeIds[which(colSums(analysisSettings$analysisMatrix) != 0)]
 
+  #-----------------------------------------------------------------------------
+  # extract the second element of a list of lists (here the label)
+  #-----------------------------------------------------------------------------
   analysisLabels <- unlist(
-    rlist::list.map(                         # extract the second element of a
-      runSettings$runCmSettings$analyses,    # list of lists (here the label)
+    rlist::list.map(
+      runSettings$runCmSettings$analyses,
       label
     )
   )
@@ -163,14 +167,14 @@ runRiskStratifiedEstimation <- function(
 
   if (is.null(getDataSettings$plpDataFolder)) {
     prepareForPlpData(
-      treatmentCohortId = analysisSettings$treatmentCohortId,
-      comparatorCohortId = analysisSettings$comparatorCohortId,
-      targetCohortId = databaseSettings$targetCohortId,
-      cohortDatabaseSchema = databaseSettings$cohortDatabaseSchema,
-      cohortTable = databaseSettings$cohortTable,
+      treatmentCohortId     = analysisSettings$treatmentCohortId,
+      comparatorCohortId    = analysisSettings$comparatorCohortId,
+      targetCohortId        = databaseSettings$targetCohortId,
+      cohortDatabaseSchema  = databaseSettings$cohortDatabaseSchema,
+      cohortTable           = databaseSettings$cohortTable,
       resultsDatabaseSchema = databaseSettings$resultsDatabaseSchema,
-      mergedCohortTable = databaseSettings$mergedCohortTable,
-      connectionDetails = connectionDetails
+      mergedCohortTable     = databaseSettings$mergedCohortTable,
+      connectionDetails     = connectionDetails
     )
     ParallelLogger::logInfo(
       "Constructing the plpData object"
@@ -189,21 +193,21 @@ runRiskStratifiedEstimation <- function(
     }
 
     plpData <- PatientLevelPrediction::getPlpData(
-      connectionDetails = connectionDetails,
-      cdmDatabaseSchema = databaseSettings$cdmDatabaseSchema,
-      cohortId = databaseSettings$targetCohortId,
-      outcomeIds = predictOutcomes,
-      cohortDatabaseSchema = databaseSettings$resultsDatabaseSchema,
-      cohortTable = databaseSettings$mergedCohortTable,
-      outcomeDatabaseSchema = databaseSettings$outcomeDatabaseSchema,
-      outcomeTable = databaseSettings$outcomeTable,
-      studyStartDate = getDataSettings$getPlpDataSettings$studyStartDate,
-      studyEndDate = getDataSettings$getPlpDataSettings$studyEndDate,
-      cdmVersion = databaseSettings$cdmVersion,
-      firstExposureOnly = getDataSettings$getPlpDataSettings$firstExposureOnly,
-      washoutPeriod = getDataSettings$getPlpDataSettings$washoutPeriod,
+      connectionDetails          = connectionDetails,
+      cdmDatabaseSchema          = databaseSettings$cdmDatabaseSchema,
+      cohortId                   = databaseSettings$targetCohortId,
+      outcomeIds                 = predictOutcomes,
+      cohortDatabaseSchema       = databaseSettings$resultsDatabaseSchema,
+      cohortTable                = databaseSettings$mergedCohortTable,
+      outcomeDatabaseSchema      = databaseSettings$outcomeDatabaseSchema,
+      outcomeTable               = databaseSettings$outcomeTable,
+      studyStartDate             = getDataSettings$getPlpDataSettings$studyStartDate,
+      studyEndDate               = getDataSettings$getPlpDataSettings$studyEndDate,
+      cdmVersion                 = databaseSettings$cdmVersion,
+      firstExposureOnly          = getDataSettings$getPlpDataSettings$firstExposureOnly,
+      washoutPeriod              = getDataSettings$getPlpDataSettings$washoutPeriod,
       excludeDrugsFromCovariates = getDataSettings$getPlpDataSettings$excludeDrugsFromCovariates,
-      covariateSettings = covariateSettings$covariateSettingsPlp
+      covariateSettings          = covariateSettings$covariateSettingsPlp
     )
     PatientLevelPrediction::savePlpData(
       plpData,
@@ -237,26 +241,27 @@ runRiskStratifiedEstimation <- function(
       )
     }
 
+    getCmDataSettings <- getDataSettings$getCmDataSettings
     cohortMethodData <- CohortMethod::getDbCohortMethodData(
-      connectionDetails = connectionDetails,
-      cdmDatabaseSchema = databaseSettings$cdmDatabaseSchema,
-      targetId = analysisSettings$treatmentCohortId,
-      comparatorId = analysisSettings$comparatorCohortId,
-      outcomeIds = analysisSettings$outcomeIds,
-      studyStartDate = getDataSettings$getCmDataSettings$studyStartDate,
-      studyEndDate = getDataSettings$getCmDataSettings$studyEndDate,
-      exposureDatabaseSchema = databaseSettings$exposureDatabaseSchema,
-      exposureTable = databaseSettings$exposureTable,
-      outcomeDatabaseSchema = databaseSettings$outcomeDatabaseSchema,
-      outcomeTable = databaseSettings$outcomeTable,
-      cdmVersion = databaseSettings$cdmVersion,
-      excludeDrugsFromCovariates = getDataSettings$getCmDataSettings$excludeDrugsFromCovariates,
-      firstExposureOnly = getDataSettings$getCmDataSettings$firstExposureOnly,
-      removeDuplicateSubjects = getDataSettings$getCmDataSettings$removeDuplicateSubjects,
-      restrictToCommonPeriod = getDataSettings$getCmDataSettings$restrictToCommonPeriod,
-      washoutPeriod = getDataSettings$getCmDataSettings$washoutPeriod,
-      maxCohortSize = getDataSettings$getCmDataSettings$maxCohortSize,
-      covariateSettings = covariateSettings$covariateSettingsCm
+      connectionDetails          = connectionDetails,
+      cdmDatabaseSchema          = databaseSettings$cdmDatabaseSchema,
+      targetId                   = analysisSettings$treatmentCohortId,
+      comparatorId               = analysisSettings$comparatorCohortId,
+      outcomeIds                 = analysisSettings$outcomeIds,
+      studyStartDate             = getCmDataSettings$studyStartDate,
+      studyEndDate               = getCmDataSettings$studyEndDate,
+      exposureDatabaseSchema     = databaseSettings$exposureDatabaseSchema,
+      exposureTable              = databaseSettings$exposureTable,
+      outcomeDatabaseSchema      = databaseSettings$outcomeDatabaseSchema,
+      outcomeTable               = databaseSettings$outcomeTable,
+      cdmVersion                 = databaseSettings$cdmVersion,
+      excludeDrugsFromCovariates = getCmDataSettings$excludeDrugsFromCovariates,
+      firstExposureOnly          = getCmDataSettings$firstExposureOnly,
+      removeDuplicateSubjects    = getCmDataSettings$removeDuplicateSubjects,
+      restrictToCommonPeriod     = getCmDataSettings$restrictToCommonPeriod,
+      washoutPeriod              = getCmDataSettings$washoutPeriod,
+      maxCohortSize              = getCmDataSettings$maxCohortSize,
+      covariateSettings          = covariateSettings$covariateSettingsCm
     )
 
     CohortMethod::saveCohortMethodData(
@@ -297,13 +302,13 @@ runRiskStratifiedEstimation <- function(
   )
 
   dummy <- ParallelLogger::clusterApply(
-    cluster = cluster,
-    x = predictOutcomes,
-    fun = fitPsModelOverall,
-    getDataSettings = getDataSettings,
+    cluster            = cluster,
+    x                  = predictOutcomes,
+    fun                = fitPsModelOverall,
+    getDataSettings    = getDataSettings,
     populationSettings = populationSettings,
-    analysisSettings = analysisSettings,
-    runCmSettings = runSettings$runCmSettings
+    analysisSettings   = analysisSettings,
+    runCmSettings      = runSettings$runCmSettings
   )
   ParallelLogger::stopCluster(cluster)
 
@@ -337,9 +342,9 @@ runRiskStratifiedEstimation <- function(
       )
     )
     pop <- CohortMethod::matchOnPs(
-      ps,
-      caliper = runSettings$runPlpSettings$matchingSettings$caliper,
-      maxRatio = runSettings$runPlpSettings$matchingSettings$maxRatio
+      population = ps,
+      caliper    = runSettings$runPlpSettings$matchingSettings$caliper,
+      maxRatio   = runSettings$runPlpSettings$matchingSettings$maxRatio
     ) %>%
       dplyr::mutate(
         cohortStartDate = lubridate::as_date(
@@ -363,46 +368,47 @@ runRiskStratifiedEstimation <- function(
 
     attr(startingPop, "metaData")$attrition <- NULL
 
+    populationPlpSettings <- populationSettings$populationPlpSettings
     population <- PatientLevelPrediction::createStudyPopulation(
-      plpData = plpData,
-      outcomeId = id,
-      population = startingPop,
-      binary = populationSettings$populationPlpSettings$binary,
-      includeAllOutcomes = populationSettings$populationPlpSettings$includeAllOutcomes,
-      firstExposureOnly = populationSettings$populationPlpSettings$firstExposureOnly,
-      washoutPeriod = populationSettings$populationPlpSettings$washoutPeriod,
-      removeSubjectsWithPriorOutcome = populationSettings$populationPlpSettings$removeSubjectsWithPriorOutcome,
-      priorOutcomeLookback = populationSettings$populationPlpSettings$priorOutcomeLookback,
-      requireTimeAtRisk = populationSettings$populationPlpSettings$requireTimeAtRisk,
-      minTimeAtRisk = populationSettings$populationPlpSettings$minTimeAtRisk,
-      riskWindowStart = populationSettings$populationPlpSettings$riskWindowStart,
-      startAnchor = populationSettings$populationPlpSettings$startAnchor,
-      riskWindowEnd = populationSettings$populationPlpSettings$riskWindowEnd,
-      endAnchor = populationSettings$populationPlpSettings$endAnchor,
-      verbosity = populationSettings$populationPlpSettings$verbosity
+      plpData                        = plpData,
+      outcomeId                      = id,
+      population                     = startingPop,
+      binary                         = populationPlpSettings$binary,
+      includeAllOutcomes             = populationPlpSettings$includeAllOutcomes,
+      firstExposureOnly              = populationPlpSettings$firstExposureOnly,
+      washoutPeriod                  = populationPlpSettings$washoutPeriod,
+      removeSubjectsWithPriorOutcome = populationPlpSettings$removeSubjectsWithPriorOutcome,
+      priorOutcomeLookback           = populationPlpSettings$priorOutcomeLookback,
+      requireTimeAtRisk              = populationPlpSettings$requireTimeAtRisk,
+      minTimeAtRisk                  = populationPlpSettings$minTimeAtRisk,
+      riskWindowStart                = populationPlpSettings$riskWindowStart,
+      startAnchor                    = populationPlpSettings$startAnchor,
+      riskWindowEnd                  = populationPlpSettings$riskWindowEnd,
+      endAnchor                      = populationPlpSettings$endAnchor,
+      verbosity                      = populationPlpSettings$verbosity
     )
 
     attr(population, "metaData")$cohortId <- 1
 
     predictionResults <- PatientLevelPrediction::runPlp(
-      population = population,
-      plpData = plpData,
-      modelSettings = runSettings$runPlpSettings$modelSettings,
+      population           = population,
+      plpData              = plpData,
+      modelSettings        = runSettings$runPlpSettings$modelSettings,
       minCovariateFraction = runSettings$runPlpSettings$minCovariateFraction,
-      normalizeData = runSettings$runPlpSettings$normalizeData,
-      testSplit = runSettings$runPlpSettings$testSplit,
-      testFraction = runSettings$runPlpSettings$testFraction,
-      trainFraction = runSettings$runPlpSettings$trainFraction,
-      nfold = runSettings$runPlpSettings$nfold,
-      indexes = runSettings$runPlpSettings$indexes,
-      savePlpData = runSettings$runPlpSettings$savePlpData,
-      savePlpResult = TRUE,
-      savePlpPlots = FALSE,
-      saveEvaluation = runSettings$runPlpSettings$saveEvaluation,
-      verbosity = runSettings$runPlpSettings$verbosity,
-      timeStamp = runSettings$runPlpSettings$timeStamp,
-      analysisId = analysisSettings$analysisId,
-      saveDirectory = file.path(
+      normalizeData        = runSettings$runPlpSettings$normalizeData,
+      testSplit            = runSettings$runPlpSettings$testSplit,
+      testFraction         = runSettings$runPlpSettings$testFraction,
+      trainFraction        = runSettings$runPlpSettings$trainFraction,
+      nfold                = runSettings$runPlpSettings$nfold,
+      indexes              = runSettings$runPlpSettings$indexes,
+      savePlpData          = runSettings$runPlpSettings$savePlpData,
+      savePlpResult        = TRUE,
+      savePlpPlots         = FALSE,
+      saveEvaluation       = runSettings$runPlpSettings$saveEvaluation,
+      verbosity            = runSettings$runPlpSettings$verbosity,
+      timeStamp            = runSettings$runPlpSettings$timeStamp,
+      analysisId           = analysisSettings$analysisId,
+      saveDirectory        = file.path(
         analysisPath,
         "Prediction",
         id
@@ -453,11 +459,11 @@ runRiskStratifiedEstimation <- function(
   dummy <- tryCatch(
     {
       ParallelLogger::clusterApply(
-        cluster = cluster,
-        x = predictOutcomes,
-        fun = evaluatePrediction,
-        analysisSettings = analysisSettings,
-        getDataSettings = getDataSettings,
+        cluster            = cluster,
+        x                  = predictOutcomes,
+        fun                = evaluatePrediction,
+        analysisSettings   = analysisSettings,
+        getDataSettings    = getDataSettings,
         populationSettings = populationSettings
       )
     },
@@ -783,13 +789,13 @@ runRiskStratifiedEstimation <- function(
     for (predictOutcome in predictOutcomes) {
       dummy <- ParallelLogger::clusterApply(
         cluster = cluster,
-        x = negativeControlIds,
-        fun = fitPsModelSwitch,
-        predictOutcome = predictOutcome,
-        analysisSettings = analysisSettings,
-        getDataSettings = getDataSettings,
+        x                  = negativeControlIds,
+        fun                = fitPsModelSwitch,
+        predictOutcome     = predictOutcome,
+        analysisSettings   = analysisSettings,
+        getDataSettings    = getDataSettings,
         populationSettings = populationSettings,
-        runSettings = runSettings
+        runSettings        = runSettings
       )
       ParallelLogger::logInfo("Fitting negative control outcome models")
 
@@ -804,12 +810,12 @@ runRiskStratifiedEstimation <- function(
 
         dummy <- tryCatch({
           ParallelLogger::clusterApply(
-            cluster = cluster,
-            x = negativeControlIds,
-            fun = fitOutcomeModels,
+            cluster         = cluster,
+            x               = negativeControlIds,
+            fun             = fitOutcomeModels,
             getDataSettings = getDataSettings,
-            pathToPs = pathToPs,
-            analysis = analysis
+            pathToPs        = pathToPs,
+            analysis        = analysis
           )},
           error = function(e) {
             e$message
@@ -855,12 +861,12 @@ runRiskStratifiedEstimation <- function(
   createOverallResults(analysisSettings)
 
   settings <- list(
-    analysisSettings = analysisSettings,
-    getDataSettings = getDataSettings,
-    databaseSettings = databaseSettings,
-    covariateSettings = covariateSettings,
+    analysisSettings   = analysisSettings,
+    getDataSettings    = getDataSettings,
+    databaseSettings   = databaseSettings,
+    covariateSettings  = covariateSettings,
     populationSettings = populationSettings,
-    runSettings = runSettings
+    runSettings        = runSettings
   )
 
   saveRDS(
@@ -880,7 +886,7 @@ runRiskStratifiedEstimation <- function(
   ParallelLogger::clearLoggers()
 
   logger <- ParallelLogger::createLogger(
-    name = "SIMPLE",
+    name      = "SIMPLE",
     threshold = "INFO",
     appenders = list(
       ParallelLogger::createConsoleAppender(
