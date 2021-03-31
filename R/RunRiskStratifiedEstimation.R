@@ -665,6 +665,7 @@ runRiskStratifiedEstimation <- function(
           )
         },
         error = function(e) {
+
           e$message
         }
       )
@@ -768,23 +769,7 @@ runRiskStratifiedEstimation <- function(
       )
     }
 
-    pathToPs <- file.path(
-      analysisSettings$saveDirectory,
-      analysisSettings$analysisId,
-      "Estimation"
-    )
-    # dummy <- ParallelLogger::clusterApply(
-    #   cluster = cluster,
-    #   x = negativeControlIds,
-    #   fun = mergeMultipleTempFiles,
-    #   fileNames = list(
-    #     "relativeRiskReduction",
-    #     "absoluteRiskReduction",
-    #     "cases"
-    #   ),
-    #   mergeTempFiles = mergeTempFiles,
-    #   path = pathToPs
-    # )
+    mergeTempFiles(shinyDir, "mappedOverallResultsNegativeControls")
 
     for (predictOutcome in predictOutcomes) {
       dummy <- ParallelLogger::clusterApply(
@@ -804,7 +789,8 @@ runRiskStratifiedEstimation <- function(
         pathToPs <- file.path(
           analysisSettings$saveDirectory,
           analysisSettings$analysisId,
-          "NegativeControls",
+          "Estimation",
+          analysisLabels[i],
           predictOutcome
         )
 
@@ -822,36 +808,6 @@ runRiskStratifiedEstimation <- function(
           }
         )
       }
-    }
-    # mergeTempFiles(
-    #   path = file.path(
-    #     analysisSettings$saveDirectory,
-    #     analysisSettings$analysisId,
-    #     "shiny"
-    #   ),
-    #   outcomeId = "",
-    #   fileName = "mappedOverallResultsNegativeControls"
-    # )
-    for (predictOutcome in predictOutcomes) {
-
-      pathToPs <- file.path(
-        analysisSettings$saveDirectory,
-        analysisSettings$analysisId,
-        "Estimation",
-        predictOutcome
-      )
-      # dummy <- ParallelLogger::clusterApply(
-      #   cluster = cluster,
-      #   x = negativeControlIds,
-      #   fun = mergeMultipleTempFiles,
-      #   fileNames = list(
-      #     "relativeRiskReduction",
-      #     "absoluteRiskReduction",
-      #     "cases"
-      #   ),
-      #   mergeTempFiles = mergeTempFiles,
-      #   path = pathToPs
-      # )
     }
   }
 

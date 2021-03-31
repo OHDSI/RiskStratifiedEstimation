@@ -683,7 +683,18 @@ psAnalysis <- function(
         "mapMatrix.rds"
       )
     ) %>%
+      dplyr::select(
+        c(
+          "rowId",
+          "subjectId",
+          "treatment",
+          "value",
+          "labels",
+          "riskStratum"
+        )
+      ) %>%
       dplyr::inner_join(riskPredictions)
+
   }
 
   nRiskStrata <- ifelse(

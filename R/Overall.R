@@ -154,6 +154,7 @@ includeOverallResults <- function(
   analysis,
   isNegativeControl = FALSE
 ) {
+
   analysisPath <- file.path(
     analysisSettings$saveDirectory,
     analysisSettings$analysisId
@@ -186,14 +187,20 @@ includeOverallResults <- function(
     "CohortMethod"
   )
 
-  ret <- ParallelLogger::clusterApply(
-    cluster          = cluster,
-    x                = outcomeIds,
-    fun              = generateSingleAnalysis,
-    analysis         = analysis,
-    analysisSettings = analysisSettings,
-    analysisPath     = analysisPath
-  )
+  predictOutcomes <- analysisSettings$outcomeIds[which(colSums(analysisSettings$analysisMatrix) != 0)]
+
+  for (predictOutcome in predictOutcomes) {
+    ret <- ParallelLogger::clusterApply(
+      cluster           = cluster,
+      x                 = outcomeIds,
+      fun               = generateSingleAnalysis,
+      analysis          = analysis,
+      analysisSettings  = analysisSettings,
+      analysisPath      = analysisPath,
+      isNegativeControl = isNegativeControl,
+      predictOutcome    = predictOutcome
+    )
+  }
 
   ParallelLogger::stopCluster(cluster)
 
@@ -377,12 +384,56 @@ generateSingleAnalysis <- function(
   analysisPath,
   cohortMethodData = NULL,
   analysisSettings,
-  analysis
+  analysis,
+  isNegativeControl = FALSE,
+  predictOutcome = NULL
 ) {
+
+  if (isNegativeControl & is.null(predictOutcome)) {
+    stop("Needs stratification outcome Id")
+  }
+  psFullLocation <- ifelse(
+    test = isNegativeControl,
+    yes  = "NegativeControls",
+    no   = "Prediction"
+  )
+  psSaveLocation <- ifelse(
+    test = isNegativeControl,
+    yes  = file.path(
+      analysisPath,
+      "Estimation",
+      analysis$label,
+      predictOutcome,
+      outcomeId,
+      paste0(
+        paste(
+          "psFull",
+          analysis$label,
+          sep = "_"
+        ),
+        ".rds"
+      )
+    ),
+    no  = file.path(
+      analysisPath,
+      "Estimation",
+      analysis$label,
+      outcomeId,
+      outcomeId,
+      paste0(
+        paste(
+          "psFull",
+          analysis$label,
+          sep = "_"
+        ),
+        ".rds"
+      )
+    )
+  )
   ps <- readRDS(
     file = file.path(
       analysisPath,
-      "Prediction",
+      psFullLocation,
       outcomeId,
       "psFull.rds"
     )
@@ -422,21 +473,7 @@ generateSingleAnalysis <- function(
   }
   saveRDS(
     ps,
-    file = file.path(
-      analysisPath,
-      "Estimation",
-      analysis$label,
-      outcomeId,
-      outcomeId,
-      paste0(
-        paste(
-          "psFull",
-          analysis$label,
-          sep = "_"
-        ),
-        ".rds"
-      )
-    )
+    file = psSaveLocation
   )
   return(
     data.frame(
