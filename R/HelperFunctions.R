@@ -279,27 +279,19 @@ createOverallResults <- function(analysisSettings) {
       typeOfResult == "relative" ~ "relativeRiskReduction.rds",
       typeOfResult == "cases"    ~ "cases.rds"
     )
-    tmp <- tryCatch(
-      {
-        readRDS(
-          file.path(
-            path,
-            fileName
-          )
-        ) %>%
-          dplyr::mutate(
-            estOutcome = as.numeric(basename(path))
-          )
-      },
-      warning = function(w)
-      {
-        w$message
-      }
-    )
-    if (is.character(tmp)) {
+    if (!file.exists(file.path(path, fileName))) {
       return(NULL)
     } else {
-      return(tmp)
+      readRDS(
+        file.path(
+          path,
+          fileName
+        )
+      ) %>%
+        dplyr::mutate(
+          estOutcome = as.numeric(basename(path))
+        ) %>%
+        return()
     }
   }
 
@@ -331,7 +323,15 @@ createOverallResults <- function(analysisSettings) {
       compareOutcomes <- negativeControls
     }
     pathList <- file.path(tmpPath, compareOutcomes)
-    tmpAbsolute <- lapply(pathList, mergeAbsolute, typeOfResult = typeOfResult) %>%
+    tmpAbsolute <- list()
+    for (i in seq_along(pathList)) {
+      tmpAbsolute[[i]] <- mergeAbsolute(
+        path = pathList[i],
+        typeOfResult = typeOfResult
+      )
+    }
+
+    res <- tmpAbsolute %>%
       dplyr::bind_rows() %>%
       dplyr::mutate(
         stratOutcome = predictOutcome,
@@ -339,56 +339,63 @@ createOverallResults <- function(analysisSettings) {
         treatment    = analysisSettings$treatmentCohortId,
         comparator   = analysisSettings$comparatorCohortId
       )
-    return(tmpAbsolute)
+    return(res)
   }
 
   relativeTmp <- absoluteTmp <- casesTmp <- list()
   relativeNcTmp <- absoluteNcTmp <- casesNcTmp <- list()
   for (i in seq_along(analysisLabels)) {
-    relativeTmp[[i]] <- lapply(
-      predictOutcomes,
-      mergePredictOutcomes,
+    relativeTmp[[i]] <- purrr::map_dfr(
+      .x = predictOutcomes,
+      .f = mergePredictOutcomes,
       pathToResults = pathToResults,
       label = analysisLabels[i],
       analysisSettings = analysisSettings,
       typeOfResult = "relative"
-    ) %>%
-      dplyr::bind_rows()
+    )
 
     closeAllConnections()
-    absoluteTmp[[i]] <- lapply(
-      predictOutcomes,
-      mergePredictOutcomes,
+    absoluteTmp[[i]] <- purrr::map_dfr(
+      .x = predictOutcomes,
+      .f = mergePredictOutcomes,
       pathToResults = pathToResults,
       label = analysisLabels[i],
       analysisSettings = analysisSettings,
       typeOfResult = "absolute"
-    ) %>%
-      dplyr::bind_rows()
+    )
 
     closeAllConnections()
-    casesTmp[[i]] <- lapply(
-      predictOutcomes,
-      mergePredictOutcomes,
+    casesTmp[[i]] <- purrr::map_dfr(
+      .x = predictOutcomes,
+      .f = mergePredictOutcomes,
       pathToResults = pathToResults,
       label = analysisLabels[i],
       analysisSettings = analysisSettings,
       typeOfResult = "cases"
-    ) %>%
-      dplyr::bind_rows()
+    )
     closeAllConnections()
 
     if (!is.null(negativeControls)) {
-      relativeNcTmp[[i]] <- lapply(
-        predictOutcomes,
-        mergePredictOutcomes,
+      relativeNcTmp[[i]] <- purrr::map_dfr(
+        .x = predictOutcomes,
+        .f = mergePredictOutcomes,
         pathToResults = pathToResults,
         label = analysisLabels[i],
         analysisSettings = analysisSettings,
         typeOfResult = "relative",
         isNegativeControl = TRUE
-      ) %>%
-        dplyr::bind_rows()
+      )
+
+      # relativeNcTmp[[i]] <- lapply(
+      #   predictOutcomes,
+      #   mergePredictOutcomes,
+      #   pathToResults = pathToResults,
+      #   label = analysisLabels[i],
+      #   analysisSettings = analysisSettings,
+      #   typeOfResult = "relative",
+      #   isNegativeControl = TRUE
+      # ) %>%
+      #   dplyr::bind_rows()
 
       closeAllConnections()
     }

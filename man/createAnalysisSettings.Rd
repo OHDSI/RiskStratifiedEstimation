@@ -13,6 +13,9 @@ createAnalysisSettings(
   analysisMatrix = diag(length(outcomeIds)),
   mapTreatments,
   mapOutcomes,
+  negativeControlOutcomes = c(),
+  balanceThreads = 1,
+  negativeControlThreads = 1,
   verbosity = NULL,
   saveDirectory = NULL
 )
@@ -22,27 +25,43 @@ createAnalysisSettings(
 
 \item{databaseName}{The name of the database.}
 
-\item{treatmentCohortId}{The cohort definition id of the treatment cohort in the cohortTable.}
+\item{treatmentCohortId}{The cohort definition id of the treatment cohort
+in the cohortTable.}
 
-\item{comparatorCohortId}{The cohort definition id of the comparator cohort in the cohortTable.}
+\item{comparatorCohortId}{The cohort definition id of the comparator cohort
+in the cohortTable.}
 
-\item{outcomeIds}{The cohort definition ids of the outcome cohorts in the outcomeTable.}
+\item{outcomeIds}{The cohort definition ids of the outcome cohorts
+in the outcomeTable.}
 
-\item{analysisMatrix}{Boolean matrix defining the outcomes to be assessed (rows) within risk
-strata (columns). The order in columns should match the the order of
-\code{outcomeIds}. Default is the diagonal matrix, which leads to the
-risk stratified assessment of only the outcome for which the risk strata
+\item{analysisMatrix}{Boolean matrix defining the outcomes to be assessed
+(rows) within risk strata (columns). The order
+in columns should match the the order of
+\code{outcomeIds}. Default is the diagonal matrix,
+which leads to the risk stratified assessment
+of only the outcome for which the risk strata
 were defined.}
 
-\item{mapTreatments}{Dataframe containing 2 columns: "exposure_id" with the id numbers of the
-treatment and comparator cohorts and "exposure_name" the cohort names.}
+\item{mapTreatments}{Dataframe containing 2 columns: "exposure_id"
+with the id numbers of the
+treatment and comparator cohorts and "exposure_name"
+the cohort names.}
 
-\item{mapOutcomes}{Dataframe containing 2 columns: "outcome_id" with the cohort names of the
-outcomes of interest and "outcome_name" with their names.}
+\item{mapOutcomes}{Dataframe containing 2 columns: "outcome_id" with
+the cohort names of the outcomes of interest and
+"outcome_name" with their names.}
 
-\item{verbosity}{Sets the level of the verbosity. If the log level is at or higher in
-priority than the logger threshold, a message will print. The levels
-are:
+\item{negativeControlOutcomes}{The outcome Ids to be used as negative controls}
+
+\item{balanceThreads}{The number of threads to be used for the estimation
+of covariate balance}
+
+\item{negativeControlThreads}{The number of threads to be used for running
+the negative control analyses}
+
+\item{verbosity}{Sets the level of the verbosity. If the log level
+is at or higher in priority than the logger threshold,
+a message will print. The levels are:
 \itemize{
   \item {DEBUG}{Highest verbosity showing all debug statements}
   \item {TRACE}{Showing information about start and end of steps}
@@ -52,7 +71,8 @@ are:
   \item {FATAL}{Be silent except for fatal errors}
 }}
 
-\item{saveDirectory}{The directory name where the results of the analyses will be stored.}
+\item{saveDirectory}{The directory name where the results of the analyses will
+be stored.}
 }
 \value{
 An analysisSettings object providing the identification information of the analysis.
