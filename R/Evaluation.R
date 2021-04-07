@@ -154,14 +154,7 @@ evaluatePrediction <- function(
     "Matched"
   )
 
-  if (!dir.exists(analysisPath)) {
-
-    dir.create(
-      analysisPath,
-      recursive = TRUE
-    )
-
-  }
+  directoryCheck(analysisPath)
 
   saveRDS(
     calibrationData,
@@ -244,14 +237,7 @@ evaluatePrediction <- function(
     "EntirePopulation"
   )
 
-  if (!dir.exists(analysisPath)) {
-
-    dir.create(
-      analysisPath,
-      recursive = TRUE
-    )
-
-  }
+  directoryCheck(analysisPath)
 
   saveRDS(
     calibrationData,
@@ -329,14 +315,7 @@ evaluatePrediction <- function(
     "Treatment"
   )
 
-  if (!dir.exists(analysisPath)) {
-
-    dir.create(
-      analysisPath,
-      recursive = TRUE
-    )
-
-  }
+  directoryCheck(analysisPath)
 
   saveRDS(
     calibrationData,
@@ -414,14 +393,7 @@ evaluatePrediction <- function(
     "Comparator"
   )
 
-  if (!dir.exists(analysisPath)) {
-
-    dir.create(
-      analysisPath,
-      recursive = TRUE
-    )
-
-  }
+  directoryCheck(analysisPath)
 
   saveRDS(
     calibrationData,
@@ -955,8 +927,10 @@ predictionPerformance <- function(outcomeId,
 #' @importFrom dplyr %>%
 #' @export
 
-predictionPerformanceAnalysis <- function(analysisSettings,
-                                          save = TRUE) {
+predictionPerformanceAnalysis <- function(
+  analysisSettings,
+  save = TRUE
+) {
 
   predictOutcomes <-
     analysisSettings$outcomeIds[which(colSums(analysisSettings$analysisMatrix) != 0)]
@@ -976,18 +950,14 @@ predictionPerformanceAnalysis <- function(analysisSettings,
       "shiny"
     )
 
-    if (!dir.exists(saveDir)) {
-      dir.create(
-        saveDir,
-        recursive = TRUE
-      )
-    }
+    directoryCheck(saveDir)
 
-    saveRDS(performance,
-            file.path(
-              saveDir,
-              "predictionPerformance.rds"
-            )
+    saveRDS(
+      performance,
+      file.path(
+        saveDir,
+        "predictionPerformance.rds"
+      )
     )
   }
 

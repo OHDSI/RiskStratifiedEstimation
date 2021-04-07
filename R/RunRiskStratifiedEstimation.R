@@ -753,9 +753,14 @@ runRiskStratifiedEstimation <- function(
       runCmSettings      = runSettings$runCmSettings,
       isNegativeControl  = TRUE
     )
-    ParallelLogger::logInfo("Fitting overall negative control outcome models")
 
     for (i in seq_along(runSettings$runCmSettings$analyses)) {
+      ParallelLogger::logInfo(
+        paste(
+          "Fitting overall negative control outcome models for analysis:",
+          analysisLabels[i]
+        )
+      )
       includeOverallResults(
         analysisSettings  = analysisSettings,
         getDataSettings   = getDataSettings,
@@ -768,6 +773,12 @@ runRiskStratifiedEstimation <- function(
     mergeTempFiles(shinyDir, "mappedOverallResultsNegativeControls")
 
     for (predictOutcome in predictOutcomes) {
+      ParallelLogger::logInfo(
+        paste(
+          "Fitting propensity score models for negative controls within risk strata of:",
+          predictOutcome
+        )
+      )
       dummy <- ParallelLogger::clusterApply(
         cluster = cluster,
         x                  = negativeControlIds,
@@ -778,9 +789,14 @@ runRiskStratifiedEstimation <- function(
         populationSettings = populationSettings,
         runSettings        = runSettings
       )
-      ParallelLogger::logInfo("Fitting negative control outcome models")
 
       for (i in seq_along(analysisLabels)) {
+      ParallelLogger::logInfo(
+        paste(
+          "Fitting outcome models for negative controls for analysis: ",
+          analysisLabels[i]
+        )
+      )
         analysis <- runSettings$runCmSettings$analyses[[i]]
         pathToPs <- file.path(
           analysisSettings$saveDirectory,

@@ -1004,3 +1004,13 @@ getAbsoluteDifference <- function(summaryKMList)
 {
   diff(summaryKMList$surv)
 }
+
+
+directoryCheck <- function(path) {
+  if (!dir.exists(path)) {
+    dir.create(
+      path      = path,
+      recursive = TRUE
+    )
+  }
+}

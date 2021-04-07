@@ -430,6 +430,9 @@ generateSingleAnalysis <- function(
       )
     )
   )
+
+  directoryCheck(dirname(psSaveLocation))
+
   ps <- readRDS(
     file = file.path(
       analysisPath,
