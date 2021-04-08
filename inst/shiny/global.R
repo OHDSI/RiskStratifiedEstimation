@@ -38,8 +38,7 @@ overallAnalysisFiles <- list.files(
   pattern = "^overall"
 )
 
-if (!is.null(overallAnalysisFiles))
-{
+if (!is.null(overallAnalysisFiles)) {
   overallAnalysis <- TRUE
 
   overallMappedOverallRelativeResults <- readRDS(

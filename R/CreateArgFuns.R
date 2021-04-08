@@ -705,6 +705,7 @@ createCreateIPWArgs <- function(weightsType = "ATE",
 #'
 #'
 #' @param analysisId                The analysis ID.
+#' @param description               Text describing the analysis.
 #' @param databaseName              The name of the database.
 #' @param treatmentCohortId         The cohort definition id of the treatment cohort
 #'                                  in the cohortTable.
@@ -751,6 +752,7 @@ createCreateIPWArgs <- function(weightsType = "ATE",
 
 createAnalysisSettings <- function(
   analysisId = NULL,
+  description = "",
   databaseName,
   treatmentCohortId,
   comparatorCohortId,
@@ -766,6 +768,7 @@ createAnalysisSettings <- function(
 ) {
   res <- list(
     analysisId              = analysisId,
+    description             = description,
     databaseName            = databaseName,
     treatmentCohortId       = treatmentCohortId,
     comparatorCohortId      = comparatorCohortId,

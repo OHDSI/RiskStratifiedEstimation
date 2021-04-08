@@ -6,6 +6,7 @@
 \usage{
 createAnalysisSettings(
   analysisId = NULL,
+  description = "",
   databaseName,
   treatmentCohortId,
   comparatorCohortId,
@@ -22,6 +23,8 @@ createAnalysisSettings(
 }
 \arguments{
 \item{analysisId}{The analysis ID.}
+
+\item{description}{Text describing the analysis.}
 
 \item{databaseName}{The name of the database.}
 
