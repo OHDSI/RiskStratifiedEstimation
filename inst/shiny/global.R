@@ -17,15 +17,6 @@ mapOutcomes <- readRDS(
 	)
 )
 
-
-
-mapOutcomes <- readRDS(
-	file.path(
-		analysisPath,
-		"map_outcomes.rds"
-	)
-)
-
 mapExposures <- readRDS(
 	file.path(
 		analysisPath,
@@ -113,7 +104,9 @@ if (!is.null(overallAnalysisFiles)) {
     dplyr::rename("comparator" = "exposure_name")
 }
 
+hasOverallNegativeControls <- FALSE
 if (file.exists(file.path(analysisPath, "mappedOverallResultsNegativeControls.rds"))) {
+  hasOverallNegativeControls <- TRUE
   overallNegativeControls <- readRDS(
     file.path(
       analysisPath,
@@ -140,6 +133,47 @@ if (file.exists(file.path(analysisPath, "mappedOverallResultsNegativeControls.rd
     dplyr::rename("comparator" = "exposure_name") %>%
     dplyr::mutate(
       logRr = log(estimate)
+    )
+}
+
+hasNegativeControls <- FALSE
+if (file.exists(file.path(analysisPath, "negativeControls.rds"))) {
+  hasNegativeControls <- TRUE
+  negativeControls <- readRDS(
+    file.path(
+      analysisPath,
+      "negativeControls.rds"
+    )
+  ) %>%
+    dplyr::left_join(
+      mapOutcomes,
+      by = c(
+        "stratOutcome" = "outcome_id"
+      )
+    ) %>%
+    dplyr::select(-"stratOutcome") %>%
+    dplyr::rename(
+      "stratOutcome" = "outcome_name"
+    ) %>%
+    dplyr::left_join(
+      mapExposures,
+      by = c(
+        "treatment" = "exposure_id"
+      )
+    ) %>%
+    dplyr::select(-"treatment") %>%
+    dplyr::rename(
+      "treatment" = "exposure_name"
+    ) %>%
+    dplyr::left_join(
+      mapExposures,
+      by = c(
+        "comparator" = "exposure_id"
+      )
+    ) %>%
+    dplyr::select(-"comparator") %>%
+    dplyr::rename(
+      "comparator" = "exposure_name"
     )
 }
 
@@ -403,44 +437,6 @@ mappedOverallCasesResults <-
 		"comparator" = "exposure_name"
 	)
 
-if (file.exists(file.path(analysisPath, "negativeControls.rds"))) {
-  negativeControls <- readRDS(
-    file.path(
-      analysisPath,
-      "negativeControls.rds"
-    )
-  ) %>%
-    dplyr::left_join(
-      mapOutcomes,
-      by = c(
-        "stratOutcome" = "outcome_id"
-      )
-    ) %>%
-    dplyr::select(-"stratOutcome") %>%
-    dplyr::rename(
-      "stratOutcome" = "outcome_name"
-    ) %>%
-    dplyr::left_join(
-      mapExposures,
-      by = c(
-        "treatment" = "exposure_id"
-      )
-    ) %>%
-    dplyr::select(-"treatment") %>%
-    dplyr::rename(
-      "treatment" = "exposure_name"
-    ) %>%
-    dplyr::left_join(
-      mapExposures,
-      by = c(
-        "comparator" = "exposure_id"
-      )
-    ) %>%
-    dplyr::select(-"comparator") %>%
-    dplyr::rename(
-      "comparator" = "exposure_name"
-    )
-}
 
 databaseOptions <- unique(
   analyses$database
@@ -606,8 +602,8 @@ getBalance <- function(
 	          "overall",
 	          "balance",
 	          res$analysis_id,
-	          res$analysis_label,
 	          res$database,
+	          res$analysis_label,
 	          treatmentId,
 	          comparatorId,
 	          stratOutcomeId,
@@ -627,8 +623,8 @@ getBalance <- function(
 	        paste(
 	          "balance",
 	          res$analysis_id,
-	          res$analysis_label,
 	          res$database,
+	          res$analysis_label,
 	          treatmentId,
 	          comparatorId,
 	          stratOutcomeId,
@@ -689,8 +685,8 @@ getPsDensity <- function(treat,
 				paste(
 					"psDensity",
 					res$analysis_id,
-					anal,
 					db,
+					anal,
 					treatmentId,
 					comparatorId,
 					stratOutcomeId,
@@ -748,8 +744,8 @@ getPsDensityOverall <- function(
 				  "overall",
 					"psDensity",
 					res$analysis_id,
-					res$analysis_label,
 					res$database,
+					res$analysis_label,
 					treatmentId,
 					comparatorId,
 					stratOutcomeId,
@@ -1004,14 +1000,10 @@ combinedPlot <- function(
 	)
 
 	cases <-
-		reshape::melt(
+		reshape2::melt(
 			cases,
 			id.vars = c(
-				"riskStratum",
-				"database",
-				"analysisType_estOutcome",
-				"estOutcome",
-				"analysisType"
+				"riskStratum"
 			),
 			measure.vars = c(
 				"casesComparator",
@@ -1343,7 +1335,7 @@ combinedPlot <- function(
   )
 
   cases <-
-    reshape::melt(
+    reshape2::melt(
       cases,
       id.vars = c(
         "riskStratum",
@@ -1539,10 +1531,11 @@ getNegativeControls <- function(
 ) {
   res <- negativeControls %>%
     dplyr::filter(
-      .$stratOutcome %in% strat & .$treatment %in% treat & .$comparator %in% comp & .$database %in% db & .$analysisType %in% anal
-    ) %>%
-    dplyr::mutate(
-      logRr = log(HR)
+      stratOutcome %in% strat &
+        treatment %in% treat &
+        comparator %in% comp &
+        database %in% db &
+        analysisType %in% anal
     )
   return(res)
 }
@@ -1555,24 +1548,80 @@ plotRiskStratifiedNegativeControls <- function(
   riskStrata <- unique(negativeControls$riskStratum)
   plots <- list()
   for (i in seq_along(riskStrata)) {
+    negativeControlsSubset <- negativeControls %>%
+      filter(riskStratum == riskStrata[i])
+
     null <- EmpiricalCalibration::fitNull(
-      logRr = negativeControls$logRr,
-      seLogRr = negativeControls$seLogRr
+      logRr   = log(negativeControlsSubset$estimate),
+      seLogRr = negativeControlsSubset$seLogRr
     )
+
     positiveControlsSubset <- positiveControls %>%
       dplyr::filter(
         riskStratum == paste0("Q", i)
       )
+
     plots[[i]] <- EmpiricalCalibration::plotCalibrationEffect(
-      logRrNegatives = negativeControls$logRr,
-      seLogRrNegatives = negativeControls$seLogRr,
-      logRrPositives = positiveControlsSubset$logRr,
+      logRrNegatives   = log(negativeControlsSubset$estimate),
+      seLogRrNegatives = negativeControlsSubset$seLogRr,
+      logRrPositives   = log(positiveControlsSubset$estimate),
       seLogRrPositives = positiveControlsSubset$seLogRr,
-      null = null
+      null             = null
     )
   }
   gridExtra::grid.arrange(
-    plots[[1]], plots[[2]], plots[[3]], plots[[4]],
-    nrow = 1
+    grobs = plots,
+    nrow  = 1
   )
+}
+
+
+calibrateRiskStrataCis <- function(
+  negativeControls,
+  positiveControls
+) {
+  riskStrata <- unique(negativeControls$riskStratum)
+  outcomes <- unique(positiveControls$estOutcome)
+  ret <- NULL
+  for (j in seq_along(outcomes)) {
+    for (i in seq_along(riskStrata)) {
+      negativeControlsSubset <- negativeControls %>%
+        dplyr::filter(
+          riskStratum == paste0("Q", i)
+        )
+      positiveControlsSubset <- positiveControls %>%
+        dplyr::filter(
+          riskStratum == paste0("Q", i),
+          estOutcome == outcomes[j]
+        )
+      mod <- EmpiricalCalibration::fitSystematicErrorModel(
+        logRr =  log(negativeControlsSubset$estimate),
+        seLogRr = negativeControlsSubset$seLogRr,
+        trueLogRr = rep(0, nrow(negativeControlsSubset))
+      )
+
+      ret <- ret %>%
+        dplyr::bind_rows(EmpiricalCalibration::calibrateConfidenceInterval(
+          logRr = log(positiveControlsSubset$estimate),
+          seLogRr = positiveControlsSubset$seLogRr,
+          model = mod
+        ) %>%
+          dplyr::mutate(
+            estimate = round(exp(logRr), digits = 2),
+            lower = round(exp(logLb95Rr), digits = 2),
+            upper = round(exp(logUb95Rr), digits = 2)
+          ) %>%
+          dplyr::select(
+            estimate,
+            lower,
+            upper
+          ) %>%
+          dplyr::mutate(
+            riskStratum = paste0("Q", i),
+            Outcome = outcomes[j]
+          )
+        )
+    }
+  }
+  return(ret)
 }

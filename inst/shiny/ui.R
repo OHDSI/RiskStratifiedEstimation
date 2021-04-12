@@ -87,7 +87,7 @@ shiny::shinyUI(
             "estOutcomeEstimation",
             "Evaluate outcome",
             choices = unique(mapOutcomes$outcome_name),
-            selected = ""
+            selected = unique(mapOutcomes$outcome_name)[1]
           )
         ),
         shiny::conditionalPanel(

@@ -267,8 +267,8 @@ estimateTreatmentEffect <- function(
     )
 
     colnames(cases) <- c(
-      "comparator",
-      "treatment"
+      "casesComparator",
+      "casesTreatment"
     )
 
     cases <- as.data.frame(
@@ -355,8 +355,8 @@ estimateTreatmentEffect <- function(
     )
 
     colnames(cases) <- c(
-      "comparator",
-      "treatment"
+      "casesComparator",
+      "casesTreatment"
     )
 
     cases <- as.data.frame(cases)
