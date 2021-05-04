@@ -161,12 +161,23 @@ includeOverallResults <- function(
   )
 
   if (isNegativeControl) {
-    outcomeIds <- analysisSettings$negativeControlOutcomes
     nThreads <- runSettings$runCmSettings$negativeControlThreads
+    outcomeIds <- analysisSettings$negativeControlOutcomes
   } else {
-    outcomeIds <- analysisSettings$outcomeIds[which(colSums(analysisSettings$analysisMatrix) != 0)]
     nThreads <- runSettings$runCmSettings$fitOutcomeModelsThreads
+    outcomeIds <- analysisSettings$outcomeIds[which(colSums(analysisSettings$analysisMatrix) != 0)]
   }
+
+  # if (analysis$stratificationOutcomes != "all") {
+  #   outcomeIds <- analysis$stratificationOutcomes
+  # } else {
+  #   outcomeIds <- analysisSettings$outcomeIds[which(colSums(analysisSettings$analysisMatrix) != 0)]
+  # }
+  # if (isNegativeControl) {
+  #   nThreads <- runSettings$runCmSettings$negativeControlThreads
+  # } else {
+  #   nThreads <- runSettings$runCmSettings$fitOutcomeModelsThreads
+  # }
 
   cohortMethodData <- CohortMethod::loadCohortMethodData(
     file = file.path(
@@ -187,7 +198,11 @@ includeOverallResults <- function(
     "CohortMethod"
   )
 
-  predictOutcomes <- analysisSettings$outcomeIds[which(colSums(analysisSettings$analysisMatrix) != 0)]
+  if (analysis$stratificationOutcomes != "all") {
+    predictOutcomes <- analysis$stratificationOutcomes
+  } else {
+    predictOutcomes <- analysisSettings$outcomeIds[which(colSums(analysisSettings$analysisMatrix) != 0)]
+  }
 
   for (predictOutcome in predictOutcomes) {
     ret <- ParallelLogger::clusterApply(

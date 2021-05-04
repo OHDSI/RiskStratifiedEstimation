@@ -7,6 +7,7 @@
 createRunCmAnalysesArgs(
   label = NULL,
   riskStratificationMethod = "equal",
+  stratificationOutcomes = "all",
   riskStratificationThresholds = 4,
   psMethod = "stratifyByPs",
   effectEstimationSettings = createStratifyByPsArgs(),
@@ -20,6 +21,11 @@ createRunCmAnalysesArgs(
 "quantile" for user-specified risk quantiles
 as thresholds; "custom" for user-specified risk
 thresholds}
+
+\item{stratificationOutcomes}{The outcome IDs on which risk stratification
+will be carried out. Should be a subset
+of the stratification outcomes defined
+in the `analysisSettings`. Default is "all".}
 
 \item{riskStratificationThresholds}{The thresholds to be used for risk stratification.
 If `riskStratificationMethod` is "equal" then

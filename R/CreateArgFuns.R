@@ -473,6 +473,10 @@ createCreatePsArgs <- function(
 #'                                      "quantile" for user-specified risk quantiles
 #'                                      as thresholds; "custom" for user-specified risk
 #'                                      thresholds
+#' @param stratificationOutcomes        The outcome IDs on which risk stratification
+#'                                      will be carried out. Should be a subset
+#'                                      of the stratification outcomes defined
+#'                                      in the `analysisSettings`. Default is "all".
 #' @param riskStratificationThresholds  The thresholds to be used for risk stratification.
 #'                                      If `riskStratificationMethod` is "equal" then
 #'                                      it should be a single number denoting the number
@@ -501,6 +505,7 @@ createCreatePsArgs <- function(
 createRunCmAnalysesArgs <- function(
   label                        = NULL,
   riskStratificationMethod     = "equal",
+  stratificationOutcomes       = "all",
   riskStratificationThresholds = 4,
   psMethod                     = "stratifyByPs",
   effectEstimationSettings     = createStratifyByPsArgs(),
@@ -515,6 +520,7 @@ createRunCmAnalysesArgs <- function(
     label                        = label,
     riskStratificationMethod     = riskStratificationMethod,
     riskStratificationThresholds = riskStratificationThresholds,
+    stratificationOutcomes       = stratificationOutcomes,
     psMethod                     = psMethod,
     effectEstimationSettings     = effectEstimationSettings,
     timePoint                    = timePoint

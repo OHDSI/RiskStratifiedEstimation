@@ -7,6 +7,7 @@
 fitPsModelSwitch(
   predictOutcome,
   compareOutcome,
+  initialPopulation,
   analysisSettings,
   getDataSettings,
   populationSettings,
@@ -17,6 +18,10 @@ fitPsModelSwitch(
 \item{predictOutcome}{The outcome of the prediction step}
 
 \item{compareOutcome}{The outcome of interest for the estimation step}
+
+\item{initialPopulation}{The initial population to be used for the
+estimation of the switched-outcome propensity
+scores.}
 
 \item{analysisSettings}{An R object of type \code{analysisSettings} created using the function
 \code{\link[RiskStratifiedEstimation]{createAnalysisSettings}}.}

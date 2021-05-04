@@ -287,6 +287,30 @@ runRiskStratifiedEstimation <- function(
     "Done loading data"
   )
 
+  ParallelLogger::logInfo(
+    "Creating initial population"
+  )
+
+  cohortsCm <- cohortMethodData$cohorts %>%
+    dplyr::collect() %>%
+    dplyr::mutate(
+      cohortStartDate = lubridate::as_date(cohortStartDate)
+    )
+
+  cohortsPlp <- plpData$cohorts %>% dplyr::tibble()
+
+  initialPopulation <- cohortsCm %>%
+    dplyr::left_join(
+      cohortsPlp,
+      by = c(
+        "rowId",
+        "cohortStartDate",
+        "daysFromObsStart",
+        "daysToCohortEnd",
+        "daysToObsEnd"
+      )
+    )
+
 
   cluster <- ParallelLogger::makeCluster(
     runSettings$runCmSettings$createPsThreads
@@ -305,6 +329,7 @@ runRiskStratifiedEstimation <- function(
     cluster            = cluster,
     x                  = predictOutcomes,
     fun                = fitPsModelOverall,
+    initialPopulation  = initialPopulation,
     getDataSettings    = getDataSettings,
     populationSettings = populationSettings,
     analysisSettings   = analysisSettings,
@@ -503,16 +528,22 @@ runRiskStratifiedEstimation <- function(
 
   ParallelLogger::clusterRequire(
     cluster,
-    c(
-      "RiskStratifiedEstimation",
-      "CohortMethod"
-    )
+    "RiskStratifiedEstimation"
+  )
+  ParallelLogger::clusterRequire(
+    cluster,
+    "CohortMethod"
+  )
+  ParallelLogger::clusterRequire(
+    cluster,
+    "dplyr"
   )
 
   dummy <- ParallelLogger::clusterApply(
     cluster            = cluster,
     x                  = predictOutcomes,
     fun                = fitPsModel,
+    initialPopulation  = initialPopulation,
     analysisSettings   = analysisSettings,
     getDataSettings    = getDataSettings,
     populationSettings = populationSettings,
@@ -527,7 +558,7 @@ runRiskStratifiedEstimation <- function(
   # Propensity score estimation secondary outcomes
   #-----------------------------------------------------------------------------
   ParallelLogger::logInfo(
-    "Starting propensity score estimation for secondary outcomegimopes"
+    "Starting propensity score estimation for secondary outcomes"
   )
 
   for (predictOutcome in predictOutcomes) {
@@ -549,10 +580,15 @@ runRiskStratifiedEstimation <- function(
 
       ParallelLogger::clusterRequire(
         cluster,
-        c(
-          "RiskStratifiedEstimation",
-          "CohortMethod"
-        )
+        "RiskStratifiedEstimation"
+      )
+      ParallelLogger::clusterRequire(
+        cluster,
+        "CohortMethod"
+      )
+      ParallelLogger::clusterRequire(
+        cluster,
+        "dplyr"
       )
 
       dummy <- tryCatch(
@@ -562,6 +598,7 @@ runRiskStratifiedEstimation <- function(
             x                  = compareOutcomes,
             fun                = fitPsModelSwitch,
             predictOutcome     = predictOutcome,
+            initialPopulation  = initialPopulation,
             analysisSettings   = analysisSettings,
             getDataSettings    = getDataSettings,
             populationSettings = populationSettings,

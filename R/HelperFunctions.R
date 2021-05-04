@@ -107,12 +107,13 @@ switchOutcome <- function(
 
   result <- ps %>%
     dplyr::select(
-      subjectId,
+      # subjectId,
+      rowId,
       propensityScore
     ) %>%
     dplyr::left_join(
       populationCm,
-      by = "subjectId"
+      by = "rowId"
     ) %>%
     dplyr::filter(
       !is.na(
@@ -877,15 +878,7 @@ createMapMatrix <- function(
         riskStratum = as.numeric(labels)
       )
   } else if (analysis$riskStratificationMethod == "custom") {
-    mapMatrix <- riskPredictions %>%
-      dplyr::mutate(
-        labels = cut(
-          value,
-          breaks = analysis$riskStratificationThresholds,
-          include.lowest = TRUE
-        ),
-        riskStratum = as.numeric(labels)
-      )
+    mapMatrix <- analysis$riskStratificationThresholds(riskPredictions)
   }
 
   return(mapMatrix)
@@ -895,9 +888,11 @@ createMapMatrix <- function(
 
 ## Non-exports ##
 
-getCounts <- function(population,
-                      timePoint,
-                      psMethod){
+getCounts <- function(
+  population,
+  timePoint,
+  psMethod
+) {
 
   population <- as.data.frame(
     population

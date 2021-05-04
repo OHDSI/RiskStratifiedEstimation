@@ -6,6 +6,7 @@
 \usage{
 fitPsModelOverall(
   outcomeId,
+  initialPopulation,
   getDataSettings,
   populationSettings,
   analysisSettings,
@@ -15,6 +16,10 @@ fitPsModelOverall(
 }
 \arguments{
 \item{outcomeId}{The outcome of interest for which the risk stratification is performed.}
+
+\item{initialPopulation}{The reference population object, usually
+defined by joining the cohorts fo the plpData
+and cohortMethodData objects.}
 
 \item{getDataSettings}{An R object of type \code{getDataSettings} created using the function
 \code{\link[RiskStratifiedEstimation]{createGetDataSettings}}.}

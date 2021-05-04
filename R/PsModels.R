@@ -26,6 +26,9 @@
 #'
 #' @param predictOutcome             The outcome of the prediction step
 #' @param compareOutcome             The outcome of interest for the estimation step
+#' @param initialPopulation          The initial population to be used for the
+#'                                   estimation of the switched-outcome propensity
+#'                                   scores.
 #' @param analysisSettings           An R object of type \code{analysisSettings} created using the function
 #'                                   \code{\link[RiskStratifiedEstimation]{createAnalysisSettings}}.
 #' @param getDataSettings            An R object of type \code{getDataSettings} created using the function
@@ -40,6 +43,7 @@
 fitPsModelSwitch <- function(
   predictOutcome,
   compareOutcome,
+  initialPopulation,
   analysisSettings,
   getDataSettings,
   populationSettings,
@@ -79,7 +83,7 @@ fitPsModelSwitch <- function(
     )
   }
 
-  cohorts <- plpData$cohorts
+  # cohorts <- plpData$cohorts
 
   ParallelLogger::logInfo(
     "Creating combined population settings"
@@ -87,6 +91,7 @@ fitPsModelSwitch <- function(
   populationPlpCm <-
     CohortMethod::createStudyPopulation(
       cohortMethodData = cohortMethodData,
+      population = initialPopulation,
       outcomeId = predictOutcome,
       firstExposureOnly = populationSettings$populationCmSettings$firstExposureOnly,
       restrictToCommonPeriod = populationSettings$populationCmSettings$restrictToCommonPeriod,
@@ -100,23 +105,23 @@ fitPsModelSwitch <- function(
       riskWindowEnd = populationSettings$populationCmSettings$riskWindowEnd,
       endAnchor = populationSettings$populationCmSettings$endAnchor,
       censorAtNewRiskWindow = populationSettings$populationCmSettings$censorAtNewRiskWindow
-    ) %>%
-    dplyr::mutate(
-      cohortStartDate = lubridate::as_date(
-        cohortStartDate
-      )
-    ) %>%
-    dplyr::left_join(
-      cohorts,
-      by = c(
-        "rowId",
-        "subjectId",
-        "cohortStartDate",
-        "daysFromObsStart",
-        "daysToCohortEnd",
-        "daysToObsEnd"
-      )
-    )
+    ) # %>%
+    # dplyr::mutate(
+    #   cohortStartDate = lubridate::as_date(
+    #     cohortStartDate
+    #   )
+    # ) %>%
+    # dplyr::left_join(
+    #   cohorts,
+    #   by = c(
+    #     "rowId",
+    #     # "subjectId",
+    #     "cohortStartDate",
+    #     "daysFromObsStart",
+    #     "daysToCohortEnd",
+    #     "daysToObsEnd"
+    #   )
+    # )
 
   ParallelLogger::logInfo(
     paste(
@@ -324,6 +329,9 @@ createIPW <- function(
 #' to be applied in a parallelized analysis.
 #'
 #' @param outcomeId                  The outcome of interest for which the risk stratification is performed.
+#' @param initialPopulation          The reference population object, usually
+#'                                   defined by joining the cohorts fo the plpData
+#'                                   and cohortMethodData objects.
 #' @param getDataSettings            An R object of type \code{getDataSettings} created using the function
 #'                                   \code{\link[RiskStratifiedEstimation]{createGetDataSettings}}.
 #' @param populationSettings         An R object of type \code{covariateSettings} created using the function
@@ -340,6 +348,7 @@ createIPW <- function(
 
 fitPsModelOverall <- function(
   outcomeId,
+  initialPopulation,
   getDataSettings,
   populationSettings,
   analysisSettings,
@@ -354,6 +363,7 @@ fitPsModelOverall <- function(
   populationCmSettings <- populationSettings$populationCmSettings
   populationCm <- CohortMethod::createStudyPopulation(
     cohortMethodData               = cohortMethodData,
+    population                     = initialPopulation,
     outcomeId                      = outcomeId,
     firstExposureOnly              = populationCmSettings$firstExposureOnly,
     restrictToCommonPeriod         = populationCmSettings$restrictToCommonPeriod,
@@ -383,6 +393,7 @@ fitPsModelOverall <- function(
     populationPlpSettings <- populationSettings$populationPlpSettings
     populationPlp <- PatientLevelPrediction::createStudyPopulation(
       plpData                        = plpData,
+      population                     = initialPopulation,
       outcomeId                      = outcomeId,
       binary                         = populationPlpSettings$binary,
       includeAllOutcomes             = populationPlpSettings$includeAllOutcomes,
@@ -397,16 +408,44 @@ fitPsModelOverall <- function(
       riskWindowEnd                  = populationPlpSettings$riskWindowEnd,
       endAnchor                      = populationPlpSettings$endAnchor,
       verbosity                      = populationPlpSettings$verbosity
-    )
+    ) %>%
+      dplyr::tibble() %>%
+      dplyr::inner_join(
+        initialPopulation,
+        by = c(
+          "rowId",
+          "subjectId",
+          "cohortId",
+          "cohortStartDate",
+          "daysFromObsStart",
+          "daysToCohortEnd",
+          "daysToObsEnd",
+          "ageYear",
+          "gender"
+        )
+      )
 
     pop <- pop %>%
-      dplyr::select(
-        "rowId",
-        "subjectId",
-        "treatment"
-      ) %>%
       dplyr::left_join(
-        populationPlp
+        populationPlp,
+        by = c(
+          "rowId",
+          "personSeqId",
+          "personId",
+          "treatment",
+          "cohortStartDate",
+          "daysFromObsStart",
+          "daysToCohortEnd",
+          "daysToObsEnd",
+          "subjectId",
+          "cohortId",
+          "ageYear",
+          "gender",
+          "outcomeCount",
+          "timeAtRisk",
+          "daysToEvent",
+          "survivalTime"
+        )
       )
 
     saveDir <- file.path(
@@ -477,6 +516,8 @@ fitPsModelOverall <- function(
 #'
 #' @param outcomeId                  The outcome of interest for which the esitmation is performed. That is the outcome for
 #'                                   which risk stratification is performed.
+#' @param initialPopulation          The initial population on the subset of which
+#'                                   the propensity scores will be estimated.
 #' @param analysisSettings           An R object of type \code{analysisSettings} created using the function
 #'                                   \code{\link[RiskStratifiedEstimation]{createAnalysisSettings}}.
 #' @param getDataSettings            An R object of type \code{getDataSettings} created using the function
@@ -494,6 +535,7 @@ fitPsModelOverall <- function(
 
 fitPsModel <- function(
   outcomeId,
+  initialPopulation,
   runSettings,
   getDataSettings,
   populationSettings,
@@ -529,6 +571,7 @@ fitPsModel <- function(
 
   populationPlp <- PatientLevelPrediction::createStudyPopulation(
     plpData = plpData,
+    population = initialPopulation,
     outcomeId = outcomeId,
     binary = populationSettings$populationPlpSettings$binary,
     includeAllOutcomes = populationSettings$populationPlpSettings$includeAllOutcomes,
@@ -543,7 +586,9 @@ fitPsModel <- function(
     riskWindowEnd = populationSettings$populationPlpSettings$riskWindowEnd,
     endAnchor = populationSettings$populationPlpSettings$endAnchor,
     verbosity = populationSettings$populationPlpSettings$verbosity
-  )
+  ) %>%
+    dplyr::tibble() %>%
+    dplyr::inner_join(initialPopulation)
 
   ParallelLogger::logInfo(
     "Generating the estimation poppulation"
@@ -551,6 +596,7 @@ fitPsModel <- function(
 
   populationCm <- CohortMethod::createStudyPopulation(
     cohortMethodData = cohortMethodData,
+    population = initialPopulation,
     outcomeId = outcomeId,
     firstExposureOnly = populationSettings$populationCmSettings$firstExposureOnly,
     restrictToCommonPeriod = populationSettings$populationCmSettings$restrictToCommonPeriod,
@@ -601,19 +647,14 @@ fitPsModel <- function(
     "Predicting on the estimation population"
   )
 
+  populationPlp <- populationPlp %>%
+    dplyr::select("rowId", "ageYear", "gender")
+
   riskPredictions <- predictionResult$model$predict(
     plpData = plpData,
     population = populationCm
   ) %>%
-    dplyr::tibble() %>%
-    dplyr::select(
-      -c(
-        "cohortStartDate",
-        "daysFromObsStart",
-        "daysToCohortEnd",
-        "daysToObsEnd"
-      )
-    )
+    dplyr::tibble()
 
   attr(populationCm, "metaData") <- populationCmMetaData  # Delete that?
 
@@ -661,6 +702,12 @@ psAnalysis <- function(
   runSettings
 ) {
   analysis <- runSettings$runCmSettings$analyses[[label]]
+  stratOutcomes <- analysis$stratificationOutcomes
+  if (stratOutcomes != "all") {
+    if (!predictOutcome %in% stratOutcomes) {
+      return(NULL)
+    }
+  }
 
   if (predictOutcome == compareOutcome) {
     mapMatrix <- createMapMatrix(
@@ -686,7 +733,7 @@ psAnalysis <- function(
       dplyr::select(
         c(
           "rowId",
-          "subjectId",
+          # "subjectId",
           "treatment",
           "value",
           "labels",
@@ -694,14 +741,28 @@ psAnalysis <- function(
         )
       ) %>%
       dplyr::inner_join(riskPredictions)
-
   }
 
-  nRiskStrata <- ifelse(
-    analysis$riskStratificationMethod == "equal",
-    yes = analysis$riskStratificationThresholds,
-    no  = length(analysis$riskStratificationThresholds) - 1
-  )
+  # nRiskStrata <- ifelse(
+  #   analysis$riskStratificationMethod == "equal",
+  #   yes = analysis$riskStratificationThresholds,
+  #   no  = length(analysis$riskStratificationThresholds) - 1
+  # )
+
+  riskStratificationMethod <- analysis$riskStratificationMethod
+  if (riskStratificationMethod == "equal") {
+    nRiskStrata <- analysis$riskStratificationThresholds
+  } else if (riskStratificationMethod == "quantile") {
+    nRiskStrata <- length(analysis$riskStratificationThresholds) - 1
+  } else if (riskStratificationMethod == "custom") {
+    nRiskStrata <- length(unique(mapMatrix$riskStratum))
+  }
+
+  # nRiskStrata <- dplyr::case_when(
+  #   riskStratificationMethod == "equal"    ~ analysis$riskStratificationThresholds,
+  #   riskStratificationMethod == "quantile" ~ length(analysis$riskStratificationThresholds) - 1,
+  #   riskStratificationMethod == "custom"   ~ length(unique(mapMatrix$riskStratum))
+  # )
 
   saveDir <- file.path(
     analysisSettings$saveDirectory,
@@ -744,13 +805,8 @@ runPsAnalysis <- function(
   failed <- FALSE
   for (i in 1:nRiskStrata) {
     population <- mapMatrix %>%
-      # dplyr::select(rowId, subjectId, riskStratum, outcomeCount) %>%
-      dplyr::filter(riskStratum == i)
-      # dplyr::inner_join(
-      #   y    = cohortMethodData$cohorts,
-      #   by   = c("rowId", "subjectId"),
-      #   copy = TRUE
-      # )
+      dplyr::filter(riskStratum == i) %>%
+      dplyr::select(-value)
     ps[[i]] <- tryCatch(
       {
         CohortMethod::createPs(
