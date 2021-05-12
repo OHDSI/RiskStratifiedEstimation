@@ -65,26 +65,6 @@ evaluatePrediction <- function(
 
   psFull <-
     psFull %>%
-    dplyr::right_join(
-      PatientLevelPrediction::createStudyPopulation(
-        plpData = plpData,
-        population = startingPopulation,
-        outcomeId = predictionId,
-        binary = populationSettings$populationPlpSettings$binary,
-        includeAllOutcomes = populationSettings$populationPlpSettings$includeAllOutcomes,
-        firstExposureOnly = populationSettings$populationPlpSettings$firstExposureOnly,
-        washoutPeriod = populationSettings$populationPlpSettings$washoutPeriod,
-        removeSubjectsWithPriorOutcome = populationSettings$populationPlpSettings$removeSubjectsWithPriorOutcome,
-        priorOutcomeLookback = populationSettings$populationPlpSettings$priorOutcomeLookback,
-        requireTimeAtRisk = populationSettings$populationPlpSettings$requireTimeAtRisk,
-        minTimeAtRisk = populationSettings$populationPlpSettings$minTimeAtRisk,
-        riskWindowStart = populationSettings$populationPlpSettings$riskWindowStart,
-        startAnchor = populationSettings$populationPlpSettings$startAnchor,
-        riskWindowEnd = populationSettings$populationPlpSettings$riskWindowEnd,
-        endAnchor = populationSettings$populationPlpSettings$endAnchor,
-        verbosity = populationSettings$populationPlpSettings$verbosity
-      )
-    ) %>%
     dplyr::mutate(
       outcomeCount = ifelse(
         outcomeCount > 0,
@@ -92,8 +72,6 @@ evaluatePrediction <- function(
         no = 0
       )
     )
-
-  # attr(psFull, "metaData") <- attr(psFull, "metaData")
 
   # Evaluate on matched set
   populationSubset <- CohortMethod::matchOnPs(
