@@ -844,18 +844,26 @@ createGetDataSettings <- function(getPlpDataSettings = createGetPlpDataArgs(),
 #' @param populationCmSettings    Parameter object for the definition of the \code{populationCm} object
 #'                                created from
 #'                                \code{\link[RiskStratifiedEstimation]{createPopulationCmSettingsArgs}}.
+#' @param postProcessing          A function to run on the initial population after
+#'                                creating the prediction and estimation populations
 #'
 #' @export
 
-createPopulationSettings <- function(populationPlpSettings = createPopulationPlpSettingsArgs(),
-                                     populationCmSettings = createPopulationCmSettingsArgs()) {
+createPopulationSettings <- function(
+  populationPlpSettings = createPopulationPlpSettingsArgs(),
+  populationCmSettings  = createPopulationCmSettingsArgs(),
+  postProcessing        = "none"
+) {
 
-  res <- list(populationPlpSettings = populationPlpSettings,
-              populationCmSettings = populationCmSettings)
+  res <- list(
+    populationPlpSettings = populationPlpSettings,
+    populationCmSettings  = populationCmSettings,
+    postProcessing        = postProcessing
+  )
 
 
   attr(res, "fun") <- "createPopulationSettings"
-  class(res) <- "populationSettings"
+  class(res)       <- "populationSettings"
 
   return(res)
 

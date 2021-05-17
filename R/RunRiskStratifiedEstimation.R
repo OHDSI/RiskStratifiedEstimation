@@ -311,6 +311,17 @@ runRiskStratifiedEstimation <- function(
       )
     )
 
+  if (!is.function(populationSettings$postProcessing)) {
+    if (populationSettings$postProcessing != "none") {
+      ParallelLogger::logWarn("Post processing is not a function!")
+      ParallelLogger::logWarn("Skipping post processing")
+    }
+  } else {
+    ParallelLogger::logInfo("Post processing initial population")
+    initialPopulation <- populationSettings$postProcessing(initialPopulation)
+  }
+
+  ParallelLogger::logInfo("Fitting overall propensity score models")
 
   cluster <- ParallelLogger::makeCluster(
     runSettings$runCmSettings$createPsThreads
