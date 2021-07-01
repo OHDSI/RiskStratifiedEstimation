@@ -8,8 +8,6 @@ if (is.null(.GlobalEnv$shinySettings)) {
   analysisPath <- .GlobalEnv$shinySettings
 }
 
-
-
 mapOutcomes <- readRDS(
 	file.path(
 		analysisPath,
@@ -261,6 +259,7 @@ predictionPerformance <-
 			"predictionPerformance.rds"
 		)
 	) %>%
+  tibble() %>%
 	dplyr::left_join(
 		mapOutcomes,
 		by = c(
@@ -534,16 +533,19 @@ getIncidenceOverall <- function(
 		return()
 }
 
-getPredictionPerformance <- function(treat,
-									 comp,
-									 strat,
-									 coh,
-									 db,
-									 predictionPerformance) {
+getPredictionPerformance <- function(
+  treat,
+  comp,
+  strat,
+  coh,
+  db,
+  predictionPerformance
+) {
 
 	predictionPerformance %>%
 		dplyr::filter(
-			.$stratOutcome %in% strat & .$cohort %in% coh & .$treatment %in% treat & .$comparator %in% comp & .$database %in% db
+			.$stratOutcome %in% strat & .$cohort %in% coh & .$treatment %in% treat &
+			  .$comparator %in% comp & .$database %in% db
 		) %>%
 		return()
 
@@ -769,69 +771,68 @@ getAuc <- function(
   mapOutcomes,
   analysisPath
 ) {
-
   res <- analyses %>%
-		dplyr::filter(
-			.$treatment == treat,
-			.$comparator == comp,
-			.$database == db,
-			.$analysis_label == anal
-		)
+    dplyr::filter(
+      .$treatment == treat,
+      .$comparator == comp,
+      .$database == db,
+      .$analysis_label == anal
+    )
 
-	stratOutcomeId <- mapOutcomes %>%
-		dplyr::filter(.$outcome_name == strat) %>%
-		dplyr::select("outcome_id") %>%
-		unlist()
+  stratOutcomeId <- mapOutcomes %>%
+    dplyr::filter(.$outcome_name == strat) %>%
+    dplyr::select("outcome_id") %>%
+    unlist()
 
-	treatmentId <- mapExposures %>%
-		dplyr::filter(.$exposure_name == treat) %>%
-		dplyr::select("exposure_id") %>%
-		unlist()
+  treatmentId <- mapExposures %>%
+    dplyr::filter(.$exposure_name == treat) %>%
+    dplyr::select("exposure_id") %>%
+    unlist()
 
-	comparatorId <- mapExposures %>%
-		dplyr::filter(.$exposure_name == comp) %>%
-		dplyr::select("exposure_id") %>%
-		unlist()
+  comparatorId <- mapExposures %>%
+    dplyr::filter(.$exposure_name == comp) %>%
+    dplyr::select("exposure_id") %>%
+    unlist()
 
-	pathList <- file.path(
-		analysisPath,
-		paste(
-			paste(
-				"auc",
-				predictionPopulation,
-				res$analysis_id,
-				res$database,
-				treatmentId,
-				comparatorId,
-				stratOutcomeId,
-				sep = "_"
-			),
-			"rds",
-			sep = "."
-		)
-	)
+  pathList <- file.path(
+    analysisPath,
+    paste(
+      paste(
+        "auc",
+        predictionPopulation,
+        res$analysis_id,
+        res$database,
+        treatmentId,
+        comparatorId,
+        stratOutcomeId,
+        sep = "_"
+      ),
+      "rds",
+      sep = "."
+    )
+  )
 
 
-	aucResultList <- lapply(
-		pathList,
-		readRDS
-	)
+  aucResultList <- lapply(
+    pathList,
+    readRDS
+  )
 
-	names(aucResultList) <- predictionPopulation
+  names(aucResultList) <- predictionPopulation
 
-	aucResultList %>%
-		dplyr::bind_rows(
-			.id = "cohort"
-		) %>%
-		return()
+  aucResultList %>%
+    dplyr::bind_rows(
+      .id = "cohort"
+    ) %>%
+    return()
 }
 
 
 getCalibration <- function(
-	treat,
-	comp,
-	strat,
-	db,
+  treat,
+  comp,
+  strat,
+  db,
 	anal,
 	predictionPopulation,
 	analyses,
@@ -1625,3 +1626,4 @@ calibrateRiskStrataCis <- function(
   }
   return(ret)
 }
+
