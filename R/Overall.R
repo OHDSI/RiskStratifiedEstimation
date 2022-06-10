@@ -41,8 +41,7 @@ fitOutcomeModelsOverall <- function(
   analysisSettings,
   getDataSettings,
   runCmSettings
-)
-{
+) {
   ParallelLogger::logInfo(
     paste(
       "Calculating main results for outcome:",

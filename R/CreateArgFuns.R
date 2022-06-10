@@ -19,152 +19,6 @@
 # @author Peter Rijnbeek
 
 
-#' Create a parameter object for the function createStudyPopulation
-#'
-#' @details
-#' Create an object defining the parameter values.
-#'
-#' @param firstExposureOnly                Should only the first exposure per subject be included?
-#'                                         Notethat this is typically done in thecreateStudyPopulation
-#'                                         function,
-#' @param restrictToCommonPeriod           Restrict the analysis to the period when both exposures are
-#'                                         observed?
-#' @param washoutPeriod                    The mininum required continuous observation time prior
-#'                                         toindex date for a person to be included in the cohort.
-#' @param removeDuplicateSubjects          Remove subjects that are in both the target and
-#'                                         comparatorcohort? See details for allowed values.
-#' @param removeSubjectsWithPriorOutcome   Remove subjects that have the outcome prior to the
-#'                                         riskwindow start?
-#' @param priorOutcomeLookback             How many days should we look back when identifying
-#'                                         prioroutcomes?
-#' @param minDaysAtRisk                    The minimum required number of days at risk.
-#' @param riskWindowStart                  The start of the risk window (in days) relative to the
-#'                                         startAnchor.
-#' @param addExposureDaysToStart           DEPRECATED: Add the length of exposure the start of the risk
-#'                                         window?Use startAnchor instead.
-#' @param startAnchor                      The anchor point for the start of the risk window. Can be
-#'                                         "cohort start"or "cohort end".
-#' @param riskWindowEnd                    The end of the risk window (in days) relative to the
-#'                                         endAnchor.
-#' @param addExposureDaysToEnd             DEPRECATED: Add the length of exposure the risk window?Use
-#'                                         endAnchor instead.
-#' @param endAnchor                        The anchor point for the end of the risk window. Can be
-#'                                         "cohort start"or "cohort end".
-#' @param censorAtNewRiskWindow            If a subject is in multiple cohorts, should time-at-risk be
-#'                                         censoredwhen the new time-at-risk starts to prevent overlap?
-#'
-#' @export
-
-createPopulationCmSettingsArgs <- function(
-  firstExposureOnly = FALSE,
-  restrictToCommonPeriod = FALSE,
-  washoutPeriod = 0,
-  removeDuplicateSubjects = FALSE,
-  removeSubjectsWithPriorOutcome = TRUE,
-  priorOutcomeLookback = 99999,
-  minDaysAtRisk = 1,
-  riskWindowStart = 0,
-  addExposureDaysToStart = NULL,
-  startAnchor = "cohort start",
-  riskWindowEnd = 0,
-  addExposureDaysToEnd = NULL,
-  endAnchor = "cohort end",
-  censorAtNewRiskWindow = FALSE
-) {
-
-  # First: get default values:
-  analysis <- list()
-  for (name in names(formals(createPopulationCmSettingsArgs))) {
-    analysis[[name]] <- get(name)
-  }
-  # Second: overwrite defaults with actual values:
-  values <- lapply(as.list(match.call())[-1], function(x) eval(x, envir = sys.frame(-3)))
-  for (name in names(values)) {
-    if (name %in% names(analysis))
-      analysis[[name]] <- values[[name]]
-  }
-  class(analysis) <- "args"
-  return(analysis)
-}
-
-
-#' Create a parameter object for the function createStudyPopulation
-#'
-#' @details
-#' Create an object defining the parameter values.
-#'
-#' @param binary                           Forces the outcomeCount to be 0 or 1 (use for binary
-#'                                         prediction problems)
-#' @param includeAllOutcomes               (binary) indicating whether to include people with outcomes
-#'                                         who are not observed for the whole at risk period
-#' @param firstExposureOnly                Should only the first exposure per subject be included? Note
-#'                                         thatthis is typically done in the createStudyPopulation
-#'                                         function,
-#' @param washoutPeriod                    The mininum required continuous observation time prior to
-#'                                         indexdate for a person to be included in the cohort.
-#' @param removeSubjectsWithPriorOutcome   Remove subjects that have the outcome prior to the risk
-#'                                         window start?
-#' @param priorOutcomeLookback             How many days should we look back when identifying prior
-#'                                         outcomes?
-#' @param requireTimeAtRisk                Should subject without time at risk be removed?
-#' @param minTimeAtRisk                    The minimum number of days at risk required to be included
-#' @param riskWindowStart                  The start of the risk window (in days) relative to the
-#'                                         startAnchor.
-#' @param startAnchor                      The anchor point for the start of the risk window. Can be
-#'                                         "cohort start" or "cohort end".
-#' @param addExposureDaysToStart           DEPRECATED: Add the length of exposure the start of the risk
-#'                                         window? Use startAnchor instead.
-#' @param riskWindowEnd                    The end of the risk window (in days) relative to the
-#'                                         endAnchor parameter
-#' @param endAnchor                        The anchor point for the end of the risk window. Can be
-#'                                         "cohort start" or "cohort end".
-#' @param addExposureDaysToEnd             DEPRECATED: Add the length of exposure the risk window? Use
-#'                                         endAnchor instead.
-#' @param verbosity                        Sets the level of the verbosity. If the log level is at or
-#'                                         higher in priority than the logger threshold, a message will
-#'                                         print. The levels are:DEBUGHighest verbosity showing all
-#'                                         debug statementsTRACEShowing information about start and end
-#'                                         of stepsINFOShow informative information (Default)WARNShow
-#'                                         warning messagesERRORShow error messagesFATALBe silent
-#'                                         except for fatal errors
-#'
-#' @export
-createPopulationPlpSettingsArgs <- function(
-  binary = T,
-  includeAllOutcomes = T,
-  firstExposureOnly = FALSE,
-  washoutPeriod = 0,
-  removeSubjectsWithPriorOutcome = TRUE,
-  priorOutcomeLookback = 99999,
-  requireTimeAtRisk = F,
-  minTimeAtRisk = 365,
-  riskWindowStart = 0,
-  startAnchor = "cohort start",
-  addExposureDaysToStart = NULL,
-  riskWindowEnd = 365,
-  endAnchor = "cohort start",
-  addExposureDaysToEnd = NULL,
-  verbosity = "INFO"
-) {
-  # First: get default values:
-  analysis <- list()
-  for (name in names(formals(createPopulationPlpSettingsArgs))) {
-    analysis[[name]] <- get(name)
-  }
-  # Second: overwrite defaults with actual values:
-  values <- lapply(as.list(match.call())[-1], function(x) eval(x, envir = sys.frame(-3)))
-  for (name in names(values)) {
-    if (name %in% names(analysis))
-      analysis[[name]] <- values[[name]]
-  }
-  class(analysis) <- "args"
-  return(analysis)
-}
-
-
-
-
-
 #' Create a parameter object for the function runPlp
 #'
 #' @details
@@ -226,28 +80,22 @@ createPopulationPlpSettingsArgs <- function(
 #'                               folder. Default is a timestamp.
 #' @param matchingSettings       The settings for the construction of the population on which the
 #'                               prediction model will be developed.
+#' @param timepoint              The timepoint to predict risk (survival models only)
 #'
 #' @export
-
+#'
 createRunPlpSettingsArgs <- function(
-  plpResults = NULL,
-  minCovariateFraction = 0.001,
-  normalizeData = TRUE,
-  modelSettings = PatientLevelPrediction::setLassoLogisticRegression(),
-  testSplit = "person",
-  testFraction = 0.25,
-  trainFraction = NULL,
-  splitSeed = NULL,
-  nfold = 3,
-  indexes = NULL,
-  savePlpData = FALSE,
-  savePlpPlots = TRUE,
-  saveEvaluation = TRUE,
-  verbosity = "INFO",
-  timeStamp = FALSE,
-  analysisId = NULL,
-  matchingSettings = createMatchOnPsArgs()
+  splitSettings              = PatientLevelPrediction::createDefaultSplitSetting(),
+  sampleSettings             = PatientLevelPrediction::createSampleSettings(),
+  featureEngineeringSettings = PatientLevelPrediction::createFeatureEngineeringSettings(),
+  preprocessSettings         = PatientLevelPrediction::createPreprocessSettings(),
+  modelSettings              = PatientLevelPrediction::setLassoLogisticRegression(),
+  logSettings                = PatientLevelPrediction::createLogSettings(),
+  executeSettings            = PatientLevelPrediction::createExecuteSettings(),
+  matchingSettings           = CohortMethod::createMatchOnPsArgs(),
+  timepoint                  = NULL
 ) {
+
   # First: get default values:
   analysis <- list()
   for (name in names(formals(createRunPlpSettingsArgs))) {
@@ -280,8 +128,10 @@ createRunPlpSettingsArgs <- function(
 #' An R object of type \code{runSettings}
 #' @export
 
-createRunSettings <- function(runPlpSettings = createRunPlpSettingsArgs(modelSettings = PatientLevelPrediction::setLassoLogisticRegression()),
-                              runCmSettings = createRunCmSettingsArgs()) {
+createRunSettings <- function(
+  runPlpSettings = createRunPlpSettingsArgs(modelSettings = PatientLevelPrediction::setLassoLogisticRegression()),
+  runCmSettings = createRunCmSettingsArgs()
+) {
 
   res <- list(runPlpSettings = runPlpSettings, runCmSettings = runCmSettings)
   attr(res, "fun") <- "createRunSettings"
@@ -840,18 +690,18 @@ createGetDataSettings <- function(getPlpDataSettings = createGetPlpDataArgs(),
 #
 #' @param populationPlpSettings   Parameter object for the definition of the \code{populationPlp}
 #'                                object created from
-#'                                \code{\link[RiskStratifiedEstimation]{createPopulationPlpSettingsArgs}}.
+#'                                \code{\link[PatientLevelPrediction]{createStudyPopulationSettings}}.
 #' @param populationCmSettings    Parameter object for the definition of the \code{populationCm} object
 #'                                created from
-#'                                \code{\link[RiskStratifiedEstimation]{createPopulationCmSettingsArgs}}.
+#'                                \code{\link[CohortMethod]{createCreateStudyPopulationArgs}}.
 #' @param postProcessing          A function to run on the initial population after
 #'                                creating the prediction and estimation populations
 #'
 #' @export
 
 createPopulationSettings <- function(
-  populationPlpSettings = createPopulationPlpSettingsArgs(),
-  populationCmSettings  = createPopulationCmSettingsArgs(),
+  populationPlpSettings = PatientLevelPrediction::createStudyPopulationSettings(),
+  populationCmSettings  = CohortMethod::createCreateStudyPopulationArgs(),
   postProcessing        = "none"
 ) {
 
@@ -912,10 +762,12 @@ createPopulationSettings <- function(
 
 createDatabaseSettings <- function(cdmVersion = "5",
                                    cdmDatabaseSchema,
+                                   databaseName,
                                    cohortDatabaseSchema = cdmDatabaseSchema,
                                    outcomeDatabaseSchema = cdmDatabaseSchema,
                                    resultsDatabaseSchema = cdmDatabaseSchema,
                                    exposureDatabaseSchema = cdmDatabaseSchema,
+                                   tempEmulationSchema = cdmDatabaseSchema,
                                    cohortTable,
                                    outcomeTable,
                                    exposureTable = "drug_era",
@@ -924,6 +776,7 @@ createDatabaseSettings <- function(cdmVersion = "5",
 
   res <- list(cdmVersion = cdmVersion,
               cdmDatabaseSchema = cdmDatabaseSchema,
+              databaseName = databaseName,
               cohortDatabaseSchema = cohortDatabaseSchema,
               outcomeDatabaseSchema = outcomeDatabaseSchema,
               resultsDatabaseSchema = resultsDatabaseSchema,
@@ -931,6 +784,7 @@ createDatabaseSettings <- function(cdmVersion = "5",
               cohortTable = cohortTable,
               outcomeTable = outcomeTable,
               exposureTable = exposureTable,
+              tempEmulationSchema = tempEmulationSchema,
               mergedCohortTable = mergedCohortTable,
               targetCohortId = targetCohortId)
 

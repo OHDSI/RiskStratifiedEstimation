@@ -6,19 +6,19 @@
 both the \code{populationPlp} and the \code{populationCm} objects.}
 \usage{
 createPopulationSettings(
-  populationPlpSettings = createPopulationPlpSettingsArgs(),
-  populationCmSettings = createPopulationCmSettingsArgs(),
+  populationPlpSettings = PatientLevelPrediction::createStudyPopulationSettings(),
+  populationCmSettings = CohortMethod::createCreateStudyPopulationArgs(),
   postProcessing = "none"
 )
 }
 \arguments{
 \item{populationPlpSettings}{Parameter object for the definition of the \code{populationPlp}
 object created from
-\code{\link[RiskStratifiedEstimation]{createPopulationPlpSettingsArgs}}.}
+\code{\link[PatientLevelPrediction]{createStudyPopulationSettings}}.}
 
 \item{populationCmSettings}{Parameter object for the definition of the \code{populationCm} object
 created from
-\code{\link[RiskStratifiedEstimation]{createPopulationCmSettingsArgs}}.}
+\code{\link[CohortMethod]{createCreateStudyPopulationArgs}}.}
 
 \item{postProcessing}{A function to run on the initial population after
 creating the prediction and estimation populations}

@@ -5,34 +5,19 @@
 \title{Create a parameter object for the function runPlp}
 \usage{
 createRunPlpSettingsArgs(
-  plpResults = NULL,
-  minCovariateFraction = 0.001,
-  normalizeData = TRUE,
+  splitSettings = PatientLevelPrediction::createDefaultSplitSetting(),
+  sampleSettings = PatientLevelPrediction::createSampleSettings(),
+ 
+    featureEngineeringSettings = PatientLevelPrediction::createFeatureEngineeringSettings(),
+  preprocessSettings = PatientLevelPrediction::createPreprocessSettings(),
   modelSettings = PatientLevelPrediction::setLassoLogisticRegression(),
-  testSplit = "person",
-  testFraction = 0.25,
-  trainFraction = NULL,
-  splitSeed = NULL,
-  nfold = 3,
-  indexes = NULL,
-  savePlpData = FALSE,
-  savePlpPlots = TRUE,
-  saveEvaluation = TRUE,
-  verbosity = "INFO",
-  timeStamp = FALSE,
-  analysisId = NULL,
-  matchingSettings = createMatchOnPsArgs()
+  logSettings = PatientLevelPrediction::createLogSettings(),
+  executeSettings = PatientLevelPrediction::createExecuteSettings(),
+  matchingSettings = CohortMethod::createMatchOnPsArgs(),
+  timepoint = NULL
 )
 }
 \arguments{
-\item{plpResults}{A data frame containig the path to an existing plpResult. The column
-names should be "outcomeId" and "directory".}
-
-\item{minCovariateFraction}{The minimum fraction of target population who must have a covariate
-for it to be included in the model training}
-
-\item{normalizeData}{Whether to normalise the covariates before training (Default: TRUE)}
-
 \item{modelSettings}{An object of class modelSettings created using one of the
 function:setLassoLogisticRegression() A lasso logistic regression
 model setGradientBoostingMachine() A gradient boosting machine
@@ -41,6 +26,19 @@ model setDecisionTree() A decision tree model setCovNN()) A
 convolutional neural network model setCIReNN() A recurrent neural
 network model setMLP() A neural network model setDeepNN() A deep
 neural network model setKNN() A KNN model}
+
+\item{matchingSettings}{The settings for the construction of the population on which the
+prediction model will be developed.}
+
+\item{timepoint}{The timepoint to predict risk (survival models only)}
+
+\item{plpResults}{A data frame containig the path to an existing plpResult. The column
+names should be "outcomeId" and "directory".}
+
+\item{minCovariateFraction}{The minimum fraction of target population who must have a covariate
+for it to be included in the model training}
+
+\item{normalizeData}{Whether to normalise the covariates before training (Default: TRUE)}
 
 \item{testSplit}{Either 'person' or 'time' specifying the type of evaluation
 used.'time' find the date where testFraction of patients had an index
@@ -91,9 +89,6 @@ Automatically switched on for TRACE level.}
 
 \item{analysisId}{Identifier for the analysis. It is used to create, e.g., the result
 folder. Default is a timestamp.}
-
-\item{matchingSettings}{The settings for the construction of the population on which the
-prediction model will be developed.}
 }
 \description{
 Create a parameter object for the function runPlp

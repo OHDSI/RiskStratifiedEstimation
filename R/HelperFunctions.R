@@ -236,13 +236,17 @@ createOverallResults <- function(analysisSettings) {
         dplyr::rowwise() %>%
         dplyr::mutate(
           lower = binom.test(
-            x = observedIncidence*PersonCountAtRisk,
-            PersonCountAtRisk
+            x = round(observedIncidence * PersonCountAtRisk),
+            PersonCountAtRisk,
+            alternative = "two.sided",
+            conf.level = .95
           )$conf.int[1],
           upper = binom.test(
-            x = observedIncidence*PersonCountAtRisk,
-            PersonCountAtRisk
-          )$conf.int[2]
+            x = round(observedIncidence * PersonCountAtRisk),
+            PersonCountAtRisk,
+            alternative = "two.sided",
+            conf.level = .95
+          )$conf.int[2],
         ) %>%
         dplyr::mutate(
           database = analysisSettings$databaseName,

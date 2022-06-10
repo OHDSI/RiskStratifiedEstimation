@@ -1032,7 +1032,7 @@ combinedPlot <- function(
 
 
 	p1   <-
-		plot_ly(
+		plotly::plot_ly(
 			data = cases,
 			x = ~riskStratum,
 			y = ~value,
@@ -1122,7 +1122,7 @@ combinedPlot <- function(
 			),
 			xaxis = list(
 				title = "Risk stratum",
-				tickformat = ',d'
+				tickvals = ~risk
 			)
 		) %>%
 		plotly::layout(
@@ -1186,7 +1186,7 @@ combinedPlot <- function(
 			),
 			xaxis = list(
 				title = "Risk stratum",
-				tickformat = ',d'
+				tickvals = ~risk
 			)
 		)
 
@@ -1455,7 +1455,7 @@ combinedPlot <- function(
       ),
       xaxis = list(
         title = "Risk stratum",
-        tickformat = ',d'
+        tickvals = ~risk
       )
     ) %>%
     plotly::layout(
@@ -1517,7 +1517,7 @@ combinedPlot <- function(
       ),
       xaxis = list(
         title = "Risk stratum",
-        tickformat = ',d'
+        tickvals = ~risk
       )
     )
 
