@@ -26,9 +26,48 @@ evaluatePrediction <- function(
   analysisSettings,
   getDataSettings,
   populationSettings,
-  predictionId
-)
-{
+  predictionId,
+  timepoint = NULL
+) {
+  .generateEvaluation <- function(
+    population,
+    plpData,
+    plpModel,
+    timepoint
+  ) {
+    modelEvaluationOnSubset <- PatientLevelPrediction::predictPlp(
+      population = population,
+      plpData = plpData,
+      plpModel = plpModel,
+      timepoint = timepoint
+    ) %>%
+      dplyr::mutate(
+        evaluation = "Test"
+      )
+
+    modelType <- attr(modelEvaluationOnSubset, "metaData")$modelType
+
+    calibrationData <- PatientLevelPrediction:::getCalibrationSummary(
+      prediction = modelEvaluationOnSubset,
+      predictionType = modelType,
+      numberOfStrata = 10,
+      truncateFraction = .01
+    )
+    evaluationStatistics <- PatientLevelPrediction:::getEvaluationStatistics(
+      prediction = modelEvaluationOnSubset,
+      predictionType = modelType,
+      typeColumn = "evaluation"
+    )
+
+    return(
+      list(
+        prediction = modelEvaluationOnSubset,
+        calibrationData = calibrationData,
+        evaluationStatistics = evaluationStatistics
+      )
+    )
+  }
+
   saveDir <- file.path(
     analysisSettings$saveDirectory,
     analysisSettings$analysisId
@@ -82,38 +121,12 @@ evaluatePrediction <- function(
     outcomeId = predictionId
   )
 
-  modelEvaluationOnSubset <- PatientLevelPrediction::applyModel(
+  evaluation <- .generateEvaluation(
     population = populationSubset,
     plpData = plpData,
-    plpModel = plpResult$model
+    plpModel = plpResult$model,
+    timepoint = timepoint
   )
-
-  # calibrationData <- PatientLevelPrediction::calibrationLine(
-  #   prediction = modelEvaluationOnSubset$prediction
-  # )
-
-  calibrationData <- modelEvaluationOnSubset$prediction %>%
-    dplyr::mutate(
-      group = dplyr::ntile(
-        value,
-        10
-      )
-    ) %>%
-    dplyr::group_by(
-      group
-    ) %>%
-    dplyr::summarise(
-      personsWithOutcome = sum(
-        outcomeCount
-      ),
-      PersonCountAtRisk = dplyr::n(),
-      observedIncidence = mean(
-        outcomeCount
-      ),
-     averagePredictedProbability = mean(
-       value
-     )
-    )
 
   # Save evaluation on matched set
   analysisPath <- file.path(
@@ -135,7 +148,7 @@ evaluatePrediction <- function(
   directoryCheck(analysisPath)
 
   saveRDS(
-    calibrationData,
+    evaluation$calibrationData,
     file = file.path(
       analysisPath,
       "calibrationData.rds"
@@ -143,7 +156,7 @@ evaluatePrediction <- function(
   )
 
   saveRDS(
-    modelEvaluationOnSubset$performanceEvaluation,
+    evaluation$evaluationStatistics,
     file = file.path(
       analysisPath,
       "performanceEvaluation.rds"
@@ -151,18 +164,10 @@ evaluatePrediction <- function(
   )
 
   saveRDS(
-    modelEvaluationOnSubset$prediction,
+    evaluation$prediction,
     file = file.path(
       analysisPath,
       "prediction.rds"
-    )
-  )
-
-  saveRDS(
-    modelEvaluationOnSubset$covariateSummary,
-    file = file.path(
-      analysisPath,
-      "covariateSummary.rds"
     )
   )
 
@@ -172,39 +177,17 @@ evaluatePrediction <- function(
       psFull
     )
 
-  attr(population, "metaData") <- list(
+  attr(populationSubset, "metaData") <- list(
     cohortId = 1,
     outcomeId = predictionId
   )
 
-  modelEvaluationOnPopulation <- PatientLevelPrediction::applyModel(
+  evaluation <- .generateEvaluation(
     population = population,
     plpData = plpData,
-    plpModel = plpResult$model
+    plpModel = plpResult$model,
+    timepoint = timepoint
   )
-
-  calibrationData <- modelEvaluationOnPopulation$prediction %>%
-    dplyr::mutate(
-      group = dplyr::ntile(
-        value,
-        10
-      )
-    ) %>%
-    dplyr::group_by(
-      group
-    ) %>%
-    dplyr::summarise(
-      personsWithOutcome = sum(
-        outcomeCount
-      ),
-      PersonCountAtRisk = dplyr::n(),
-      observedIncidence = mean(
-        outcomeCount
-      ),
-     averagePredictedProbability = mean(
-       value
-     )
-    )
 
   # Save evaluation on the entire target population
   analysisPath <- file.path(
@@ -218,14 +201,14 @@ evaluatePrediction <- function(
   directoryCheck(analysisPath)
 
   saveRDS(
-    calibrationData,
+    evaluation$calibrationData,
     file = file.path(
       analysisPath,
       "calibrationData.rds"
     )
   )
   saveRDS(
-    modelEvaluationOnPopulation$performanceEvaluation,
+    evaluation$evaluationStatistics,
     file = file.path(
       analysisPath,
       "performanceEvaluation.rds"
@@ -233,21 +216,12 @@ evaluatePrediction <- function(
   )
 
   saveRDS(
-    modelEvaluationOnPopulation$prediction,
+    evaluation$prediction,
     file = file.path(
       analysisPath,
       "prediction.rds"
     )
   )
-
-  saveRDS(
-    modelEvaluationOnPopulation$covariateSummary,
-    file = file.path(
-      analysisPath,
-      "covariateSummary.rds"
-    )
-  )
-
 
   # Evaluate on treatment arm
   populationSubset <- population %>%
@@ -255,34 +229,12 @@ evaluatePrediction <- function(
       treatment == 1
     )
 
-  modelEvaluationOnSubset <- PatientLevelPrediction::applyModel(
+  evaluation <- .generateEvaluation(
     population = populationSubset,
     plpData = plpData,
-    plpModel = plpResult$model
+    plpModel = plpResult$model,
+    timepoint = timepoint
   )
-
-  calibrationData <- modelEvaluationOnSubset$prediction %>%
-    dplyr::mutate(
-      group = dplyr::ntile(
-        value,
-        10
-      )
-    ) %>%
-    dplyr::group_by(
-      group
-    ) %>%
-    dplyr::summarise(
-      personsWithOutcome = sum(
-        outcomeCount
-      ),
-      PersonCountAtRisk = dplyr::n(),
-      observedIncidence = mean(
-        outcomeCount
-      ),
-      averagePredictedProbability = mean(
-        value
-      )
-    )
 
   # Save evaluation on treatment arm
   analysisPath <- file.path(
@@ -296,7 +248,7 @@ evaluatePrediction <- function(
   directoryCheck(analysisPath)
 
   saveRDS(
-    calibrationData,
+    evaluation$calibrationData,
     file = file.path(
       analysisPath,
       "calibrationData.rds"
@@ -304,7 +256,7 @@ evaluatePrediction <- function(
   )
 
   saveRDS(
-    modelEvaluationOnSubset$performanceEvaluation,
+    evaluation$evaluationStatistics,
     file = file.path(
       analysisPath,
       "performanceEvaluation.rds"
@@ -312,18 +264,10 @@ evaluatePrediction <- function(
   )
 
   saveRDS(
-    modelEvaluationOnSubset$prediction,
+    evaluation$prediction,
     file = file.path(
       analysisPath,
       "prediction.rds"
-    )
-  )
-
-  saveRDS(
-    modelEvaluationOnSubset$covariateSummary,
-    file = file.path(
-      analysisPath,
-      "covariateSummary.rds"
     )
   )
 
@@ -333,34 +277,12 @@ evaluatePrediction <- function(
       treatment == 0
     )
 
-  modelEvaluationOnSubset <- PatientLevelPrediction::applyModel(
+  evaluation <- .generateEvaluation(
     population = populationSubset,
     plpData = plpData,
-    plpModel = plpResult$model
+    plpModel = plpResult$model,
+    timepoint = timepoint
   )
-
-  calibrationData <- modelEvaluationOnSubset$prediction %>%
-    dplyr::mutate(
-      group = dplyr::ntile(
-        value,
-        10
-      )
-    ) %>%
-    dplyr::group_by(
-      group
-    ) %>%
-    dplyr::summarise(
-      personsWithOutcome = sum(
-        outcomeCount
-      ),
-      PersonCountAtRisk = dplyr::n(),
-      observedIncidence = mean(
-        outcomeCount
-      ),
-      averagePredictedProbability = mean(
-        value
-      )
-    )
 
   # Save evaluation on comparator arm
   analysisPath <- file.path(
@@ -374,7 +296,7 @@ evaluatePrediction <- function(
   directoryCheck(analysisPath)
 
   saveRDS(
-    calibrationData,
+    evaluation$calibrationData,
     file = file.path(
       analysisPath,
       "calibrationData.rds"
@@ -382,7 +304,7 @@ evaluatePrediction <- function(
   )
 
   saveRDS(
-    modelEvaluationOnSubset$performanceEvaluation,
+    evaluation$evaluationStatistics,
     file = file.path(
       analysisPath,
       "performanceEvaluation.rds"
@@ -390,23 +312,14 @@ evaluatePrediction <- function(
   )
 
   saveRDS(
-    modelEvaluationOnSubset$prediction,
+    evaluation$prediction,
     file = file.path(
       analysisPath,
       "prediction.rds"
     )
   )
 
-  saveRDS(
-    modelEvaluationOnSubset$covariateSummary,
-    file = file.path(
-      analysisPath,
-      "covariateSummary.rds"
-    )
-  )
-
   return(NULL)
-
 }
 
 
@@ -799,12 +712,16 @@ computeRseeIncidence <- function(analysisSettings) {
 #' @importFrom dplyr %>%
 #' @export
 
-predictionPerformance <- function(outcomeId,
-                                  analysisSettings) {
+predictionPerformance <- function(
+  outcomeId,
+  analysisSettings
+) {
 
-  recoverEvaluation <- function(cohort,
-                                outcomeId,
-                                analysisSettings) {
+  .recoverEvaluation <- function(
+    cohort,
+    outcomeId,
+    analysisSettings
+  ) {
 
     analysisPath <- file.path(
       analysisSettings$saveDirectory,
@@ -820,54 +737,24 @@ predictionPerformance <- function(outcomeId,
         analysisPath,
         "performanceEvaluation.rds"
       )
-    )$evaluationStatistics
+    )
 
     performance <- as.data.frame(
       performance
     )
     rownames(performance) <- NULL
 
-    performance %>%
+    ret <- performance %>%
       dplyr::mutate(
-        Value = as.numeric(
-          as.character(
-            Value
-          )
-        )
-      ) %>%
-      dplyr::filter(
-        Metric %in% c(
-          "AUC.auc",
-          "AUC.auc_lb95ci",
-          "AUC.auc_ub95ci",
-          "AUPRC",
-          "BrierScore",
-          "BrierScaled",
-          "CalibrationIntercept",
-          "CalibrationSlope",
-          "CalibrationInLarge"
-        )
-      ) %>%
-      dplyr::mutate(
-        metric = c(
-          "auc",
-          "aucLower",
-          "aucUpper",
-          "auprc",
-          "brierScore",
-          "brierScaled",
-          "calibrationIntercept",
-          "calibrationSlope",
-          "calibrationInLarge"
-        )
-      ) %>%
+        value = as.numeric(value)
+      )  %>%
       dplyr::select(
         metric,
-        Value
+        value
       ) %>%
       tidyr::spread(
         metric,
-        Value
+        value
       ) %>%
       dplyr::mutate(
         cohort = cohort,
@@ -876,10 +763,9 @@ predictionPerformance <- function(outcomeId,
         treatmentId = analysisSettings$treatmentCohortId,
         comparatorId = analysisSettings$comparatorCohortId,
         database = analysisSettings$databaseName
-      ) %>%
-      return()
+      )
 
-
+    return(ret)
   }
 
   cohorts <- c(
@@ -889,16 +775,15 @@ predictionPerformance <- function(outcomeId,
     "Treatment"
   )
 
-  lapply(
+  ret <- lapply(
     cohorts,
-    recoverEvaluation,
+    .recoverEvaluation,
     analysisSettings = analysisSettings,
     outcomeId = outcomeId
   ) %>%
-    dplyr::bind_rows() %>%
-    return()
+    dplyr::bind_rows()
 
-
+  return(ret)
 }
 
 

@@ -40,6 +40,7 @@
 #' @importFrom dplyr %>%
 #' @export
 
+
 fitPsModelSwitch <- function(
   predictOutcome,
   compareOutcome,
@@ -88,40 +89,42 @@ fitPsModelSwitch <- function(
   ParallelLogger::logInfo(
     "Creating combined population settings"
   )
+
+  populationCmSettings <- populationSettings$populationCmSettings
   populationPlpCm <-
     CohortMethod::createStudyPopulation(
-      cohortMethodData = cohortMethodData,
-      population = initialPopulation,
-      outcomeId = predictOutcome,
-      firstExposureOnly = populationSettings$populationCmSettings$firstExposureOnly,
-      restrictToCommonPeriod = populationSettings$populationCmSettings$restrictToCommonPeriod,
-      removeDuplicateSubjects = populationSettings$populationCmSettings$removeDuplicateSubjects,
-      washoutPeriod = populationSettings$populationCmSettings$washoutPeriod,
-      removeSubjectsWithPriorOutcome = populationSettings$populationCmSettings$removeSubjectsWithPriorOutcome,
-      priorOutcomeLookback = populationSettings$populationCmSettings$priorOutcomeLookback,
-      minDaysAtRisk = populationSettings$populationCmSettings$minDaysAtRisk,
-      riskWindowStart = populationSettings$populationCmSettings$riskWindowStart,
-      startAnchor = populationSettings$populationCmSettings$startAnchor,
-      riskWindowEnd = populationSettings$populationCmSettings$riskWindowEnd,
-      endAnchor = populationSettings$populationCmSettings$endAnchor,
-      censorAtNewRiskWindow = populationSettings$populationCmSettings$censorAtNewRiskWindow
+      cohortMethodData               = cohortMethodData,
+      population                     = initialPopulation,
+      outcomeId                      = predictOutcome,
+      firstExposureOnly              = populationCmSettings$firstExposureOnly,
+      restrictToCommonPeriod         = populationCmSettings$restrictToCommonPeriod,
+      removeDuplicateSubjects        = populationCmSettings$removeDuplicateSubjects,
+      washoutPeriod                  = populationCmSettings$washoutPeriod,
+      removeSubjectsWithPriorOutcome = populationCmSettings$removeSubjectsWithPriorOutcome,
+      priorOutcomeLookback           = populationCmSettings$priorOutcomeLookback,
+      minDaysAtRisk                  = populationCmSettings$minDaysAtRisk,
+      riskWindowStart                = populationCmSettings$riskWindowStart,
+      startAnchor                    = populationCmSettings$startAnchor,
+      riskWindowEnd                  = populationCmSettings$riskWindowEnd,
+      endAnchor                      = populationCmSettings$endAnchor,
+      censorAtNewRiskWindow          = populationCmSettings$censorAtNewRiskWindow
     ) # %>%
-    # dplyr::mutate(
-    #   cohortStartDate = lubridate::as_date(
-    #     cohortStartDate
-    #   )
-    # ) %>%
-    # dplyr::left_join(
-    #   cohorts,
-    #   by = c(
-    #     "rowId",
-    #     # "subjectId",
-    #     "cohortStartDate",
-    #     "daysFromObsStart",
-    #     "daysToCohortEnd",
-    #     "daysToObsEnd"
-    #   )
-    # )
+  # dplyr::mutate(
+  #   cohortStartDate = lubridate::as_date(
+  #     cohortStartDate
+  #   )
+  # ) %>%
+  # dplyr::left_join(
+  #   cohorts,
+  #   by = c(
+  #     "rowId",
+  #     # "subjectId",
+  #     "cohortStartDate",
+  #     "daysFromObsStart",
+  #     "daysToCohortEnd",
+  #     "daysToObsEnd"
+  #   )
+  # )
 
   ParallelLogger::logInfo(
     paste(
@@ -135,23 +138,25 @@ fitPsModelSwitch <- function(
     "Generating population with switched outcome"
   )
 
+  populationCmSettings <- populationSettings$populationCmSettings
   populationCm <-
     CohortMethod::createStudyPopulation(
-      cohortMethodData = cohortMethodData,
-      population = populationPlpCm,
-      outcomeId = compareOutcome,
-      firstExposureOnly = populationSettings$populationCmSettings$firstExposureOnly,
-      restrictToCommonPeriod = populationSettings$populationCmSettings$restrictToCommonPeriod,
-      washoutPeriod = populationSettings$populationCmSettings$washoutPeriod,
-      removeDuplicateSubjects = TRUE,
-      removeSubjectsWithPriorOutcome = populationSettings$populationCmSettings$removeSubjectsWithPriorOutcome,
-      priorOutcomeLookback = populationSettings$populationCmSettings$priorOutcomeLookback,
-      minDaysAtRisk = populationSettings$populationCmSettings$minDaysAtRisk,
-      riskWindowStart = populationSettings$populationCmSettings$riskWindowStart,
-      startAnchor = populationSettings$populationCmSettings$startAnchor,
-      riskWindowEnd = populationSettings$populationCmSettings$riskWindowEnd,
-      endAnchor = populationSettings$populationCmSettings$endAnchor,
-      censorAtNewRiskWindow = populationSettings$populationCmSettings$censorAtNewRiskWindow)
+      cohortMethodData               = cohortMethodData,
+      population                     = populationPlpCm,
+      outcomeId                      = compareOutcome,
+      firstExposureOnly              = populationCmSettings$firstExposureOnly,
+      restrictToCommonPeriod         = populationCmSettings$restrictToCommonPeriod,
+      washoutPeriod                  = populationCmSettings$washoutPeriod,
+      removeDuplicateSubjects        = TRUE,
+      removeSubjectsWithPriorOutcome = populationCmSettings$removeSubjectsWithPriorOutcome,
+      priorOutcomeLookback           = populationCmSettings$priorOutcomeLookback,
+      minDaysAtRisk                  = populationCmSettings$minDaysAtRisk,
+      riskWindowStart                = populationCmSettings$riskWindowStart,
+      startAnchor                    = populationCmSettings$startAnchor,
+      riskWindowEnd                  = populationCmSettings$riskWindowEnd,
+      endAnchor                      = populationCmSettings$endAnchor,
+      censorAtNewRiskWindow          = populationCmSettings$censorAtNewRiskWindow
+    )
 
   #-----------------------------------------------------------------------------
   # Predictions in the population with switched outcome
@@ -159,7 +164,7 @@ fitPsModelSwitch <- function(
   # definitions, but the thresholds for risk stratification
   # should remain the same
   #-----------------------------------------------------------------------------
-  riskPredictions <- PatientLevelPrediction::applyModel(
+  riskPredictions <- PatientLevelPrediction::predictPlp(
     population = populationCm,
     plpData = plpData,
     plpModel = PatientLevelPrediction::loadPlpModel(
@@ -173,13 +178,10 @@ fitPsModelSwitch <- function(
         "model"
       )
     ),
-    calculatePerformance = FALSE
+    timepoint = runSettings$runPlpSettings$timepoint
   ) %>%
     dplyr::as_tibble()
 
-  # ----------------------------------------------------------------------------
-  # Update HERE!!
-  # ----------------------------------------------------------------------------
   analysisLabels <- names(runSettings$runCmSettings$analyses)
 
   failed <- purrr::map(
@@ -203,7 +205,6 @@ fitPsModelSwitch <- function(
   )
 
 }
-
 
 
 
@@ -392,22 +393,10 @@ fitPsModelOverall <- function(
     )
     populationPlpSettings <- populationSettings$populationPlpSettings
     populationPlp <- PatientLevelPrediction::createStudyPopulation(
-      plpData                        = plpData,
-      population                     = initialPopulation,
-      outcomeId                      = outcomeId,
-      binary                         = populationPlpSettings$binary,
-      includeAllOutcomes             = populationPlpSettings$includeAllOutcomes,
-      firstExposureOnly              = populationPlpSettings$firstExposureOnly,
-      washoutPeriod                  = populationPlpSettings$washoutPeriod,
-      removeSubjectsWithPriorOutcome = populationPlpSettings$removeSubjectsWithPriorOutcome,
-      priorOutcomeLookback           = populationPlpSettings$priorOutcomeLookback,
-      requireTimeAtRisk              = populationPlpSettings$requireTimeAtRisk,
-      minTimeAtRisk                  = populationPlpSettings$minTimeAtRisk,
-      riskWindowStart                = populationPlpSettings$riskWindowStart,
-      startAnchor                    = populationPlpSettings$startAnchor,
-      riskWindowEnd                  = populationPlpSettings$riskWindowEnd,
-      endAnchor                      = populationPlpSettings$endAnchor,
-      verbosity                      = populationPlpSettings$verbosity
+      plpData            = plpData,
+      population         = initialPopulation,
+      outcomeId          = outcomeId,
+      populationSettings = populationPlpSettings
     ) %>%
       dplyr::tibble() %>%
       dplyr::inner_join(
@@ -569,47 +558,38 @@ fitPsModel <- function(
     "Generating the prediction population"
   )
 
+  populationPlpSettings <- populationSettings$populationPlpSettings
+
   populationPlp <- PatientLevelPrediction::createStudyPopulation(
-    plpData = plpData,
-    population = initialPopulation,
-    outcomeId = outcomeId,
-    binary = populationSettings$populationPlpSettings$binary,
-    includeAllOutcomes = populationSettings$populationPlpSettings$includeAllOutcomes,
-    firstExposureOnly = populationSettings$populationPlpSettings$firstExposureOnly,
-    washoutPeriod = populationSettings$populationPlpSettings$washoutPeriod,
-    removeSubjectsWithPriorOutcome = populationSettings$populationPlpSettings$removeSubjectsWithPriorOutcome,
-    priorOutcomeLookback = populationSettings$populationPlpSettings$priorOutcomeLookback,
-    requireTimeAtRisk = populationSettings$populationPlpSettings$requireTimeAtRisk,
-    minTimeAtRisk = populationSettings$populationPlpSettings$minTimeAtRisk,
-    riskWindowStart = populationSettings$populationPlpSettings$riskWindowStart,
-    startAnchor = populationSettings$populationPlpSettings$startAnchor,
-    riskWindowEnd = populationSettings$populationPlpSettings$riskWindowEnd,
-    endAnchor = populationSettings$populationPlpSettings$endAnchor,
-    verbosity = populationSettings$populationPlpSettings$verbosity
+    plpData            = plpData,
+    population         = initialPopulation,
+    outcomeId          = outcomeId,
+    populationSettings = populationPlpSettings
   ) %>%
     dplyr::tibble() %>%
     dplyr::inner_join(initialPopulation)
 
   ParallelLogger::logInfo(
-    "Generating the estimation poppulation"
+    "Generating the estimation population"
   )
 
+  populationCmSettings <- populationSettings$populationCmSettings
   populationCm <- CohortMethod::createStudyPopulation(
-    cohortMethodData = cohortMethodData,
-    population = initialPopulation,
-    outcomeId = outcomeId,
-    firstExposureOnly = populationSettings$populationCmSettings$firstExposureOnly,
-    restrictToCommonPeriod = populationSettings$populationCmSettings$restrictToCommonPeriod,
-    washoutPeriod = populationSettings$populationCmSettings$washoutPeriod,
-    removeDuplicateSubjects = populationSettings$populationCmSettings$removeDuplicateSubjects,
-    removeSubjectsWithPriorOutcome = populationSettings$populationCmSettings$removeSubjectsWithPriorOutcome,
-    priorOutcomeLookback = populationSettings$populationCmSettings$priorOutcomeLookback,
-    minDaysAtRisk = populationSettings$populationCmSettings$minDaysAtRisk,
-    riskWindowStart = populationSettings$populationCmSettings$riskWindowStart,
-    startAnchor = populationSettings$populationCmSettings$startAnchor,
-    riskWindowEnd = populationSettings$populationCmSettings$riskWindowEnd,
-    endAnchor = populationSettings$populationCmSettings$endAnchor,
-    censorAtNewRiskWindow = populationSettings$populationCmSettings$censorAtNewRiskWindow
+    cohortMethodData               = cohortMethodData,
+    population                     = initialPopulation,
+    outcomeId                      = outcomeId,
+    firstExposureOnly              = populationCmSettings$firstExposureOnly,
+    restrictToCommonPeriod         = populationCmSettings$restrictToCommonPeriod,
+    washoutPeriod                  = populationCmSettings$washoutPeriod,
+    removeDuplicateSubjects        = populationCmSettings$removeDuplicateSubjects,
+    removeSubjectsWithPriorOutcome = populationCmSettings$removeSubjectsWithPriorOutcome,
+    priorOutcomeLookback           = populationCmSettings$priorOutcomeLookback,
+    minDaysAtRisk                  = populationCmSettings$minDaysAtRisk,
+    riskWindowStart                = populationCmSettings$riskWindowStart,
+    startAnchor                    = populationCmSettings$startAnchor,
+    riskWindowEnd                  = populationCmSettings$riskWindowEnd,
+    endAnchor                      = populationCmSettings$endAnchor,
+    censorAtNewRiskWindow          = populationCmSettings$censorAtNewRiskWindow
   )
 
   populationCmMetaData <- attr(
@@ -650,11 +630,20 @@ fitPsModel <- function(
   populationPlp <- populationPlp %>%
     dplyr::select("rowId", "ageYear", "gender")
 
-  riskPredictions <- predictionResult$model$predict(
+  timepoint <- runSettings$runPlpSettings$timepoint
+  riskPredictions <- PatientLevelPrediction::predictPlp(
+    plpModel = predictionResult$model,
     plpData = plpData,
-    population = populationCm
+    population = populationCm,
+    timepoint = timepoint
   ) %>%
     dplyr::tibble()
+
+  # riskPredictions <- predictionResult$model$predict(
+  #   plpData = plpData,
+  #   population = populationCm
+  # ) %>%
+  #   dplyr::tibble()
 
   attr(populationCm, "metaData") <- populationCmMetaData  # Delete that?
 
