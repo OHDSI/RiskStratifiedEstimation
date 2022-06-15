@@ -108,7 +108,7 @@ runRiskStratifiedEstimation <- function(
 
   if (!dir.exists(shinyDir)) {
     dir.create(
-      analysisPath,
+      shinyDir,
       recursive = TRUE
     )
   }
@@ -448,7 +448,7 @@ runRiskStratifiedEstimation <- function(
     #   )
     # )
 
-    attr(population, "metaData")$cohortId <- 1
+    # attr(population, "metaData")$cohortId <- 1
 
     predictionResults <- PatientLevelPrediction::runPlp(
       analysisId = analysisSettings$analysisId,
