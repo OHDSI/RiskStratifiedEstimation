@@ -1107,51 +1107,6 @@ shiny::shinyServer(
       }
     )
 
-    showInfoBox <- function(title, htmlFileName) {
-      if (!file.exists(htmlFileName)) {
-        msg <- "Description not available"
-      } else {
-        msg <- HTML(
-          readChar(
-            htmlFileName,
-            file.info(htmlFileName)$size)
-        )
-      }
-      showModal(
-        modalDialog(
-          title = title,
-          easyClose = TRUE,
-          footer = NULL,
-          size = "l",
-          msg
-        )
-      )
-    }
-
-    # observeEvent(
-    #   input$testInfo,
-    #   {
-    #     targetHtmlFile <- file.path(
-    #       pathToHtml,
-    #       paste(
-    #         input$database,
-    #         "html",
-    #         sep = "."
-    #       )
-    #     )
-    #     showInfoBox(
-    #       "Database information",
-    #       file.path(
-    #         pathToHtml,
-    #         paste(
-    #           input$database,
-    #           "html",
-    #           sep = "."
-    #         )
-    #       )
-    #     )
-    #   }
-    # )
 
     observeEvent(
       input$testInfo,
@@ -1164,15 +1119,25 @@ shiny::shinyServer(
             sep = "."
           )
         )
-        shinyalert::shinyalert(
-          title = "Database description",
-          shiny::includeHTML(targetHtmlFile),
-          type = "",
-          html = TRUE,
-          size = "l",
+        if (!file.exists(targetHtmlFile)) {
+          shinyalert::shinyalert(
+            title = "Database description",
+            text = "Not available",
+            size = "l",
           closeOnClickOutside = TRUE,
           confirmButtonCol = "#3B5866"
-        )
+          )
+        } else {
+          shinyalert::shinyalert(
+            title = "Database description",
+            shiny::includeHTML(targetHtmlFile),
+            type = "",
+            html = TRUE,
+            size = "l",
+            closeOnClickOutside = TRUE,
+            confirmButtonCol = "#3B5866"
+          )
+        }
       }
     )
   }
