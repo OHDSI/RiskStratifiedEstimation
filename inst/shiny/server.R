@@ -763,7 +763,7 @@ shiny::shinyServer(
       }
     )
 
-    output$overallBalanceTable <- DT::renderDataTable(
+    output$overallBalanceTable <- DT::renderDT(
       {
         res <- overallBalanceSubset() %>%
           dplyr::mutate(
@@ -823,72 +823,7 @@ shiny::shinyServer(
             mapExposures,
             by = c("treatment" = "exposure_id")
           ) %>%
-          ggplot2::ggplot(
-            ggplot2::aes(
-              x = x,
-              y = y
-            )
-          ) +
-          ggplot2::geom_density(
-            stat = "identity",
-            ggplot2::aes(
-              color = exposure_name,
-              group = exposure_name,
-              fill = exposure_name
-            )
-          ) +
-          ggplot2::facet_grid(~riskStratum) +
-          ggplot2::ylab(
-            label = "Density"
-          ) +
-          ggplot2::xlab(
-            label = "Preference score"
-          ) +
-          ggplot2::scale_fill_manual(
-            values = c(
-              rgb(
-                red = 0.8,
-                green = 0,
-                blue = 0,
-                alpha = 0.5
-              ),
-              rgb(
-                red = 0,
-                green = 0,
-                blue = 0.8,
-                alpha = 0.5
-              )
-            )
-          ) +
-          ggplot2::scale_color_manual(
-            values = c(
-              rgb(
-                red = 0.8,
-                green = 0,
-                blue = 0,
-                alpha = 0.5
-              ),
-              rgb(
-                red = 0,
-                green = 0,
-                blue = 0.8,
-                alpha = 0.5
-              )
-            )
-          ) +
-          ggplot2::theme(
-            legend.title = ggplot2::element_blank(),
-            legend.position = "top",
-            legend.text = ggplot2::element_text(
-              margin = ggplot2::margin(
-                t = 0,
-                r = 0.5,
-                b = 0,
-                l = 0.1,
-                unit = "cm"
-              )
-            )
-          )
+          plotPsDensity(riskStratified = TRUE)
       }
     )
 
@@ -915,71 +850,7 @@ shiny::shinyServer(
             mapExposures,
             by = c("treatment" = "exposure_id")
           ) %>%
-          ggplot2::ggplot(
-            ggplot2::aes(
-              x = x,
-              y = y
-            )
-          ) +
-          ggplot2::geom_density(
-            stat = "identity",
-            ggplot2::aes(
-              color = exposure_name,
-              group = exposure_name,
-              fill = exposure_name
-            )
-          ) +
-          ggplot2::ylab(
-            label = "Density"
-          ) +
-          ggplot2::xlab(
-            label = "Preference score"
-          ) +
-          ggplot2::scale_fill_manual(
-            values = c(
-              rgb(
-                red = 0.8,
-                green = 0,
-                blue = 0,
-                alpha = 0.5
-              ),
-              rgb(
-                red = 0,
-                green = 0,
-                blue = 0.8,
-                alpha = 0.5
-              )
-            )
-          ) +
-          ggplot2::scale_color_manual(
-            values = c(
-              rgb(
-                red = 0.8,
-                green = 0,
-                blue = 0,
-                alpha = 0.5
-              ),
-              rgb(
-                red = 0,
-                green = 0,
-                blue = 0.8,
-                alpha = 0.5
-              )
-            )
-          ) +
-          ggplot2::theme(
-            legend.title = ggplot2::element_blank(),
-            legend.position = "top",
-            legend.text = ggplot2::element_text(
-              margin = ggplot2::margin(
-                t = 0,
-                r = 0.5,
-                b = 0,
-                l = 0.1,
-                unit = "cm"
-              )
-            )
-          )
+          plotPsDensity()
       }
     )
 
@@ -1237,34 +1108,70 @@ shiny::shinyServer(
     )
 
     showInfoBox <- function(title, htmlFileName) {
+      if (!file.exists(htmlFileName)) {
+        msg <- "Description not available"
+      } else {
+        msg <- HTML(
+          readChar(
+            htmlFileName,
+            file.info(htmlFileName)$size)
+        )
+      }
       showModal(
         modalDialog(
           title = title,
           easyClose = TRUE,
           footer = NULL,
           size = "l",
-          HTML(
-            readChar(
-              htmlFileName,
-              file.info(htmlFileName)$size)
-          )
+          msg
         )
       )
     }
 
+    # observeEvent(
+    #   input$testInfo,
+    #   {
+    #     targetHtmlFile <- file.path(
+    #       pathToHtml,
+    #       paste(
+    #         input$database,
+    #         "html",
+    #         sep = "."
+    #       )
+    #     )
+    #     showInfoBox(
+    #       "Database information",
+    #       file.path(
+    #         pathToHtml,
+    #         paste(
+    #           input$database,
+    #           "html",
+    #           sep = "."
+    #         )
+    #       )
+    #     )
+    #   }
+    # )
+
     observeEvent(
       input$testInfo,
       {
-        showInfoBox(
-          "Database information",
-          file.path(
-            pathToHtml,
-            paste(
-              input$database,
-              "html",
-              sep = "."
-            )
+        targetHtmlFile <- file.path(
+          pathToHtml,
+          paste(
+            input$database,
+            "html",
+            sep = "."
           )
+        )
+        shinyalert::shinyalert(
+          title = "Database description",
+          shiny::includeHTML(targetHtmlFile),
+          type = "",
+          html = TRUE,
+          size = "l",
+          closeOnClickOutside = TRUE,
+          confirmButtonCol = "#3B5866"
         )
       }
     )

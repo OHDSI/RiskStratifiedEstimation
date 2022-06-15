@@ -157,7 +157,8 @@ shiny::shinyUI(
                       title = "Covariate balance table",
                       width = NULL,
                       collapsible = TRUE,
-                      DT::dataTableOutput("overallBalanceTable")
+                      # DT::dataTableOutput("overallBalanceTable")
+                      DT::DTOutput("overallBalanceTable")
                     )
                   )
                 ),
@@ -186,7 +187,7 @@ shiny::shinyUI(
               "Risk stratified analysis",
               plotly::plotlyOutput(
                 "combinedPlot",
-                height = "600px"
+                height = "800px"
               )
             ),
             shiny::tabPanel(

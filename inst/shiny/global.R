@@ -8,6 +8,11 @@ if (is.null(.GlobalEnv$shinySettings)) {
   analysisPath <- .GlobalEnv$shinySettings
 }
 
+pathToHtml <- file.path(
+  analysisPath,
+  "html"
+)
+
 mapOutcomes <- readRDS(
 	file.path(
 		analysisPath,
@@ -1206,8 +1211,8 @@ hline <- function(y = 0, color = "black") {
 		y0 = y,
 		y1 = y,
 		line = list(
-			color = color,
-			dash = "dash"
+			color = color
+			# dash = "dash"
 		)
 	)
 }
@@ -1418,9 +1423,10 @@ combinedPlot <- function(
     relative %>%
     dplyr::group_by(.$estOutcome) %>%
     plotly::plot_ly(
-      mode = "markers",
+      mode = "lines+markers",
       x = ~risk + m,
       y = ~estimate,
+      line = list(dash = "dash", width = .8),
       color = ~estOutcome,
       colors = customColors[1:numberOfPoints],
       type = "scatter",
@@ -1479,9 +1485,10 @@ combinedPlot <- function(
   p3 <-
     absolute %>%
     plotly::plot_ly(
-      mode = "markers",
+      mode = "lines+markers",
       x = ~risk + m,
       y = ~estimate,
+      line = list(dash = "dash", width = .8),
       color = ~estOutcome,
       colors = customColors[1:numberOfPoints],
       type = "scatter",
@@ -1519,6 +1526,9 @@ combinedPlot <- function(
         title = "Risk stratum",
         tickvals = ~risk
       )
+    ) %>%
+    plotly::layout(
+      shapes = hline(0)
     )
 
   plotly::subplot(p1, p2, p3, shareX = TRUE, nrows = 3, titleY = T)
@@ -1627,3 +1637,56 @@ calibrateRiskStrataCis <- function(
   return(ret)
 }
 
+
+
+plotPsDensity <- function(data, riskStratified = FALSE) {
+  
+  plot <- ggplot2::ggplot(
+    data = data,
+    ggplot2::aes(
+      x = x,
+      y = y
+    )
+  ) +
+    ggplot2::geom_density(
+      stat = "identity",
+      ggplot2::aes(
+        color = exposure_name,
+        group = exposure_name,
+        fill = exposure_name
+      )
+    ) +
+    ggplot2::ylab(
+      label = "Density"
+    ) +
+    ggplot2::scale_x_continuous(
+      name = "Preference score",
+      breaks = seq(0, 1, .5)
+    ) +
+    ggplot2::scale_fill_manual(
+      values = scales::alpha(c("#fc8d59", "#91bfdb"), .6)
+    ) +
+    ggplot2::scale_color_manual(
+      values = scales::alpha(c("#fc8d59", "#91bfdb"), .9)
+    )
+
+  if (riskStratified) {
+    plot <- plot + ggplot2::facet_grid(~riskStratum)
+  }
+    plot <- plot + ggplot2::theme_classic() +
+    ggplot2::theme(
+      legend.title = ggplot2::element_blank(),
+      legend.position = "top",
+      legend.text = ggplot2::element_text(
+        margin = ggplot2::margin(
+          t = 0,
+          r = 0.5,
+          b = 0,
+          l = 0.1,
+          unit = "cm"
+        )
+      )
+    )
+
+  return(plot)
+}

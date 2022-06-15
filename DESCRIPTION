@@ -8,7 +8,7 @@ Description: RiskStratifiedEstimation is an R package for implementing risk stra
 License: Apache License 2.0
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.0
 Depends:
     R (>= 4.0.2),
     DatabaseConnector (>= 2.2.0),
@@ -19,6 +19,7 @@ Imports:
     CohortMethod,
     ParallelLogger,
     SqlRender,
+    EmpiricalCalibration,
     stats,
     data.table,
     dplyr,
@@ -32,6 +33,9 @@ Imports:
     tidyr,
     purrr,
     formatR,
+    plotly,
+    reshape2,
+    DT,
     magrittr
 Suggests: knitr,
     rmarkdown
