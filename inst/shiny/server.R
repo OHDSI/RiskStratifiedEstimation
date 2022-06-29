@@ -1036,15 +1036,15 @@ shiny::shinyServer(
             )
           ) %>%
           dplyr::select(
-            auc,
+            AUROC,
             cohort
           ) %>%
           dplyr::mutate(
-            auc = paste(
+            AUROC = paste(
               "AUC:",
               paste0(
                 round(
-                  100*auc,
+                  100*AUROC,
                   digits = 2
                 ),
                 "%"
@@ -1064,7 +1064,7 @@ shiny::shinyServer(
             vjust = "top",
             alpha = 0.8,
             ggplot2::aes(
-              label = auc
+              label = AUROC
             ),
             size = 5.5
           )
