@@ -23,11 +23,11 @@
 #' @export
 
 evaluatePrediction <- function(
-  analysisSettings,
-  getDataSettings,
-  populationSettings,
-  predictionId,
-  timepoint = NULL
+    analysisSettings,
+    getDataSettings,
+    populationSettings,
+    predictionId,
+    runPlpSettings
 ) {
   .generateEvaluation <- function(
     population,
@@ -77,14 +77,12 @@ evaluatePrediction <- function(
     getDataSettings$plpDataFolder
   )
 
+  plpResultDirectory <- runPlpSettings$plpResults %>%
+    dplyr::filter(outcomeId == predictionId) %>%
+    dplyr::pull(directory)
+
   plpResult <- PatientLevelPrediction::loadPlpResult(
-    file.path(
-      saveDir,
-      "Prediction",
-      predictionId,
-      analysisSettings$analysisId,
-      "plpResult"
-    )
+    dirPath = file.path(plpResultDirectory, "plpResult")
   )
 
   psFull <- readRDS(
@@ -120,6 +118,12 @@ evaluatePrediction <- function(
     cohortId = 1,
     outcomeId = predictionId
   )
+
+  timepoint <- runPlpSettings$plpResults %>%
+    dplyr::filter(outcomeId == predictionId) %>%
+    dplyr::pull(timepoint)
+
+  if (timepoint < 0) timepoint <- NULL
 
   evaluation <- .generateEvaluation(
     population = populationSubset,
@@ -321,7 +325,6 @@ evaluatePrediction <- function(
 
   return(NULL)
 }
-
 
 
 #-------------------------------------------------------------------------------

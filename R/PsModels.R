@@ -158,6 +158,10 @@ fitPsModelSwitch <- function(
       censorAtNewRiskWindow          = populationCmSettings$censorAtNewRiskWindow
     )
 
+  timepoint <- runSettings$runPlpSettings$plpResults %>%
+    dplyr::filter(outcomeId == predictOutcome) %>%
+    dplyr::pull(timepoint)
+
   #-----------------------------------------------------------------------------
   # Predictions in the population with switched outcome
   # They may be different from original, due to population
@@ -178,7 +182,7 @@ fitPsModelSwitch <- function(
         "model"
       )
     ),
-    timepoint = runSettings$runPlpSettings$timepoint
+    timepoint = timepoint
   ) %>%
     dplyr::as_tibble()
 

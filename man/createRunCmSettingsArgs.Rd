@@ -10,7 +10,8 @@ createRunCmSettingsArgs(
   createPsThreads = 1,
   fitOutcomeModelsThreads = 1,
   balanceThreads = 1,
-  negativeControlThreads = 1
+  negativeControlThreads = 1,
+  runRiskStratifiedNcs = FALSE
 )
 }
 \arguments{
@@ -32,6 +33,10 @@ of covariate balance}
 
 \item{negativeControlThreads}{The number of parallel threads for the negative
 control analyses}
+
+\item{runRiskStratifiedNcs}{Should risk stratified negative control analyses
+be performed? Default is FALSE as it can take
+a very long time to complete.}
 }
 \value{
 A parameter object for running the the estimation step.

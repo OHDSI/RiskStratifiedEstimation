@@ -1013,3 +1013,21 @@ directoryCheck <- function(path) {
     )
   }
 }
+
+pullPlpSettings <- function(runPlpSettings, outcomeId) {
+
+  res <- NULL
+  analyses <- runPlpSettings$analyses
+  ll <- lapply(
+    runPlpSettings$analyses,
+    function(x) lapply(x, unlist, recursive = F)
+  )
+
+  for (i in seq_along(analyses)) {
+    if (analyses[[i]]$outcomeId == outcomeId) {
+      res <- analyses[[i]]
+    }
+  }
+
+  return(res)
+}

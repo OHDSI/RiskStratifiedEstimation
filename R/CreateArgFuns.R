@@ -23,77 +23,49 @@
 #'
 #' @details
 #' Create an object defining the parameter values.
+#' @param outcomeId              The outcomeId for the prediction.
+#' @param spliteSettings         The split settings.
 #'
-#' @param plpResults             A data frame containig the path to an existing plpResult. The column
-#'                               names should be "outcomeId" and "directory".
-#' @param minCovariateFraction   The minimum fraction of target population who must have a covariate
-#'                               for it to be included in the model training
-#' @param normalizeData          Whether to normalise the covariates before training (Default: TRUE)
-#' @param modelSettings          An object of class modelSettings created using one of the
-#'                               function:setLassoLogisticRegression() A lasso logistic regression
-#'                               model setGradientBoostingMachine() A gradient boosting machine
-#'                               setAdaBoost() An ada boost model setRandomForest() A random forest
-#'                               model setDecisionTree() A decision tree model setCovNN()) A
-#'                               convolutional neural network model setCIReNN() A recurrent neural
-#'                               network model setMLP() A neural network model setDeepNN() A deep
-#'                               neural network model setKNN() A KNN model
-#' @param testSplit              Either 'person' or 'time' specifying the type of evaluation
-#'                               used.'time' find the date where testFraction of patients had an index
-#'                               after the date and assigns patients with an index prior to this date
-#'                               into the training set and post the date into the test set'person'
-#'                               splits the data into test (1-testFraction of the data) andtrain
-#'                               (validationFraction of the data) sets. The split is stratified by the
-#'                               class label.
-#' @param testFraction           The fraction of the data to be used as the test set in the patient
-#'                               split evaluation.
-#' @param trainFraction          A real number between 0 and 1 indicating the train set fraction of the
-#'                               data. If not set trainFraction is equal to 1 - test
-#' @param splitSeed              The seed used to split the test/train set when using a person type
-#'                               testSplit
-#' @param nfold                  The number of folds used in the cross validation (default 3)
-#' @param indexes                A dataframe containing a rowId and index column where the index value
-#'                               of -1 means in the test set, and positive integer represents the cross
-#'                               validation fold (default is NULL)
-#' @param savePlpData            Binary indicating whether to save the plpData object (default is
-#'                               FALSE)
-#' @param savePlpPlots           Binary indicating whether to save the performance plots as pdf files
-#'                               (default is TRUE)
-#' @param saveEvaluation         Binary indicating whether to save the oerformance as csv files
-#'                               (default is TRUE)
-#' @param verbosity              Sets the level of the verbosity. If the log level is at or higher in
-#'                               priority than the logger threshold, a message will print. The levels
-#'                               are:
-#'                               \itemize{
-#'                                 \item {DEBUG}{Highest verbosity showing all debug statements}
-#'                                 \item {TRACE}{Showing information about start and end of steps}
-#'                                 \item {INFO}{Show informative information (Default)}
-#'                                 \item {WARN}{Show warning messages}
-#'                                 \item {ERROR}{Show error messages}
-#'                                 \item {FATAL}{Be silent except for fatal errors}
-#'                               }
-#'
-#'
-#'
-#' @param timeStamp              If TRUE a timestamp will be added to each logging statement.
-#'                               Automatically switched on for TRACE level.
-#' @param analysisId             Identifier for the analysis. It is used to create, e.g., the result
-#'                               folder. Default is a timestamp.
 #' @param matchingSettings       The settings for the construction of the population on which the
 #'                               prediction model will be developed.
 #' @param timepoint              The timepoint to predict risk (survival models only)
 #'
 #' @export
 #'
+createRunPlpAnalysesArgs <- function(
+    outcomeId                  = NULL,
+    splitSettings              = PatientLevelPrediction::createDefaultSplitSetting(),
+    sampleSettings             = PatientLevelPrediction::createSampleSettings(),
+    featureEngineeringSettings = PatientLevelPrediction::createFeatureEngineeringSettings(),
+    preprocessSettings         = PatientLevelPrediction::createPreprocessSettings(),
+    modelSettings              = PatientLevelPrediction::setLassoLogisticRegression(),
+    logSettings                = PatientLevelPrediction::createLogSettings(),
+    executeSettings            = PatientLevelPrediction::createDefaultExecuteSettings(),
+    matchingSettings           = CohortMethod::createMatchOnPsArgs(),
+    timepoint                  = NULL
+) {
+
+  # First: get default values:
+  analysis <- list()
+  for (name in names(formals(createRunPlpAnalysesArgs))) {
+    analysis[[name]] <- get(name)
+  }
+  # Second: overwrite defaults with actual values:
+  values <- lapply(as.list(match.call())[-1], function(x) eval(x, envir = sys.frame(-3)))
+  for (name in names(values)) {
+    if (name %in% names(analysis))
+      analysis[[name]] <- values[[name]]
+  }
+  attr(analysis, "fun") <- "createRunPlpAnalysesArgs"
+  class(analysis) <- "runPlpAnalysesArgs"
+  return(analysis)
+}
+
+
+#' @export
 createRunPlpSettingsArgs <- function(
-  splitSettings              = PatientLevelPrediction::createDefaultSplitSetting(),
-  sampleSettings             = PatientLevelPrediction::createSampleSettings(),
-  featureEngineeringSettings = PatientLevelPrediction::createFeatureEngineeringSettings(),
-  preprocessSettings         = PatientLevelPrediction::createPreprocessSettings(),
-  modelSettings              = PatientLevelPrediction::setLassoLogisticRegression(),
-  logSettings                = PatientLevelPrediction::createLogSettings(),
-  executeSettings            = PatientLevelPrediction::createExecuteSettings(),
-  matchingSettings           = CohortMethod::createMatchOnPsArgs(),
-  timepoint                  = NULL
+    analyses = list(),
+    defaultSettings = createRunPlpAnalysesArgs()
 ) {
 
   # First: get default values:
@@ -110,6 +82,30 @@ createRunPlpSettingsArgs <- function(
   attr(analysis, "fun") <- "createRunPlpSettingsArgs"
   class(analysis) <- "runPlpSettingsArgs"
   return(analysis)
+
+}
+
+#' @export
+createRunExistingPlpSettingsArgs <- function(
+    outcomeId,
+    plpResultDirectory,
+    predictionSettings = list()
+) {
+
+  analysis <- list()
+  for (name in names(formals(createRunExistingPlpSettingsArgs))) {
+    analysis[[name]] <- get(name)
+  }
+  # Second: overwrite defaults with actual values:
+  values <- lapply(as.list(match.call())[-1], function(x) eval(x, envir = sys.frame(-3)))
+  for (name in names(values)) {
+    if (name %in% names(analysis))
+      analysis[[name]] <- values[[name]]
+  }
+  attr(analysis, "fun") <- "createRunExistingPlpSettingsArgs"
+  class(analysis) <- "runExistingPlpSettingsArgs"
+  return(analysis)
+
 }
 
 
@@ -129,8 +125,8 @@ createRunPlpSettingsArgs <- function(
 #' @export
 
 createRunSettings <- function(
-  runPlpSettings = createRunPlpSettingsArgs(modelSettings = PatientLevelPrediction::setLassoLogisticRegression()),
-  runCmSettings = createRunCmSettingsArgs()
+    runPlpSettings = createRunPlpSettingsArgs(),
+    runCmSettings = createRunCmSettingsArgs()
 ) {
 
   res <- list(runPlpSettings = runPlpSettings, runCmSettings = runCmSettings)
@@ -279,23 +275,23 @@ createGetCmDataArgs <- function(studyStartDate = "",
 #' @export
 
 createCreatePsArgs <- function(
-  excludeCovariateIds = c(),
-  includeCovariateIds = c(),
-  maxCohortSizeForFitting = 250000,
-  errorOnHighCorrelation = TRUE,
-  stopOnError = TRUE,
-  prior = createPrior(
-    "laplace",
-    exclude = c(0),
-    useCrossValidation = TRUE
-  ),
-  control = createControl(
-    noiseLevel = "silent",
-    cvType = "auto",
-    tolerance = 2e-07,
-    cvRepetitions = 10,
-    startingVariance = 0.01
-  )
+    excludeCovariateIds = c(),
+    includeCovariateIds = c(),
+    maxCohortSizeForFitting = 250000,
+    errorOnHighCorrelation = TRUE,
+    stopOnError = TRUE,
+    prior = createPrior(
+      "laplace",
+      exclude = c(0),
+      useCrossValidation = TRUE
+    ),
+    control = createControl(
+      noiseLevel = "silent",
+      cvType = "auto",
+      tolerance = 2e-07,
+      cvRepetitions = 10,
+      startingVariance = 0.01
+    )
 ) {
   # First: get default values:
   analysis <- list()
@@ -353,13 +349,13 @@ createCreatePsArgs <- function(
 #' @export
 
 createRunCmAnalysesArgs <- function(
-  label                        = NULL,
-  riskStratificationMethod     = "equal",
-  stratificationOutcomes       = "all",
-  riskStratificationThresholds = 4,
-  psMethod                     = "stratifyByPs",
-  effectEstimationSettings     = createStratifyByPsArgs(),
-  timePoint                    = 365
+    label                        = NULL,
+    riskStratificationMethod     = "equal",
+    stratificationOutcomes       = "all",
+    riskStratificationThresholds = 4,
+    psMethod                     = "stratifyByPs",
+    effectEstimationSettings     = createStratifyByPsArgs(),
+    timePoint                    = 365
 ) {
 
   if (is.null(label)) {
@@ -392,40 +388,46 @@ createRunCmAnalysesArgs <- function(
 #' used to create the computational part of the input of
 #' \code{\link[RiskStratifiedEstimation]{createRunSettings}}.
 #'
-#' @param analyses                      A list of the analyses to run. Each element of
-#'                                      the list can be creaeted using
-#'                                      \code{\link[RiskStratifiedEstimation]{createRunCmAnalysesArgs}}
-#'                                      \code{\link[CohortMethod]{createPs}}
-#' @param psSettings                    The settings for estimating the propensity scores
-#' @param createPsThreads               The number of parallel threads for the
-#'                                      estimation of the propensity scores. Default is 1.
-#' @param fitOutcomeModelsThreads       The number of parallel threads for the estimation of the
-#'                                      outcome models.
-#' @param balanceThreads                The number of parallel threads for the estimation
-#'                                      of covariate balance
-#' @param negativeControlThreads        The number of parallel threads for the negative
-#'                                      control analyses
+#' @param analyses                  A list of the analyses to run. Each element of
+#'                                  the list can be creaeted using
+#'                                  \code{\link[RiskStratifiedEstimation]{createRunCmAnalysesArgs}}
+#'                                  \code{\link[CohortMethod]{createPs}}
+#' @param psSettings                The settings for estimating the propensity scores
+#' @param createPsThreads           The number of parallel threads for the
+#'                                  estimation of the propensity scores. Default is 1.
+#' @param fitOutcomeModelsThreads   The number of parallel threads for the estimation of the
+#'                                  outcome models.
+#' @param balanceThreads            The number of parallel threads for the estimation
+#'                                  of covariate balance
+#' @param negativeControlThreads    The number of parallel threads for the negative
+#'                                  control analyses
+#' @param runRiskStratifiedNcs      Should risk stratified negative control analyses
+#'                                  be performed? Default is FALSE as it can take
+#'                                  a very long time to complete.
+#'
 #'
 #' @return
 #' A parameter object for running the the estimation step.
 #' @export
 
 createRunCmSettingsArgs <- function(
-  analyses,
-  psSettings                   = createCreatePsArgs(),
-  createPsThreads              = 1,
-  fitOutcomeModelsThreads      = 1,
-  balanceThreads               = 1,
-  negativeControlThreads       = 1
+    analyses,
+    psSettings                   = createCreatePsArgs(),
+    createPsThreads              = 1,
+    fitOutcomeModelsThreads      = 1,
+    balanceThreads               = 1,
+    negativeControlThreads       = 1,
+    runRiskStratifiedNcs         = FALSE
 ) {
 
   res <- list(
-    analyses                     = analyses,
-    psSettings                   = psSettings,
-    createPsThreads              = createPsThreads,
-    fitOutcomeModelsThreads      = fitOutcomeModelsThreads,
-    balanceThreads               = balanceThreads,
-    negativeControlThreads       = negativeControlThreads
+    analyses                = analyses,
+    psSettings              = psSettings,
+    createPsThreads         = createPsThreads,
+    fitOutcomeModelsThreads = fitOutcomeModelsThreads,
+    balanceThreads          = balanceThreads,
+    negativeControlThreads  = negativeControlThreads,
+    runRiskStratifiedNcs    = runRiskStratifiedNcs
   )
   class(res) <- "args"
 
@@ -452,9 +454,9 @@ createRunCmSettingsArgs <- function(
 #' @export
 
 createStratifyByPsArgs <- function(
-  numberOfStrata = 5,
-  stratificationColumns = c(),
-  baseSelection = "all"
+    numberOfStrata = 5,
+    stratificationColumns = c(),
+    baseSelection = "all"
 ) {
   # First: get default values:
   analysis <- list()
@@ -501,10 +503,10 @@ createStratifyByPsArgs <- function(
 #' @export
 
 createMatchOnPsArgs <- function(
-  caliper = 0.2,
-  caliperScale = "standardized logit",
-  maxRatio = 1,
-  stratificationColumns = c()
+    caliper = 0.2,
+    caliperScale = "standardized logit",
+    maxRatio = 1,
+    stratificationColumns = c()
 ) {
   # First: get default values:
   analysis <- list()
@@ -607,20 +609,20 @@ createCreateIPWArgs <- function(weightsType = "ATE",
 #' @export
 
 createAnalysisSettings <- function(
-  analysisId = NULL,
-  description = "",
-  databaseName,
-  treatmentCohortId,
-  comparatorCohortId,
-  outcomeIds,
-  analysisMatrix = diag(length(outcomeIds)),
-  mapTreatments,
-  mapOutcomes,
-  negativeControlOutcomes = c(),
-  balanceThreads = 1,
-  negativeControlThreads = 1,
-  verbosity = NULL,
-  saveDirectory = NULL
+    analysisId = NULL,
+    description = "",
+    databaseName,
+    treatmentCohortId,
+    comparatorCohortId,
+    outcomeIds,
+    analysisMatrix = diag(length(outcomeIds)),
+    mapTreatments,
+    mapOutcomes,
+    negativeControlOutcomes = c(),
+    balanceThreads = 1,
+    negativeControlThreads = 1,
+    verbosity = NULL,
+    saveDirectory = NULL
 ) {
   res <- list(
     analysisId              = analysisId,
@@ -700,9 +702,9 @@ createGetDataSettings <- function(getPlpDataSettings = createGetPlpDataArgs(),
 #' @export
 
 createPopulationSettings <- function(
-  populationPlpSettings = PatientLevelPrediction::createStudyPopulationSettings(),
-  populationCmSettings  = CohortMethod::createCreateStudyPopulationArgs(),
-  postProcessing        = "none"
+    populationPlpSettings = PatientLevelPrediction::createStudyPopulationSettings(),
+    populationCmSettings  = CohortMethod::createCreateStudyPopulationArgs(),
+    postProcessing        = "none"
 ) {
 
   res <- list(
