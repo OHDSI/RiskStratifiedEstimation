@@ -39,7 +39,7 @@ computeMeansPerGroupFast <- function(cohorts, covariates) {
       ]
   }
 
-  if (hasStrata && any(stratumSize %>% pull(.data$N) > 1))
+  if (hasStrata && any(stratumSize %>% dplyr::pull(.data$N) > 1))
   {
 
     keyCols <- c(
@@ -258,7 +258,7 @@ computeCovariateBalance4 <- function(population, cohorts, covariates, covariateR
 
   if (!is.null(subgroupCovariateId)) {
     subGroupCovariate <- covariates %>%
-      filter(.data$covariateId == subgroupCovariateId)
+      dplyr::filter(.data$covariateId == subgroupCovariateId)
 
     if (nrow(subGroupCovariate) == 0) {
       stop("Cannot find covariate with ID ", subgroupCovariateId)
@@ -287,7 +287,7 @@ computeCovariateBalance4 <- function(population, cohorts, covariates, covariateR
     }
 
     tempCohortsAfterMatching <- population %>%
-      filter(.data$rowId %in% subGroupCovariate$rowId) %>%
+      dplyr::filter(.data$rowId %in% subGroupCovariate$rowId) %>%
       as.data.frame()
 
     if (nrow(tempCohortsAfterMatching) == 0)
@@ -302,10 +302,10 @@ computeCovariateBalance4 <- function(population, cohorts, covariates, covariateR
     }
 
     cohortMethodData$tempCohorts <- tempCohorts %>%
-      select(.data$rowId, .data$treatment)
+      dplyr::select(.data$rowId, .data$treatment)
 
     cohortMethodData$tempCohortsAfterMatching <- tempCohortsAfterMatching %>%
-      select(.data$rowId, .data$treatment, .data$stratumId)
+      dplyr::select(.data$rowId, .data$treatment, .data$stratumId)
   }
   else
   {
@@ -337,7 +337,7 @@ computeCovariateBalance4 <- function(population, cohorts, covariates, covariateR
 
     tempCohortsAfterMatching <- data.table::setDT(
       population %>%
-        select(.data$rowId, .data$treatment, .data$stratumId)
+        dplyr::select(.data$rowId, .data$treatment, .data$stratumId)
     )
   }
   # on.exit(cohortMethodData$tempCohorts <- NULL)
@@ -360,9 +360,9 @@ computeCovariateBalance4 <- function(population, cohorts, covariates, covariateR
   colnames(afterMatching)[colnames(afterMatching) == "sd"] <- "afterMatchingSd"
 
   balance <- beforeMatching %>%
-    full_join(afterMatching, by = "covariateId") %>%
-    inner_join(covariateRef, by = "covariateId") %>%
-    mutate(
+    dplyr::full_join(afterMatching, by = "covariateId") %>%
+    dplyr::inner_join(covariateRef, by = "covariateId") %>%
+    dplyr::mutate(
       beforeMatchingStdDiff = (.data$beforeMatchingMeanTarget - .data$beforeMatchingMeanComparator)/.data$beforeMatchingSd,
       afterMatchingStdDiff = (.data$afterMatchingMeanTarget - .data$afterMatchingMeanComparator)/.data$afterMatchingSd
     )
@@ -389,7 +389,7 @@ computeCovariateBalance <- function(
 
   if (!is.null(subgroupCovariateId)) {
     subGroupCovariate <- covariates %>%
-      filter(.data$covariateId == subgroupCovariateId)
+      dplyr::filter(.data$covariateId == subgroupCovariateId)
 
     if (nrow(subGroupCovariate) == 0) {
       stop("Cannot find covariate with ID ", subgroupCovariateId)
@@ -418,7 +418,7 @@ computeCovariateBalance <- function(
     }
 
     tempCohortsAfterMatching <- population %>%
-      filter(.data$rowId %in% subGroupCovariate$rowId) %>%
+      dplyr::filter(.data$rowId %in% subGroupCovariate$rowId) %>%
       as.data.frame()
 
     if (nrow(tempCohortsAfterMatching) == 0)
@@ -433,10 +433,10 @@ computeCovariateBalance <- function(
     }
 
     cohortMethodData$tempCohorts <- tempCohorts %>%
-      select(.data$rowId, .data$treatment)
+      dplyr::select(.data$rowId, .data$treatment)
 
     cohortMethodData$tempCohortsAfterMatching <- tempCohortsAfterMatching %>%
-      select(.data$rowId, .data$treatment, .data$stratumId)
+      dplyr::select(.data$rowId, .data$treatment, .data$stratumId)
   }
   else
   {
@@ -450,7 +450,7 @@ computeCovariateBalance <- function(
 
     tempCohortsAfterMatching <- data.table::setDT(
       population %>%
-        select(.data$rowId, .data$treatment, .data$stratumId)
+        dplyr::select(.data$rowId, .data$treatment, .data$stratumId)
     )
   }
   beforeMatching <- computeMeansPerGroupFast(tempCohorts, covariates)
@@ -468,9 +468,9 @@ computeCovariateBalance <- function(
   colnames(afterMatching)[colnames(afterMatching) == "sd"] <- "afterMatchingSd"
 
   balance <- beforeMatching %>%
-    full_join(afterMatching, by = "covariateId") %>%
-    inner_join(covariateRef, by = "covariateId") %>%
-    mutate(
+    dplyr::full_join(afterMatching, by = "covariateId") %>%
+    dplyr::inner_join(covariateRef, by = "covariateId") %>%
+    dplyr::mutate(
       beforeMatchingStdDiff = (.data$beforeMatchingMeanTarget - .data$beforeMatchingMeanComparator)/.data$beforeMatchingSd,
       afterMatchingStdDiff = (.data$afterMatchingMeanTarget - .data$afterMatchingMeanComparator)/.data$afterMatchingSd
     )
@@ -559,7 +559,7 @@ computeCovariateBalanceOverall <- function(
       comparatorId = analysisSettings$comparatorCohortId,
       analysisType = analysisType
     ) %>%
-    select(
+    dplyr::select(
       riskStratum,
       covariateId,
       covariateName,

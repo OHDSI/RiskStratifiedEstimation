@@ -14,6 +14,7 @@ Depends:
     DatabaseConnector (>= 2.2.0),
     Cyclops,
     FeatureExtraction  (>= 2.2.3),
+    dplyr,
 Imports: 
     PatientLevelPrediction,
     CohortMethod,
@@ -22,7 +23,6 @@ Imports:
     EmpiricalCalibration,
     stats,
     data.table,
-    dplyr,
     shiny,
     shinydashboard,
     reshape,
