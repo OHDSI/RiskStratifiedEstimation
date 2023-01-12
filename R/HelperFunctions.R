@@ -693,111 +693,109 @@ absoluteRiskReduction <- function(
     data = population
   )
 
-  if (psMethod == "matchOnPs")
-  {
-
-    summaryKM <- summary(
-      kaplanMeier,
-      times = timePoint
-    )
-
-    standardError <- sqrt(
-      sum(
-        summaryKM$std.err^2
-      )
-    )
-
-    arr <- diff(
-      summaryKM$surv
-    )
-
-    res <- c(
-      arr,
-      arr - 1.96*standardError,
-      arr + 1.96*standardError
-    )
-
-  }
-  else if (psMethod == "stratifyByPs")
-  {
-    kaplanMeier <- list()
-    kk <- sort(
-      unique(
-        population$stratumId
-      )
-    )
-
-    for (i in kk)
+  failed <- tryCatch(
     {
-      kaplanMeier[[i]] <- survival::survfit(
-        S ~ treatment,
-        data = subset(
-          population,
-          stratumId == i
+    if (psMethod == "matchOnPs") {
+      summaryKM <- summary(
+        kaplanMeier,
+        times = timePoint
+      )
+
+      standardError <- sqrt(
+        sum(
+          summaryKM$std.err^2
         )
       )
-    }
 
-    summaryKMList <- lapply(
-      kaplanMeier,
-      summary,
-      times = timePoint
-    )
-
-    arrList <- lapply(
-      summaryKMList,
-      getAbsoluteDifference
-    )
-
-    arr <- mean(
-      unlist(
-        arrList
+      arr <- diff(
+        summaryKM$surv
       )
-    )
 
-    standardErrors <- lapply(
-      summaryKMList,
-      getStandadrdError
-    )
+      res <- c(
+        arr,
+        arr - 1.96*standardError,
+        arr + 1.96*standardError
+      )
+    } else if (psMethod == "stratifyByPs") {
+      kaplanMeier <- list()
+      kk <- sort(
+        unique(
+          population$stratumId
+        )
+      )
 
-    pooledStandardError <- sqrt(
-      sum(unlist(standardErrors)^2)/25
-    )
+      for (i in kk) {
+        kaplanMeier[[i]] <- survival::survfit(
+          S ~ treatment,
+          data = subset(
+            population,
+            stratumId == i
+          )
+        )
+      }
 
-    res <- c(
-      arr,
-      arr - 1.96*pooledStandardError,
-      arr + 1.96*pooledStandardError
-    )
-  }
+      summaryKMList <- lapply(
+        kaplanMeier,
+        summary,
+        times = timePoint,
+        extend = TRUE
+      )
 
-  else if (psMethod == "inversePtWeighted")
-  {
-    kaplanMeier <-  survival::survfit(
-      S ~ treatment,
-      data = population,
-      weights = weights
-    )
+      arrList <- lapply(
+        summaryKMList,
+        getAbsoluteDifference
+      )
 
-    summaryKM <- summary(
-      kaplanMeier,
-      times = timePoint
-    )
+      arr <- mean(
+        unlist(
+          arrList
+        )
+      )
 
-    standardError <- sqrt(
-      sum(summaryKM$std.err^2)
-    )
+      standardErrors <- lapply(
+        summaryKMList,
+        getStandadrdError
+      )
 
-    arr <- diff(
-      summaryKM$surv
-    )
+      pooledStandardError <- sqrt(
+        sum(unlist(standardErrors)^2)/25
+      )
 
-    res <- c(
-      arr,
-      arr - 1.96*standardError,
-      arr + 1.96*standardError
-    )
-  }
+      res <- c(
+        arr,
+        arr - 1.96*pooledStandardError,
+        arr + 1.96*pooledStandardError
+      )
+    } else if (psMethod == "inversePtWeighted") {
+      kaplanMeier <-  survival::survfit(
+        S ~ treatment,
+        data = population,
+        weights = weights
+      )
+
+      summaryKM <- summary(
+        kaplanMeier,
+        times = timePoint
+      )
+
+      standardError <- sqrt(
+        sum(summaryKM$std.err^2)
+      )
+
+      arr <- diff(
+        summaryKM$surv
+      )
+
+      res <- c(
+        arr,
+        arr - 1.96*standardError,
+        arr + 1.96*standardError
+      )
+    }
+  },
+    error = function(e) print(e)
+  )
+
 
   return(res)
 
@@ -818,8 +816,7 @@ absoluteRiskReduction <- function(
 
 relativeRiskReduction <- function(model){
 
-  if (class(model) == "OutcomeModel")
-  {
+  if (class(model) == "OutcomeModel") {
     return(
       unlist(
         c(
@@ -830,9 +827,7 @@ relativeRiskReduction <- function(model){
         )
       )
     )
-  }
-  else
-  {
+  }  else {
     return(
       summary(model)$conf.int[c(1, 3:4)]
     )
@@ -918,18 +913,16 @@ getCounts <- function(
     data = population
   )
 
-  if (psMethod == "matchOnPs")
-  {
+  if (psMethod == "matchOnPs") {
     summaryKM <- summary(
       kaplanMeier,
-      times = timePoint
+      times = timePoint,
+      extend = TRUE
     )
 
     res <- 1 - summaryKM$surv
 
-  }
-  else if (psMethod == "stratifyByPs")
-  {
+  } else if (psMethod == "stratifyByPs") {
     kaplanMeier <- list()
     stratId <- sort(
       unique(
@@ -937,8 +930,7 @@ getCounts <- function(
       )
     )
 
-    for (i in stratId)
-    {
+    for (i in stratId) {
       kaplanMeier[[i]] <- survival::survfit(
         S ~ treatment,
         data = subset(
@@ -951,7 +943,8 @@ getCounts <- function(
     summaryKMList <- lapply(
       kaplanMeier,
       summary,
-      times = timePoint
+      times = timePoint,
+      extend = TRUE
     )
 
     res <- colMeans(
@@ -976,7 +969,8 @@ getCounts <- function(
 
     summaryKM <- summary(
       kaplanMeier,
-      times = timePoint
+      times = timePoint,
+      extend = TRUE
     )
 
     res <- 1 - summaryKM$surv

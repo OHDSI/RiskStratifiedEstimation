@@ -411,7 +411,7 @@ fitPsModelOverall <- function(
         by = c(
           "rowId",
           "subjectId",
-          "cohortId",
+          "targetId",
           "cohortStartDate",
           "daysFromObsStart",
           "daysToCohortEnd",
@@ -434,7 +434,7 @@ fitPsModelOverall <- function(
           "daysToCohortEnd",
           "daysToObsEnd",
           "subjectId",
-          "cohortId",
+          "targetId",
           "ageYear",
           "gender",
           "outcomeCount",

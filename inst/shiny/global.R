@@ -1091,12 +1091,13 @@ combinedPlot <- function(
 		relative %>%
 		dplyr::group_by(analysisType_estOutcome) %>%
 		plotly::plot_ly(
-			mode = "markers",
+			type = "scatter",
+			mode = "line+markers",
 			x = ~risk + m,
 			y = ~estimate,
+			line = ~list(color = analysisType_estOutcome, dash = "dash", width = .5),
 			color = ~analysisType_estOutcome,
 			colors = customColors[1:numberOfPoints],
-			type = "scatter",
 			error_y = list(
 				type = "data",
 				array = relative$upper - relative$estimate,
@@ -1157,12 +1158,13 @@ combinedPlot <- function(
 	p3 <-
 		absolute %>%
 		plotly::plot_ly(
-			mode = "markers",
+			type = "scatter",
+			mode = "line+markers",
 			x = ~risk + m,
 			y = ~estimate,
 			color = ~analysisType_estOutcome,
 			colors = customColors[1:numberOfPoints],
-			type = "scatter",
+			line = ~list(color = analysisType_estOutcome, dash = "dash", width = .5),
 			error_y = list(
 				type = "data",
 				symmetric = FALSE,

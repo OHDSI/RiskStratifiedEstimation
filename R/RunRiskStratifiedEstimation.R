@@ -202,7 +202,7 @@ runRiskStratifiedEstimation <- function(
         cohortTable = databaseSettings$mergedCohortTable,
         outcomeDatabaseSchema = databaseSettings$outcomeDatabaseSchema,
         outcomeTable = databaseSettings$outcomeTable,
-        cohortId = databaseSettings$targetCohortId,
+        targetId = databaseSettings$targetCohortId,
         outcomeIds = predictOutcomes,
         cdmVersion = databaseSettings$cdmVersion
       ),
