@@ -8,15 +8,10 @@ if (is.null(.GlobalEnv$shinySettings)) {
   analysisPath <- .GlobalEnv$shinySettings
 }
 
-
-
-mapOutcomes <- readRDS(
-	file.path(
-		analysisPath,
-		"map_outcomes.rds"
-	)
+pathToHtml <- file.path(
+  analysisPath,
+  "html"
 )
-
 
 
 mapOutcomes <- readRDS(
@@ -38,8 +33,7 @@ overallAnalysisFiles <- list.files(
   pattern = "^overall"
 )
 
-if (!is.null(overallAnalysisFiles))
-{
+if (!is.null(overallAnalysisFiles)) {
   overallAnalysis <- TRUE
 
   overallMappedOverallRelativeResults <- readRDS(
@@ -112,6 +106,79 @@ if (!is.null(overallAnalysisFiles))
     ) %>%
     dplyr::select(-"comparatorId") %>%
     dplyr::rename("comparator" = "exposure_name")
+}
+
+hasOverallNegativeControls <- FALSE
+if (file.exists(file.path(analysisPath, "mappedOverallResultsNegativeControls.rds"))) {
+  hasOverallNegativeControls <- TRUE
+  overallNegativeControls <- readRDS(
+    file.path(
+      analysisPath,
+      "mappedOverallResultsNegativeControls.rds"
+    )
+  ) %>%
+    dplyr::left_join(
+      mapExposures,
+      by = c(
+        "treatmentId" = "exposure_id"
+      )
+    ) %>%
+    dplyr::select(-"treatmentId") %>%
+    dplyr::rename(
+      "treatment" = "exposure_name"
+    ) %>%
+    dplyr::left_join(
+      mapExposures,
+      by = c(
+        "comparatorId" = "exposure_id"
+      )
+    ) %>%
+    dplyr::select(-"comparatorId") %>%
+    dplyr::rename("comparator" = "exposure_name") %>%
+    dplyr::mutate(
+      logRr = log(estimate)
+    )
+}
+
+hasNegativeControls <- FALSE
+if (file.exists(file.path(analysisPath, "negativeControls.rds"))) {
+  hasNegativeControls <- TRUE
+  negativeControls <- readRDS(
+    file.path(
+      analysisPath,
+      "negativeControls.rds"
+    )
+  ) %>%
+    dplyr::left_join(
+      mapOutcomes,
+      by = c(
+        "stratOutcome" = "outcome_id"
+      )
+    ) %>%
+    dplyr::select(-"stratOutcome") %>%
+    dplyr::rename(
+      "stratOutcome" = "outcome_name"
+    ) %>%
+    dplyr::left_join(
+      mapExposures,
+      by = c(
+        "treatment" = "exposure_id"
+      )
+    ) %>%
+    dplyr::select(-"treatment") %>%
+    dplyr::rename(
+      "treatment" = "exposure_name"
+    ) %>%
+    dplyr::left_join(
+      mapExposures,
+      by = c(
+        "comparator" = "exposure_id"
+      )
+    ) %>%
+    dplyr::select(-"comparator") %>%
+    dplyr::rename(
+      "comparator" = "exposure_name"
+    )
 }
 
 analyses <- readRDS(
@@ -198,6 +265,7 @@ predictionPerformance <-
 			"predictionPerformance.rds"
 		)
 	) %>%
+  tibble() %>%
 	dplyr::left_join(
 		mapOutcomes,
 		by = c(
@@ -374,6 +442,7 @@ mappedOverallCasesResults <-
 		"comparator" = "exposure_name"
 	)
 
+
 databaseOptions <- unique(
   analyses$database
 )
@@ -399,19 +468,19 @@ getResults <- function(
 	result$relative <-
 		mappedOverallRelativeResults %>%
 		dplyr::filter(
-      .$stratOutcome %in% strat & .$estOutcome %in% est & .$treatment %in% treat & .$comparator %in% comp & .$database %in% db & .$analysisType %in% anal
+      stratOutcome %in% strat & estOutcome %in% est & treatment %in% treat & comparator %in% comp & database %in% db & analysisType %in% anal
 		)
 
 	result$absolute <-
 		mappedOverallAbsoluteResults %>%
 		dplyr::filter(
-			.$stratOutcome %in% strat & .$estOutcome %in% est & .$treatment %in% treat & .$comparator %in% comp & .$database %in% db & .$analysisType %in% anal
+			stratOutcome %in% strat & estOutcome %in% est & treatment %in% treat & comparator %in% comp & database %in% db & analysisType %in% anal
 		)
 
 	result$cases <-
 		mappedOverallCasesResults %>%
 		dplyr::filter(
-			.$stratOutcome %in% strat & .$estOutcome %in% est & .$treatment %in% treat & .$comparator %in% comp & .$database %in% db & .$analysisType %in% anal
+			stratOutcome %in% strat & estOutcome %in% est & treatment %in% treat & comparator %in% comp & database %in% db & analysisType %in% anal
 		)
 
 	return(result)
@@ -422,12 +491,18 @@ getResults <- function(
 getResultsOverall <- function(
   treat, comp, strat, db, anal,
   overallMappedOverallRelativeResults
-)
-{
+) {
   result <- overallMappedOverallRelativeResults %>%
     dplyr::filter(
-      .$stratOutcome %in% strat & .$treatment %in% treat & .$comparator %in% comp & .$database %in% db & .$analysisType %in% anal
+      treatment %in% treat & comparator %in% comp & database %in% db & analysisType %in% anal
     )
+  if (!missing(strat)) {
+    result <- result %>%
+      dplyr::filter(
+        stratOutcome %in% strat
+      )
+  }
+  return(result)
 }
 
 
@@ -443,7 +518,7 @@ getIncidence <- function(
 {
   incidence %>%
 		dplyr::filter(
-			.$stratOutcome %in% strat & .$estOutcome %in% est & .$treatment %in% treat & .$comparator %in% comp & .$database %in% db & .$analysisType %in% anal
+			stratOutcome %in% strat & estOutcome %in% est & treatment %in% treat & comparator %in% comp & database %in% db & analysisType %in% anal
 		) %>%
 		return()
 }
@@ -459,21 +534,24 @@ getIncidenceOverall <- function(
 {
   incidence %>%
 		dplyr::filter(
-			.$stratOutcome == strat & .$treatment %in% treat & .$comparator %in% comp & .$database %in% db & .$analysisType %in% anal
+			stratOutcome == strat & treatment %in% treat & comparator %in% comp & database %in% db & analysisType %in% anal
 		) %>%
 		return()
 }
 
-getPredictionPerformance <- function(treat,
-									 comp,
-									 strat,
-									 coh,
-									 db,
-									 predictionPerformance) {
+getPredictionPerformance <- function(
+  treat,
+  comp,
+  strat,
+  coh,
+  db,
+  predictionPerformance
+) {
 
 	predictionPerformance %>%
 		dplyr::filter(
-			.$stratOutcome %in% strat & .$cohort %in% coh & .$treatment %in% treat & .$comparator %in% comp & .$database %in% db
+			stratOutcome %in% strat & cohort %in% coh & treatment %in% treat &
+			  comparator %in% comp & database %in% db
 		) %>%
 		return()
 
@@ -496,29 +574,29 @@ getBalance <- function(
 
   res <- analyses %>%
 		dplyr::filter(
-			.$treatment == treat,
-			.$comparator == comp,
-			.$database == db,
-			.$analysis_label == anal
+			treatment == treat,
+			comparator == comp,
+			database == db,
+			analysis_label == anal
 		)
 
 	stratOutcomeId <- mapOutcomes %>%
-		dplyr::filter(.$outcome_name == strat) %>%
+		dplyr::filter(outcome_name == strat) %>%
 		dplyr::select("outcome_id") %>%
 		unlist()
 
 	estOutcomeId <- mapOutcomes %>%
-		dplyr::filter(.$outcome_name == est) %>%
+		dplyr::filter(outcome_name == est) %>%
 		dplyr::select("outcome_id") %>%
 		unlist()
 
 	treatmentId <- mapExposures %>%
-		dplyr::filter(.$exposure_name == treat) %>%
+		dplyr::filter(exposure_name == treat) %>%
 		dplyr::select("exposure_id") %>%
 		unlist()
 
 	comparatorId <- mapExposures %>%
-		dplyr::filter(.$exposure_name == comp) %>%
+		dplyr::filter(exposure_name == comp) %>%
 		dplyr::select("exposure_id") %>%
 		unlist()
 
@@ -532,8 +610,8 @@ getBalance <- function(
 	          "overall",
 	          "balance",
 	          res$analysis_id,
-	          res$analysis_label,
 	          res$database,
+	          res$analysis_label,
 	          treatmentId,
 	          comparatorId,
 	          stratOutcomeId,
@@ -553,8 +631,8 @@ getBalance <- function(
 	        paste(
 	          "balance",
 	          res$analysis_id,
-	          res$analysis_label,
 	          res$database,
+	          res$analysis_label,
 	          treatmentId,
 	          comparatorId,
 	          stratOutcomeId,
@@ -582,29 +660,29 @@ getPsDensity <- function(treat,
 
 	res <- analyses %>%
 		dplyr::filter(
-			.$treatment == treat,
-			.$comparator == comp,
-			.$database == db,
-			.$analysis_label == anal
+			treatment == treat,
+			comparator == comp,
+			database == db,
+			analysis_label == anal
 		)
 
 	stratOutcomeId <- mapOutcomes %>%
-		dplyr::filter(.$outcome_name == strat) %>%
+		dplyr::filter(outcome_name == strat) %>%
 		dplyr::select("outcome_id") %>%
 		unlist()
 
 	estOutcomeId <- mapOutcomes %>%
-		dplyr::filter(.$outcome_name == est) %>%
+		dplyr::filter(outcome_name == est) %>%
 		dplyr::select("outcome_id") %>%
 		unlist()
 
 	treatmentId <- mapExposures %>%
-		dplyr::filter(.$exposure_name == treat) %>%
+		dplyr::filter(exposure_name == treat) %>%
 		dplyr::select("exposure_id") %>%
 		unlist()
 
 	comparatorId <- mapExposures %>%
-		dplyr::filter(.$exposure_name == comp) %>%
+		dplyr::filter(exposure_name == comp) %>%
 		dplyr::select("exposure_id") %>%
 		unlist()
 
@@ -615,8 +693,8 @@ getPsDensity <- function(treat,
 				paste(
 					"psDensity",
 					res$analysis_id,
-					anal,
 					db,
+					anal,
 					treatmentId,
 					comparatorId,
 					stratOutcomeId,
@@ -645,24 +723,24 @@ getPsDensityOverall <- function(
 
   res <- analyses %>%
 		dplyr::filter(
-			.$treatment == treat,
-			.$comparator == comp,
-			.$database == db,
-			.$analysis_label == anal
+			treatment == treat,
+			comparator == comp,
+			database == db,
+			analysis_label == anal
 		)
 
 	stratOutcomeId <- mapOutcomes %>%
-		dplyr::filter(.$outcome_name == strat) %>%
+		dplyr::filter(outcome_name == strat) %>%
 		dplyr::select("outcome_id") %>%
 		unlist()
 
 	treatmentId <- mapExposures %>%
-		dplyr::filter(.$exposure_name == treat) %>%
+		dplyr::filter(exposure_name == treat) %>%
 		dplyr::select("exposure_id") %>%
 		unlist()
 
 	comparatorId <- mapExposures %>%
-		dplyr::filter(.$exposure_name == comp) %>%
+		dplyr::filter(exposure_name == comp) %>%
 		dplyr::select("exposure_id") %>%
 		unlist()
 
@@ -674,8 +752,8 @@ getPsDensityOverall <- function(
 				  "overall",
 					"psDensity",
 					res$analysis_id,
-					res$analysis_label,
 					res$database,
+					res$analysis_label,
 					treatmentId,
 					comparatorId,
 					stratOutcomeId,
@@ -699,69 +777,68 @@ getAuc <- function(
   mapOutcomes,
   analysisPath
 ) {
-
   res <- analyses %>%
-		dplyr::filter(
-			.$treatment == treat,
-			.$comparator == comp,
-			.$database == db,
-			.$analysis_label == anal
-		)
+    dplyr::filter(
+      treatment == treat,
+      comparator == comp,
+      database == db,
+      analysis_label == anal
+    )
 
-	stratOutcomeId <- mapOutcomes %>%
-		dplyr::filter(.$outcome_name == strat) %>%
-		dplyr::select("outcome_id") %>%
-		unlist()
+  stratOutcomeId <- mapOutcomes %>%
+    dplyr::filter(outcome_name == strat) %>%
+    dplyr::select("outcome_id") %>%
+    unlist()
 
-	treatmentId <- mapExposures %>%
-		dplyr::filter(.$exposure_name == treat) %>%
-		dplyr::select("exposure_id") %>%
-		unlist()
+  treatmentId <- mapExposures %>%
+    dplyr::filter(exposure_name == treat) %>%
+    dplyr::select("exposure_id") %>%
+    unlist()
 
-	comparatorId <- mapExposures %>%
-		dplyr::filter(.$exposure_name == comp) %>%
-		dplyr::select("exposure_id") %>%
-		unlist()
+  comparatorId <- mapExposures %>%
+    dplyr::filter(exposure_name == comp) %>%
+    dplyr::select("exposure_id") %>%
+    unlist()
 
-	pathList <- file.path(
-		analysisPath,
-		paste(
-			paste(
-				"auc",
-				predictionPopulation,
-				res$analysis_id,
-				res$database,
-				treatmentId,
-				comparatorId,
-				stratOutcomeId,
-				sep = "_"
-			),
-			"rds",
-			sep = "."
-		)
-	)
+  pathList <- file.path(
+    analysisPath,
+    paste(
+      paste(
+        "auc",
+        predictionPopulation,
+        res$analysis_id,
+        res$database,
+        treatmentId,
+        comparatorId,
+        stratOutcomeId,
+        sep = "_"
+      ),
+      "rds",
+      sep = "."
+    )
+  )
 
 
-	aucResultList <- lapply(
-		pathList,
-		readRDS
-	)
+  aucResultList <- lapply(
+    pathList,
+    readRDS
+  )
 
-	names(aucResultList) <- predictionPopulation
+  names(aucResultList) <- predictionPopulation
 
-	aucResultList %>%
-		dplyr::bind_rows(
-			.id = "cohort"
-		) %>%
-		return()
+  aucResultList %>%
+    dplyr::bind_rows(
+      .id = "cohort"
+    ) %>%
+    return()
 }
 
 
 getCalibration <- function(
-	treat,
-	comp,
-	strat,
-	db,
+  treat,
+  comp,
+  strat,
+  db,
 	anal,
 	predictionPopulation,
 	analyses,
@@ -772,24 +849,24 @@ getCalibration <- function(
 
   res <- analyses %>%
 		dplyr::filter(
-			.$treatment == treat,
-			.$comparator == comp,
-			.$database == db,
-			.$analysis_label == anal
+			treatment == treat,
+			comparator == comp,
+			database == db,
+			analysis_label == anal
 		)
 
 	stratOutcomeId <- mapOutcomes %>%
-		dplyr::filter(.$outcome_name == strat) %>%
+		dplyr::filter(outcome_name == strat) %>%
 		dplyr::select("outcome_id") %>%
 		unlist()
 
 	treatmentId <- mapExposures %>%
-		dplyr::filter(.$exposure_name == treat) %>%
+		dplyr::filter(exposure_name == treat) %>%
 		dplyr::select("exposure_id") %>%
 		unlist()
 
 	comparatorId <- mapExposures %>%
-		dplyr::filter(.$exposure_name == comp) %>%
+		dplyr::filter(exposure_name == comp) %>%
 		dplyr::select("exposure_id") %>%
 		unlist()
 
@@ -827,21 +904,20 @@ getCalibration <- function(
 }
 
 
-
 combinedPlot <- function(
 	cases,
 	relative,
 	absolute,
 	treatment,
 	comparator
-)
-{
+) {
+
 
   cases <- cases %>%
     dplyr::mutate(
       analysisType_estOutcome = paste(
-        .$analysisType,
-        .$estOutcome,
+        analysisType,
+        estOutcome,
         sep = "/"
       )
     )
@@ -849,8 +925,8 @@ combinedPlot <- function(
   relative <- relative %>%
     dplyr::mutate(
       analysisType_estOutcome = paste(
-        .$analysisType,
-        .$estOutcome,
+        analysisType,
+        estOutcome,
         sep = "/"
       )
     )
@@ -858,8 +934,8 @@ combinedPlot <- function(
   absolute <- absolute %>%
     dplyr::mutate(
       analysisType_estOutcome = paste(
-        .$analysisType,
-        .$estOutcome,
+        analysisType,
+        estOutcome,
         sep = "/"
       )
     )
@@ -903,10 +979,10 @@ combinedPlot <- function(
 	relative <- relative %>%
 		dplyr::mutate(
 		  analysisType_estOutcome = factor(
-				.$analysisType_estOutcome,
+				analysisType_estOutcome,
 				levels = sort(
 					unique(
-						.$analysisType_estOutcome
+						analysisType_estOutcome
 					)
 				)
 			)
@@ -915,10 +991,10 @@ combinedPlot <- function(
 	absolute <- absolute %>%
 		dplyr::mutate(
 		  analysisType_estOutcome = factor(
-				.$analysisType_estOutcome,
+				analysisType_estOutcome,
 				levels = sort(
 					unique(
-						.$analysisType_estOutcome
+						analysisType_estOutcome
 					)
 				)
 			)
@@ -930,14 +1006,11 @@ combinedPlot <- function(
 	)
 
 	cases <-
-		reshape::melt(
+		reshape2::melt(
 			cases,
 			id.vars = c(
 				"riskStratum",
-				"database",
-				"analysisType_estOutcome",
-				"estOutcome",
-				"analysisType"
+				"analysisType_estOutcome"
 			),
 			measure.vars = c(
 				"casesComparator",
@@ -965,7 +1038,7 @@ combinedPlot <- function(
 
 
 	p1   <-
-		plot_ly(
+		plotly::plot_ly(
 			data = cases,
 			x = ~riskStratum,
 			y = ~value,
@@ -1007,21 +1080,24 @@ combinedPlot <- function(
 		dplyr::mutate(
 			risk = as.numeric(
 				as.factor(
-					.$riskStratum
+					riskStratum
 				)
-			)
-		)
+			),
+			analysisType_estOutcome = as.factor(analysisType_estOutcome)
+		) %>%
+	  dplyr::arrange(analysisType_estOutcome)
 
 	p2 <-
 		relative %>%
-		dplyr::group_by(.$analysisType_estOutcome) %>%
+		dplyr::group_by(analysisType_estOutcome) %>%
 		plotly::plot_ly(
-			mode = "markers",
+			type = "scatter",
+			mode = "line+markers",
 			x = ~risk + m,
 			y = ~estimate,
+			line = ~list(color = analysisType_estOutcome, dash = "dash", width = .5),
 			color = ~analysisType_estOutcome,
 			colors = customColors[1:numberOfPoints],
-			type = "scatter",
 			error_y = list(
 				type = "data",
 				array = relative$upper - relative$estimate,
@@ -1055,7 +1131,7 @@ combinedPlot <- function(
 			),
 			xaxis = list(
 				title = "Risk stratum",
-				tickformat = ',d'
+				tickvals = ~risk
 			)
 		) %>%
 		plotly::layout(
@@ -1066,29 +1142,36 @@ combinedPlot <- function(
 		absolute %>%
 		dplyr::left_join(quickMap) %>%
 		dplyr::mutate(
-			estimate = 100*.$estimate,
-			lower = 100*.$lower,
-			upper = 100*.$upper,
+			estimate = 100 * estimate,
+			lower = 100 * lower,
+			upper = 100 * upper,
 			risk = as.numeric(
 				as.factor(
-					.$riskStratum
-				)
+					riskStratum
+				),
+			analysisType_estOutcome = as.factor(analysisType_estOutcome)
 			)
-		)
+		) |>
+	  dplyr::arrange(analysisType_estOutcome)
+
 
 	p3 <-
 		absolute %>%
 		plotly::plot_ly(
-			mode = "markers",
+			type = "scatter",
+			mode = "line+markers",
 			x = ~risk + m,
 			y = ~estimate,
 			color = ~analysisType_estOutcome,
 			colors = customColors[1:numberOfPoints],
-			type = "scatter",
+			line = ~list(color = analysisType_estOutcome, dash = "dash", width = .5),
 			error_y = list(
 				type = "data",
-				array = absolute$upper - absolute$estimate,
-				arrayminus = absolute$estimate - absolute$lower
+				symmetric = FALSE,
+				array = ~(upper-estimate),
+				# array = absolute$upper - absolute$estimate,
+				# arrayminus = absolute$estimate - absolute$lower
+				arrayminus = ~(estimate - lower)
 			),
 			hoverinfo = "text",
 			hovertext = paste(
@@ -1100,14 +1183,14 @@ combinedPlot <- function(
 				absolute$analysisType,
 				"<br><b>Absolute difference:</b>",
 				paste0(
-					round(absolute$estimate, 2),
+					round(absolute$estimate, 4),
 					" (",
 					paste(
-						round(absolute$lower, 2),
-						round(absolute$upper, 2),
+						round(absolute$lower, 4),
+						round(absolute$upper, 4),
 						sep = ", "
 					),
-					")"
+					"}"
 				)
 			),
 			legendgroup = ~estOutcome,
@@ -1119,7 +1202,7 @@ combinedPlot <- function(
 			),
 			xaxis = list(
 				title = "Risk stratum",
-				tickformat = ',d'
+				tickvals = ~risk
 			)
 		)
 
@@ -1139,8 +1222,8 @@ hline <- function(y = 0, color = "black") {
 		y0 = y,
 		y1 = y,
 		line = list(
-			color = color,
-			dash = "dash"
+			color = color
+			# dash = "dash"
 		)
 	)
 }
@@ -1166,296 +1249,158 @@ addInfo <- function(item, infoId) {
 
 
 
-combinedPlot123w12 <- function(
-  cases,
-  relative,
-  absolute,
-  treatment,
-  comparator
-)
-{
 
-  cases <- cases %>%
-    dplyr::mutate(
-      analysisType_estOutcome = paste(
-        .$analysisType,
-        .$estOutcome,
-        sep = "_"
+getNegativeControls <- function(
+  treat, comp, strat, db, anal,
+  negativeControls
+) {
+  res <- negativeControls %>%
+    dplyr::filter(
+      stratOutcome %in% strat &
+        treatment %in% treat &
+        comparator %in% comp &
+        database %in% db &
+        analysisType %in% anal
+    )
+  return(res)
+}
+
+
+plotRiskStratifiedNegativeControls <- function(
+  negativeControls,
+  positiveControls
+) {
+  riskStrata <- unique(negativeControls$riskStratum)
+  plots <- list()
+  for (i in seq_along(riskStrata)) {
+    negativeControlsSubset <- negativeControls %>%
+      filter(riskStratum == riskStrata[i])
+
+    null <- EmpiricalCalibration::fitNull(
+      logRr   = log(negativeControlsSubset$estimate),
+      seLogRr = negativeControlsSubset$seLogRr
+    )
+
+    positiveControlsSubset <- positiveControls %>%
+      dplyr::filter(
+        riskStratum == paste0("Q", i)
       )
+
+    plots[[i]] <- EmpiricalCalibration::plotCalibrationEffect(
+      logRrNegatives   = log(negativeControlsSubset$estimate),
+      seLogRrNegatives = negativeControlsSubset$seLogRr,
+      logRrPositives   = log(positiveControlsSubset$estimate),
+      seLogRrPositives = positiveControlsSubset$seLogRr,
+      null             = null
     )
-
-  relative <- relative %>%
-    dplyr::mutate(
-      analysisType_estOutcome = paste(
-        .$analysisType,
-        .$estOutcome,
-        sep = "_"
-      )
-    )
-
-  absolute <- absolute %>%
-    dplyr::mutate(
-      analysisType_estOutcome = paste(
-        .$analysisType,
-        .$estOutcome,
-        sep = "_"
-      )
-    )
-
-  customColors <- c(
-    "#0099FF",
-    "#009933",
-    "#CC0000",
-    "#FF9933",
-    "#663399",
-    "#CC9966"
-  )
-
-  numberOfOutcomes <- length(
-    unique(
-      cases$estOutcome
-    )
-  )
-
-  numberOfAnalyses <- length(
-    unique(
-      cases$analysisType
-    )
-  )
-
-  numberOfPoints <- numberOfOutcomes * numberOfAnalyses
-  if (numberOfPoints > 5) {
-    stop("No more than 5 outcomes can be plotted at the same time")
   }
+  gridExtra::grid.arrange(
+    grobs = plots,
+    nrow  = 1
+  )
+}
 
-  m <- 0
 
-  if (numberOfPoints == 2) {
-    m <- c(-.15, .15)
-  } else if (numberOfPoints == 3) {
-    m <- c(-.15, 0, .15)
-  } else if (numberOfPoints == 4) {
-    m <- c(-.15, -.05, .05, .15)
-  } else if (numberOfPoints == 5) {
-    m <- c(-.15, -.075, 0, .075, .15)
-  }
+calibrateRiskStrataCis <- function(
+  negativeControls,
+  positiveControls
+) {
+  riskStrata <- unique(negativeControls$riskStratum)
+  outcomes <- unique(positiveControls$estOutcome)
+  ret <- NULL
+  for (j in seq_along(outcomes)) {
+    for (i in seq_along(riskStrata)) {
+      negativeControlsSubset <- negativeControls %>%
+        dplyr::filter(
+          riskStratum == paste0("Q", i)
+        )
+      positiveControlsSubset <- positiveControls %>%
+        dplyr::filter(
+          riskStratum == paste0("Q", i),
+          estOutcome == outcomes[j]
+        )
+      mod <- EmpiricalCalibration::fitSystematicErrorModel(
+        logRr =  log(negativeControlsSubset$estimate),
+        seLogRr = negativeControlsSubset$seLogRr,
+        trueLogRr = rep(0, nrow(negativeControlsSubset))
+      )
 
-  relative <- relative %>%
-    dplyr::mutate(
-      estOutcome = factor(
-        .$estOutcome,
-        levels = sort(
-          unique(
-            .$estOutcome
+      ret <- ret %>%
+        dplyr::bind_rows(EmpiricalCalibration::calibrateConfidenceInterval(
+          logRr = log(positiveControlsSubset$estimate),
+          seLogRr = positiveControlsSubset$seLogRr,
+          model = mod
+        ) %>%
+          dplyr::mutate(
+            estimate = round(exp(logRr), digits = 2),
+            lower = round(exp(logLb95Rr), digits = 2),
+            upper = round(exp(logUb95Rr), digits = 2)
+          ) %>%
+          dplyr::select(
+            estimate,
+            lower,
+            upper
+          ) %>%
+          dplyr::mutate(
+            riskStratum = paste0("Q", i),
+            Outcome = outcomes[j]
           )
         )
+    }
+  }
+  return(ret)
+}
+
+
+
+plotPsDensity <- function(data, riskStratified = FALSE) {
+
+  plot <- ggplot2::ggplot(
+    data = data,
+    ggplot2::aes(
+      x = x,
+      y = y
+    )
+  ) +
+    ggplot2::geom_density(
+      stat = "identity",
+      ggplot2::aes(
+        color = exposure_name,
+        group = exposure_name,
+        fill = exposure_name
       )
+    ) +
+    ggplot2::ylab(
+      label = "Density"
+    ) +
+    ggplot2::scale_x_continuous(
+      name = "Preference score",
+      breaks = seq(0, 1, .5)
+    ) +
+    ggplot2::scale_fill_manual(
+      values = scales::alpha(c("#fc8d59", "#91bfdb"), .6)
+    ) +
+    ggplot2::scale_color_manual(
+      values = scales::alpha(c("#fc8d59", "#91bfdb"), .9)
     )
 
-  absolute <- absolute %>%
-    dplyr::mutate(
-      estOutcome = factor(
-        .$estOutcome,
-        levels = sort(
-          unique(
-            .$estOutcome
-          )
+  if (riskStratified) {
+    plot <- plot + ggplot2::facet_grid(~riskStratum)
+  }
+    plot <- plot + ggplot2::theme_classic() +
+    ggplot2::theme(
+      legend.title = ggplot2::element_blank(),
+      legend.position = "top",
+      legend.text = ggplot2::element_text(
+        margin = ggplot2::margin(
+          t = 0,
+          r = 0.5,
+          b = 0,
+          l = 0.1,
+          unit = "cm"
         )
       )
     )
 
-  quickMap <- data.frame(
-    estOutcome = levels(relative$estOutcome),
-    m = m
-  )
-
-  cases <-
-    reshape::melt(
-      cases,
-      id.vars = c(
-        "riskStratum",
-        "database",
-        "estOutcome"
-      ),
-      measure.vars = c(
-        "casesComparator",
-        "casesTreatment"
-      )
-    ) %>%
-    dplyr::mutate(
-      variable = ifelse(
-        .$variable == "casesComparator",
-        comparator,
-        treatment
-      ),
-      g = paste(
-        .$estOutcome,
-        .$variable,
-        sep = "/"
-      ),
-      value = 100*.$value,
-      riskStratum = as.numeric(
-        as.factor(
-          .$riskStratum
-        )
-      )
-    )
-
-
-  p1   <-
-    plot_ly(
-      data = cases,
-      x = ~riskStratum,
-      y = ~value,
-      color = ~g,
-      colors = "Paired",
-      type = 'bar',
-      hoverinfo = "text",
-      hovertext = paste(
-        "<b>Outcome:</b>",
-        cases$estOutcome,
-        "<br><b>Database:</b>",
-        cases$database,
-        "<br><b>Exposure:</b>",
-        cases$variable,
-        "<br><b>Event rate:</b>",
-        paste0(
-          round(cases$value, 2),
-          "%"
-        )
-      ),
-      legendgroup = ~g
-    ) %>%
-    plotly::layout(
-      yaxis = list(
-        title = 'Observed events (%)',
-        autorange = "reversed"
-      ),
-      xaxis = list(
-        title = "Risk stratum"
-      ),
-      barmode = 'group'
-    )
-
-  relative <-
-    relative %>%
-    dplyr::left_join(quickMap) %>%
-    dplyr::mutate(
-      risk = as.numeric(
-        as.factor(
-          .$riskStratum
-        )
-      )
-    )
-
-  p2 <-
-    relative %>%
-    dplyr::group_by(.$estOutcome) %>%
-    plotly::plot_ly(
-      mode = "markers",
-      x = ~risk + m,
-      y = ~estimate,
-      color = ~estOutcome,
-      colors = customColors[1:nOutcomes],
-      type = "scatter",
-      error_y = list(
-        type = "data",
-        array = relative$upper - relative$estimate,
-        arrayminus = relative$estimate - relative$lower
-      ),
-      hoverinfo = "text",
-      hovertext = paste(
-        "<b>Outcome:</b>",
-        relative$estOutcome,
-        "<br><b>Database:</b>",
-        relative$database,
-        "<br><b>HR:</b>",
-        paste0(
-          round(relative$estimate, 2),
-          " (",
-          paste(
-            round(relative$lower, 2),
-            round(relative$upper, 2),
-            sep = ", "
-          ),
-          ")"
-        )
-      ),
-      legendgroup = ~estOutcome
-    ) %>%
-    plotly::layout(
-      yaxis = list(
-        title = "Hazard ratio"
-      ),
-      xaxis = list(
-        title = "Risk stratum",
-        tickformat = ',d'
-      )
-    ) %>%
-    plotly::layout(
-      shapes = hline(1)
-    )
-
-  absolute <-
-    absolute %>%
-    dplyr::left_join(quickMap) %>%
-    dplyr::mutate(
-      estimate = 100*.$estimate,
-      lower = 100*.$lower,
-      upper = 100*.$upper,
-      risk = as.numeric(
-        as.factor(
-          .$riskStratum
-        )
-      )
-    )
-
-  p3 <-
-    absolute %>%
-    plotly::plot_ly(
-      mode = "markers",
-      x = ~risk + m,
-      y = ~estimate,
-      color = ~estOutcome,
-      colors = customColors[1:nOutcomes],
-      type = "scatter",
-      error_y = list(
-        type = "data",
-        array = absolute$upper - absolute$estimate,
-        arrayminus = absolute$estimate - absolute$lower
-      ),
-      hoverinfo = "text",
-      hovertext = paste(
-        "<b>Outcome:</b>",
-        absolute$estOutcome,
-        "<br><b>Database:</b>",
-        absolute$database,
-        "<br><b>Absolute difference:</b>",
-        paste0(
-          round(absolute$estimate, 2),
-          " (",
-          paste(
-            round(absolute$lower, 2),
-            round(absolute$upper, 2),
-            sep = ", "
-          ),
-          ")"
-        )
-      ),
-      legendgroup = ~estOutcome,
-      showlegend = FALSE
-    ) %>%
-    plotly::layout(
-      yaxis = list(
-        title = "Absolute risk reduction (%)"
-      ),
-      xaxis = list(
-        title = "Risk stratum",
-        tickformat = ',d'
-      )
-    )
-
-  plotly::subplot(p1, p2, p3, shareX = TRUE, nrows = 3, titleY = T)
-
-
+  return(plot)
 }

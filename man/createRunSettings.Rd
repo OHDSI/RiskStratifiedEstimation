@@ -7,8 +7,7 @@ input consists of two parts: 1) the settings for running the prediction algorith
 settings for estimating treatment effects within strata of predicted risk.}
 \usage{
 createRunSettings(
-  runPlpSettings = createRunPlpSettingsArgs(modelSettings =
-    PatientLevelPrediction::setLassoLogisticRegression()),
+  runPlpSettings = createRunPlpSettingsArgs(),
   runCmSettings = createRunCmSettingsArgs()
 )
 }

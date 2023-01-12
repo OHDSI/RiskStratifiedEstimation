@@ -7,10 +7,12 @@
 createDatabaseSettings(
   cdmVersion = "5",
   cdmDatabaseSchema,
+  databaseName,
   cohortDatabaseSchema = cdmDatabaseSchema,
   outcomeDatabaseSchema = cdmDatabaseSchema,
   resultsDatabaseSchema = cdmDatabaseSchema,
   exposureDatabaseSchema = cdmDatabaseSchema,
+  tempEmulationSchema = cdmDatabaseSchema,
   cohortTable,
   outcomeTable,
   exposureTable = "drug_era",
