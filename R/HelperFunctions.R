@@ -29,7 +29,7 @@
 #' @param cohortDatabaseSchema The name of the database schema that is the location where the cohort data used to define the at risk cohort is available
 #' @param cohortTable The table that contains the treatment and comparator cohorts.
 #' @param resultsDatabaseSchema The name of the database schema to store the new tables. Need to have write access.
-#' @param mergedCohortTable The table that will contain the merged cohorts.
+#' @param mergedCohortTable The table that will contain the computeIncidenceAnalysis <- funcitiogmerged cohorts.
 #' @param connectionDetails The connection details required to connect to a database.
 #'
 #' @return Creates the tables resultsDatabaseSchema.mergedCohortTable, resultsDatabaseSchema.attributeDefinitionTable and resultsDatabaseSchema.cohortAttributeTable
@@ -107,12 +107,13 @@ switchOutcome <- function(
 
   result <- ps %>%
     dplyr::select(
-      subjectId,
+      # subjectId,
+      rowId,
       propensityScore
     ) %>%
     dplyr::left_join(
       populationCm,
-      by = "subjectId"
+      by = "rowId"
     ) %>%
     dplyr::filter(
       !is.na(
@@ -145,6 +146,9 @@ createOverallResults <- function(analysisSettings) {
   predictOutcomes <-
     analysisSettings$outcomeIds[which(colSums(analysisSettings$analysisMatrix) != 0)]
 
+  negativeControls <- analysisSettings$negativeControlOutcomes
+  analysisLabels <- analysisSettings$analysisLabels
+
   pathToResults <- file.path(
     analysisSettings$saveDirectory,
     analysisSettings$analysisId,
@@ -163,44 +167,9 @@ createOverallResults <- function(analysisSettings) {
     "shiny"
   )
 
-  if (!dir.exists(saveDir))
-  {
+  if (!dir.exists(saveDir)) {
     dir.create(saveDir, recursive = T)
   }
-
-  absolute <- data.frame(
-    estimate = numeric(),
-    lower = numeric(),
-    upper = numeric(),
-    riskStratum = character(),
-    stratOutcome = numeric(),
-    estOutcome = numeric(),
-    database = character(),
-    analysisType = character(),
-    treatment = numeric(),
-    comparator = numeric()
-  )
-  relative <- data.frame(
-    estimate = numeric(),
-    lower = numeric(),
-    upper = numeric(),
-    riskStratum = character(),
-    stratOutcome = numeric(),
-    estOutcome = numeric(),
-    database = character(),
-    analysisType = character(),
-    treatment = numeric(),
-    comparator = numeric()
-  )
-  cases <- data.frame(
-    riskStratum = character(),
-    stratOutcome = numeric(),
-    estOutcome = numeric(),
-    database = character(),
-    analysisType = character(),
-    treatment = numeric(),
-    comparator = numeric()
-  )
 
   predictionPopulations <- c(
     "EntirePopulation",
@@ -267,13 +236,17 @@ createOverallResults <- function(analysisSettings) {
         dplyr::rowwise() %>%
         dplyr::mutate(
           lower = binom.test(
-            x = observedIncidence*PersonCountAtRisk,
-            PersonCountAtRisk
+            x = round(observedIncidence * PersonCountAtRisk),
+            PersonCountAtRisk,
+            alternative = "two.sided",
+            conf.level = .95
           )$conf.int[1],
           upper = binom.test(
-            x = observedIncidence*PersonCountAtRisk,
-            PersonCountAtRisk
-          )$conf.int[2]
+            x = round(observedIncidence * PersonCountAtRisk),
+            PersonCountAtRisk,
+            alternative = "two.sided",
+            conf.level = .95
+          )$conf.int[2],
         ) %>%
         dplyr::mutate(
           database = analysisSettings$databaseName,
@@ -302,177 +275,174 @@ createOverallResults <- function(analysisSettings) {
           )
         )
     }
+  }
 
-    absoluteResult <- readRDS(
-      file.path(
-        pathToResults,
-        predictOutcome,
-        "absoluteRiskReduction.rds"
-      )
-    ) %>%
-      dplyr::rename("estimate" = "ARR")
-    absoluteResult <- data.frame(
-      absoluteResult,
-      stratOutcome = predictOutcome,
-      estOutcome = predictOutcome,
-      database = analysisSettings$databaseName,
-      treatment = analysisSettings$treatmentCohortId,
-      comparator = analysisSettings$comparatorCohortId)
-    absolute <- rbind(absolute, absoluteResult
+  mergeAbsolute <- function(path, typeOfResult) {
+
+    fileName <- dplyr::case_when(
+      typeOfResult == "absolute" ~ "absoluteRiskReduction.rds",
+      typeOfResult == "relative" ~ "relativeRiskReduction.rds",
+      typeOfResult == "cases"    ~ "cases.rds"
     )
-
-    relativeResult <- readRDS(
-      file.path(
-        pathToResults,
-        predictOutcome,
-        "relativeRiskReduction.rds"
-      )
-    ) %>%
-      dplyr::rename("estimate" = "HR")
-    relativeResult <- data.frame(
-      relativeResult,
-      stratOutcome = predictOutcome,
-      estOutcome = predictOutcome,
-      database = analysisSettings$databaseName,
-      treatment = analysisSettings$treatmentCohortId,
-      comparator = analysisSettings$comparatorCohortId
-    )
-    relative <- rbind(relative, relativeResult)
-
-    casesResult <- readRDS(
-      file.path(
-        pathToResults,
-        predictOutcome,
-        "cases.rds"
-      )
-    ) %>%
-      dplyr::rename("casesComparator" = "comparator") %>%
-      dplyr::rename("casesTreatment" = "treatment")
-    casesResult <- data.frame(
-      casesResult,
-      stratOutcome = predictOutcome,
-      estOutcome = predictOutcome,
-      database = analysisSettings$databaseName,
-      treatment = analysisSettings$treatmentCohortId,
-      comparator = analysisSettings$comparatorCohortId
-    )
-    cases <- rbind(cases, casesResult)
-
-    predLoc <- which(analysisSettings$outcomeIds == predictOutcome)
-    compLoc <- analysisSettings$analysisMatrix[, predLoc]
-    compareOutcomes <- analysisSettings$outcomeIds[as.logical(compLoc)]
-    compareOutcomes <- compareOutcomes[compareOutcomes != predictOutcome]
-    # compareOutcomes <- compareOutcomes[!compareOutcomes %in% failedAnalyses]
-    compareOutcomes <- sort(
-      compareOutcomes[compareOutcomes != predictOutcome]
-    )
-
-    if (length(compareOutcomes) != 0) {
-      for (compareOutcome in compareOutcomes) {
-        absoluteResult <- tryCatch(
-          {
-            absoluteResult <- readRDS(
-              file.path(
-                pathToResults,
-                predictOutcome,
-                compareOutcome,
-                "absoluteRiskReduction.rds"
-              )
-            ) %>%
-              dplyr::rename("estimate" = "ARR")
-          },
-          error = function(e)
-          {
-            e$message
-          }
+    if (!file.exists(file.path(path, fileName))) {
+      return(NULL)
+    } else {
+      readRDS(
+        file.path(
+          path,
+          fileName
         )
-
-        if (!is.character(absoluteResult)) {
-          absoluteResult <- data.frame(
-            absoluteResult,
-            stratOutcome = predictOutcome,
-            estOutcome = compareOutcome,
-            database = analysisSettings$databaseName,
-            treatment = analysisSettings$treatmentCohortId,
-            comparator = analysisSettings$comparatorCohortId
-          )
-
-          absolute <- rbind(absolute, absoluteResult)
-        }
-
-        relativeResult <- tryCatch(
-          {
-            relativeResult <- readRDS(
-              file.path(
-                pathToResults,
-                predictOutcome,
-                compareOutcome,
-                "relativeRiskReduction.rds"
-              )
-            ) %>%
-              dplyr::rename("estimate" = "HR")
-          },
-          error = function(e)
-          {
-            e$message
-          }
-        )
-
-        if (!is.character(relativeResult)) {
-
-          relativeResult <- data.frame(
-            relativeResult,
-            stratOutcome = predictOutcome,
-            estOutcome = compareOutcome,
-            database = analysisSettings$databaseName,
-            treatment = analysisSettings$treatmentCohortId,
-            comparator = analysisSettings$comparatorCohortId
-          )
-          relative <- rbind(relative, relativeResult)
-        }
-
-        casesResult <- tryCatch(
-          {
-            casesResult <- readRDS(
-              file.path(
-                pathToResults,
-                predictOutcome,
-                compareOutcome,
-                "cases.rds"
-              )
-            ) %>%
-              dplyr::rename("casesComparator" = "comparator") %>%
-              dplyr::rename("casesTreatment" = "treatment")
-          },
-          error = function(e){
-            e$message
-          }
-        )
-
-        if (!is.character(casesResult)) {
-          casesResult <- data.frame(
-            casesResult,
-            stratOutcome = predictOutcome,
-            estOutcome = compareOutcome,
-            database = analysisSettings$databaseName,
-            treatment = analysisSettings$treatmentCohortId,
-            comparator = analysisSettings$comparatorCohortId
-          )
-          cases <- rbind(cases, casesResult)
-
-        }
-      }
+      ) %>%
+        dplyr::mutate(
+          estOutcome = as.numeric(basename(path))
+        ) %>%
+        return()
     }
   }
 
-  absolute %>%
-    saveRDS(file.path(saveDir, "mappedOverallAbsoluteResults.rds"))
+  mergePredictOutcomes <- function(
+    predictOutcome,
+    label,
+    pathToResults,
+    typeOfResult,
+    analysisSettings,
+    isNegativeControl = FALSE
+  ) {
 
-  relative %>%
-    saveRDS(file.path(saveDir, "mappedOverallRelativeResults.rds"))
+    tmpPath <- file.path(
+      pathToResults,
+      label,
+      predictOutcome
+    )
+    allOutcomes <- as.numeric(
+      list.dirs(
+        tmpPath,
+        full.names = FALSE,
+        recursive = FALSE
+      )
+    )
+    negativeControls <- analysisSettings$negativeControlOutcomes
+    if (!isNegativeControl) {
+      compareOutcomes <- allOutcomes[!allOutcomes %in% negativeControls]
+    } else {
+      compareOutcomes <- negativeControls
+    }
+    pathList <- file.path(tmpPath, compareOutcomes)
+    tmpAbsolute <- list()
+    for (i in seq_along(pathList)) {
+      tmpAbsolute[[i]] <- mergeAbsolute(
+        path = pathList[i],
+        typeOfResult = typeOfResult
+      )
+    }
 
-  cases %>%
-    saveRDS(file.path(saveDir, "mappedOverallCasesResults.rds"))
+    res <- tmpAbsolute %>%
+      dplyr::bind_rows() %>%
+      dplyr::mutate(
+        stratOutcome = predictOutcome,
+        database     = analysisSettings$databaseName,
+        treatment    = analysisSettings$treatmentCohortId,
+        comparator   = analysisSettings$comparatorCohortId
+      )
+    return(res)
+  }
+
+  relativeTmp <- absoluteTmp <- casesTmp <- list()
+  relativeNcTmp <- absoluteNcTmp <- casesNcTmp <- list()
+  for (i in seq_along(analysisLabels)) {
+    relativeTmp[[i]] <- purrr::map_dfr(
+      .x = predictOutcomes,
+      .f = mergePredictOutcomes,
+      pathToResults = pathToResults,
+      label = analysisLabels[i],
+      analysisSettings = analysisSettings,
+      typeOfResult = "relative"
+    )
+
+    closeAllConnections()
+    absoluteTmp[[i]] <- purrr::map_dfr(
+      .x = predictOutcomes,
+      .f = mergePredictOutcomes,
+      pathToResults = pathToResults,
+      label = analysisLabels[i],
+      analysisSettings = analysisSettings,
+      typeOfResult = "absolute"
+    )
+
+    closeAllConnections()
+    casesTmp[[i]] <- purrr::map_dfr(
+      .x = predictOutcomes,
+      .f = mergePredictOutcomes,
+      pathToResults = pathToResults,
+      label = analysisLabels[i],
+      analysisSettings = analysisSettings,
+      typeOfResult = "cases"
+    )
+    closeAllConnections()
+
+    if (!is.null(negativeControls)) {
+      relativeNcTmp[[i]] <- purrr::map_dfr(
+        .x = predictOutcomes,
+        .f = mergePredictOutcomes,
+        pathToResults = pathToResults,
+        label = analysisLabels[i],
+        analysisSettings = analysisSettings,
+        typeOfResult = "relative",
+        isNegativeControl = TRUE
+      )
+
+      # relativeNcTmp[[i]] <- lapply(
+      #   predictOutcomes,
+      #   mergePredictOutcomes,
+      #   pathToResults = pathToResults,
+      #   label = analysisLabels[i],
+      #   analysisSettings = analysisSettings,
+      #   typeOfResult = "relative",
+      #   isNegativeControl = TRUE
+      # ) %>%
+      #   dplyr::bind_rows()
+
+      closeAllConnections()
+    }
+  }
+
+  dplyr::bind_rows(relativeTmp) %>%
+    dplyr::tibble() %>%
+    saveRDS(
+      file.path(
+        saveDir,
+        "mappedOverallRelativeResults.rds"
+      )
+    )
+
+  dplyr::bind_rows(absoluteTmp) %>%
+    dplyr::tibble() %>%
+    saveRDS(
+      file.path(
+        saveDir,
+        "mappedOverallAbsoluteResults.rds"
+      )
+    )
+
+  dplyr::bind_rows(casesTmp) %>%
+    dplyr::tibble() %>%
+    saveRDS(
+      file.path(
+        saveDir,
+        "mappedOverallCasesResults.rds"
+      )
+    )
+
+  if (!is.null(negativeControls)) {
+    dplyr::bind_rows(relativeNcTmp) %>%
+      dplyr::tibble() %>%
+      saveRDS(
+        file.path(
+          saveDir,
+          "negativeControls.rds"
+        )
+      )
+  }
 
   analysisSettings$mapOutcomes %>%
     saveRDS(
@@ -489,7 +459,8 @@ createOverallResults <- function(analysisSettings) {
         "map_exposures.rds"
       )
     )
-  data.frame(
+
+  dplyr::tibble(
     analysis_id = analysisSettings$analysisId,
     description = analysisSettings$description,
     database = analysisSettings$databaseName,
@@ -560,45 +531,497 @@ fitMultiplePsModelOverall <- function(
 }
 
 
-
-#' @importFrom dplyr %>%
-#' @export
 mergeTempFiles <- function(
-  pathToPs,
-  outcomeId,
+  path,
   fileName
 ) {
-
-  path <- file.path(
-    pathToPs,
-    outcomeId
-  )
-
-  files <- list.files(
+  paths <- list.files(
     path = path,
-    pattern = paste(
-      "temp",
-      fileName,
-      sep = "_"
-    ),
-    full.names = TRUE
+    full.names = TRUE,
+    pattern = paste("tmp", fileName, sep = "_")
   )
-
-  files %>%
-    lapply(readRDS) %>%
-    dplyr::bind_rows() %>%
+  do.call(
+    rbind,
+    lapply(paths, readRDS)
+  ) %>%
     saveRDS(
       file.path(
         path,
-        paste(
+        paste0(
           fileName,
-          "rds",
-          sep = "."
+          ".rds"
         )
       )
     )
+  file.remove(paths)
+}
 
-  file.remove(files)
+
+#' @importFrom dplyr %>%
+#' @export
+mergeFiles <- function(
+  path,
+  fileName
+) {
+
+  if (!dir.exists(path)) return()
+  outcomeId <- as.numeric(basename(path))
+  readIfExists <- function(path, outcomeId, fileName) {
+    fileDir <- file.path(
+      path,
+      paste0(fileName, ".rds")
+    )
+    if (file.exists(fileDir)) {
+      readRDS(fileDir) %>%
+        dplyr::mutate(
+          stratOutcome = outcomeId,
+          estOutcome   = as.numeric(basename(path))
+        )
+    }
+  }
+
+  outcomeDirs <- list.dirs(
+    path,
+    recursive = FALSE,
+    full.names = TRUE
+  )
+
+  file.path(outcomeDirs) %>%
+    lapply(
+      readIfExists,
+      outcomeId = outcomeId,
+      fileName  = fileName
+    ) %>%
+    dplyr::bind_rows() %>%
+    dplyr::tibble()
+}
+
+
+
+#' @importFrom dplyr %>%
+#' @export
+mergeAnalysisFiles <- function(
+  analysisSettings,
+  label,
+  fileName
+) {
+  analysisPath <- file.path(
+    analysisSettings$saveDirectory,
+    analysisSettings$analysisId,
+    "Estimation",
+    label
+  )
+  paths <- list.dirs(
+    path = analysisPath,
+    full.names = TRUE,
+    recursive = FALSE
+  )
+  do.call(
+    rbind,
+    lapply(paths, mergeFiles, fileName)
+  )
+}
+
+
+#' @importFrom dplyr %>%
+#' @export
+mergeRseeFiles <- function(
+  analysisSettings,
+  fileName
+) {
+  analysisPath = file.path(
+    analysisSettings$saveDirectory,
+    analysisSettings$analysisId,
+    "Estimation"
+  )
+
+  labels <- list.dirs(
+    analysisPath,
+    full.names = FALSE,
+    recursive = FALSE
+  )
+
+  do.call(
+    rbind,
+    lapply(
+      labels,
+      mergeAnalysisFiles,
+      analysisSettings = analysisSettings,
+      fileName         = fileName
+    )
+  )
+}
+
+#' Absolute risk reduction
+#'
+#' Calculates absolute risk reduction based on the Kaplan-Meier estimates within risk strata
+#'
+#' @param population         The study population generated by \code{\link[CohortMethod]{matchOnPs}} when using
+#'                           propensity score matching or by \code{\link[CohortMethod]{stratifyByPs}} when stratifying
+#'                           on the propensity score. In case of inverse probability of treatment weighting approach,
+#'                           it is a datframe with a \code{weights} column.
+#' @param timePoint          The time at which the absolute risk difference is estimated
+#' @param psMethod           Can be one of "matchOnPs", "stratifyByPs" or "inversePtWeighted".
+#'
+#' @return                   A dataframe with the absolute risk-stratum specific absolute risk difference estimates,
+#'                           along with 95 percent confidence interval.
+#'
+#' @export
+
+absoluteRiskReduction <- function(
+  population,
+  timePoint,
+  psMethod
+) {
+
+  population <- as.data.frame(
+    population
+  )
+  population$event <- ifelse(
+    is.na(population$daysToEvent),
+    yes = 0,
+    no = 1
+  )
+
+  population$S <- survival::Surv(
+    population$survivalTime,
+    population$event
+  )
+
+  kaplanMeier <-  survival::survfit(
+    S ~ treatment,
+    data = population
+  )
+
+  failed <- tryCatch(
+    {
+    if (psMethod == "matchOnPs") {
+      summaryKM <- summary(
+        kaplanMeier,
+        times = timePoint
+      )
+
+      standardError <- sqrt(
+        sum(
+          summaryKM$std.err^2
+        )
+      )
+
+      arr <- diff(
+        summaryKM$surv
+      )
+
+      res <- c(
+        arr,
+        arr - 1.96*standardError,
+        arr + 1.96*standardError
+      )
+    } else if (psMethod == "stratifyByPs") {
+      kaplanMeier <- list()
+      kk <- sort(
+        unique(
+          population$stratumId
+        )
+      )
+
+      for (i in kk) {
+        kaplanMeier[[i]] <- survival::survfit(
+          S ~ treatment,
+          data = subset(
+            population,
+            stratumId == i
+          )
+        )
+      }
+
+      summaryKMList <- lapply(
+        kaplanMeier,
+        summary,
+        times = timePoint,
+        extend = TRUE
+      )
+
+      arrList <- lapply(
+        summaryKMList,
+        getAbsoluteDifference
+      )
+
+      arr <- mean(
+        unlist(
+          arrList
+        )
+      )
+
+      standardErrors <- lapply(
+        summaryKMList,
+        getStandadrdError
+      )
+
+      pooledStandardError <- sqrt(
+        sum(unlist(standardErrors)^2)/25
+      )
+
+      res <- c(
+        arr,
+        arr - 1.96*pooledStandardError,
+        arr + 1.96*pooledStandardError
+      )
+    } else if (psMethod == "inversePtWeighted") {
+      kaplanMeier <-  survival::survfit(
+        S ~ treatment,
+        data = population,
+        weights = weights
+      )
+
+      summaryKM <- summary(
+        kaplanMeier,
+        times = timePoint
+      )
+
+      standardError <- sqrt(
+        sum(summaryKM$std.err^2)
+      )
+
+      arr <- diff(
+        summaryKM$surv
+      )
+
+      res <- c(
+        arr,
+        arr - 1.96*standardError,
+        arr + 1.96*standardError
+      )
+    }
+  },
+    error = function(e) print(e)
+  )
+
+
+  return(res)
 
 }
 
+
+
+
+#' Relative risk reduction
+#'
+#' Calculates hazard ratios within risk strata.
+#' @param model    The model that was used to fit a cox regression model to the data.
+#'
+#' @return         A dataframe with hazard ratios for treatment effect across risk strata along with 95 percent
+#'                 confidence intervals
+#'
+#' @export
+
+relativeRiskReduction <- function(model){
+
+  if (class(model) == "OutcomeModel") {
+    return(
+      unlist(
+        c(
+          exp(
+            model$outcomeModelTreatmentEstimate[1:3]
+          ),
+          model$outcomeModelTreatmentEstimate[4]
+        )
+      )
+    )
+  }  else {
+    return(
+      summary(model)$conf.int[c(1, 3:4)]
+    )
+  }
+
+}
+
+
+
+
+#' @export
+createMapMatrix <- function(
+  riskPredictions,
+  analysis
+) {
+
+  if (analysis$riskStratificationMethod == "equal") {
+    lengthSequence <- analysis$riskStratificationThresholds + 1
+    breaks <- seq(
+      from       = 0,
+      to         = 1,
+      length.out = lengthSequence
+    )
+    mapMatrix <- riskPredictions %>%
+      dplyr::mutate(
+        labels = cut(
+          value,
+          breaks = quantile(
+            value,
+            breaks = breaks
+          ),
+          include.lowest = TRUE
+        ),
+        riskStratum = as.numeric(labels)
+      )
+  } else if (analysis$riskStratificationMethod == "quantile") {
+    mapMatrix <- riskPredictions %>%
+      dplyr::mutate(
+        labels = cut(
+          value,
+          breaks = quantile(
+            value,
+            probs = analysis$riskStratificationThresholds
+          ),
+          include.lowest = TRUE
+        ),
+        riskStratum = as.numeric(labels)
+      )
+  } else if (analysis$riskStratificationMethod == "custom") {
+    mapMatrix <- analysis$riskStratificationThresholds(riskPredictions)
+  }
+
+  return(mapMatrix)
+}
+
+
+
+## Non-exports ##
+
+getCounts <- function(
+  population,
+  timePoint,
+  psMethod
+) {
+
+  population <- as.data.frame(
+    population
+  )
+
+  population$event <- ifelse(
+    is.na(population$daysToEvent),
+    yes = 0,
+    no = 1
+  )
+
+  population$S <- survival::Surv(
+    population$survivalTime,
+    population$event
+  )
+
+  kaplanMeier <-  survival::survfit(
+    S ~ treatment,
+    data = population
+  )
+
+  if (psMethod == "matchOnPs") {
+    summaryKM <- summary(
+      kaplanMeier,
+      times = timePoint,
+      extend = TRUE
+    )
+
+    res <- 1 - summaryKM$surv
+
+  } else if (psMethod == "stratifyByPs") {
+    kaplanMeier <- list()
+    stratId <- sort(
+      unique(
+        population$stratumId
+      )
+    )
+
+    for (i in stratId) {
+      kaplanMeier[[i]] <- survival::survfit(
+        S ~ treatment,
+        data = subset(
+          population,
+          stratumId == i
+        )
+      )
+    }
+
+    summaryKMList <- lapply(
+      kaplanMeier,
+      summary,
+      times = timePoint,
+      extend = TRUE
+    )
+
+    res <- colMeans(
+      do.call(
+        rbind,
+        lapply(
+          summaryKMList,
+          function(s) {
+            1 - s$surv
+          }
+        )
+      )
+    )
+  }
+  else if (psMethod == "inversePtWeighted")
+  {
+    kaplanMeier <-  survival::survfit(
+      S ~ treatment,
+      data = population,
+      weights = weights
+    )
+
+    summaryKM <- summary(
+      kaplanMeier,
+      times = timePoint,
+      extend = TRUE
+    )
+
+    res <- 1 - summaryKM$surv
+
+  }
+
+  return(res)
+
+}
+
+
+
+
+getStandadrdError <- function(summaryKmList)
+{
+
+  sqrt(sum(summaryKmList$std.err^2))
+}
+
+
+
+
+getAbsoluteDifference <- function(summaryKMList)
+{
+  diff(summaryKMList$surv)
+}
+
+
+directoryCheck <- function(path) {
+  if (!dir.exists(path)) {
+    dir.create(
+      path      = path,
+      recursive = TRUE
+    )
+  }
+}
+
+pullPlpSettings <- function(runPlpSettings, outcomeId) {
+
+  res <- NULL
+  analyses <- runPlpSettings$analyses
+  ll <- lapply(
+    runPlpSettings$analyses,
+    function(x) lapply(x, unlist, recursive = F)
+  )
+
+  for (i in seq_along(analyses)) {
+    if (analyses[[i]]$outcomeId == outcomeId) {
+      res <- analyses[[i]]
+    }
+  }
+
+  return(res)
+}

@@ -1,34 +1,42 @@
 Package: RiskStratifiedEstimation
 Type: Package
 Title: Risk Stratified Effect Estimation
-Version: 0.9.0
+Version: 0.9.0.9000
 Author: Alexandros Rekkas 
 Maintainer: Alexandros Rekkas  <a.rekkas@erasmusmc.nl>
 Description: RiskStratifiedEstimation is an R package for implementing risk stratified analyses of treamtnet effect in an observational database in the OMOP Common Data Model. It combines functionality of PatientLevelPrediction and CohortMethod R packages to extract and analyze data from a database in the OMOP Common Data Model format. Analyses are performed in two distinct steps. First, a prediction step is implemented, where personalized risks are derived from a large set of covariates applying one of various possible prediction methods. In the second step, risk stratified treatment comparisons are performed. Large scale regularized regression is used to fit the propensity model. Inverse probability of treatment weights are calculated and truncated within strata of predicted risk. Only weighted Cox regression models are supported for the outcome model. 
 License: Apache License 2.0
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.1
+RoxygenNote: 7.2.0
 Depends:
     R (>= 4.0.2),
     DatabaseConnector (>= 2.2.0),
     Cyclops,
     FeatureExtraction  (>= 2.2.3),
-Imports: PatientLevelPrediction, 
-         CohortMethod, 
-         ParallelLogger,
-         SqlRender,
-         stats,
-         data.table,
-         dplyr, 
-         shiny,
-         shinydashboard,
-         reshape,
-         ggplot2,
-         gridExtra,
-         survival,
-         tidyr,
-         formatR
+    dplyr,
+Imports: 
+    PatientLevelPrediction,
+    CohortMethod,
+    ParallelLogger,
+    SqlRender,
+    EmpiricalCalibration,
+    stats,
+    data.table,
+    shiny,
+    shinydashboard,
+    reshape,
+    rlist,
+    ggplot2,
+    gridExtra,
+    survival,
+    tidyr,
+    purrr,
+    formatR,
+    plotly,
+    reshape2,
+    DT,
+    magrittr
 Suggests: knitr,
     rmarkdown
 VignetteBuilder: knitr

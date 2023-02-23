@@ -19,228 +19,55 @@
 # @author Peter Rijnbeek
 
 
-#' Create a parameter object for the function createStudyPopulation
-#'
-#' @details
-#' Create an object defining the parameter values.
-#'
-#' @param firstExposureOnly                Should only the first exposure per subject be included?
-#'                                         Notethat this is typically done in thecreateStudyPopulation
-#'                                         function,
-#' @param restrictToCommonPeriod           Restrict the analysis to the period when both exposures are
-#'                                         observed?
-#' @param washoutPeriod                    The mininum required continuous observation time prior
-#'                                         toindex date for a person to be included in the cohort.
-#' @param removeDuplicateSubjects          Remove subjects that are in both the target and
-#'                                         comparatorcohort? See details for allowed values.
-#' @param removeSubjectsWithPriorOutcome   Remove subjects that have the outcome prior to the
-#'                                         riskwindow start?
-#' @param priorOutcomeLookback             How many days should we look back when identifying
-#'                                         prioroutcomes?
-#' @param minDaysAtRisk                    The minimum required number of days at risk.
-#' @param riskWindowStart                  The start of the risk window (in days) relative to the
-#'                                         startAnchor.
-#' @param addExposureDaysToStart           DEPRECATED: Add the length of exposure the start of the risk
-#'                                         window?Use startAnchor instead.
-#' @param startAnchor                      The anchor point for the start of the risk window. Can be
-#'                                         "cohort start"or "cohort end".
-#' @param riskWindowEnd                    The end of the risk window (in days) relative to the
-#'                                         endAnchor.
-#' @param addExposureDaysToEnd             DEPRECATED: Add the length of exposure the risk window?Use
-#'                                         endAnchor instead.
-#' @param endAnchor                        The anchor point for the end of the risk window. Can be
-#'                                         "cohort start"or "cohort end".
-#' @param censorAtNewRiskWindow            If a subject is in multiple cohorts, should time-at-risk be
-#'                                         censoredwhen the new time-at-risk starts to prevent overlap?
-#'
-#' @export
-
-createPopulationCmSettingsArgs <- function(
-  firstExposureOnly = FALSE,
-  restrictToCommonPeriod = FALSE,
-  washoutPeriod = 0,
-  removeDuplicateSubjects = FALSE,
-  removeSubjectsWithPriorOutcome = TRUE,
-  priorOutcomeLookback = 99999,
-  minDaysAtRisk = 1,
-  riskWindowStart = 0,
-  addExposureDaysToStart = NULL,
-  startAnchor = "cohort start",
-  riskWindowEnd = 0,
-  addExposureDaysToEnd = NULL,
-  endAnchor = "cohort end",
-  censorAtNewRiskWindow = FALSE
-) {
-
-  # First: get default values:
-  analysis <- list()
-  for (name in names(formals(createPopulationCmSettingsArgs))) {
-    analysis[[name]] <- get(name)
-  }
-  # Second: overwrite defaults with actual values:
-  values <- lapply(as.list(match.call())[-1], function(x) eval(x, envir = sys.frame(-3)))
-  for (name in names(values)) {
-    if (name %in% names(analysis))
-      analysis[[name]] <- values[[name]]
-  }
-  class(analysis) <- "args"
-  return(analysis)
-}
-
-
-#' Create a parameter object for the function createStudyPopulation
-#'
-#' @details
-#' Create an object defining the parameter values.
-#'
-#' @param binary                           Forces the outcomeCount to be 0 or 1 (use for binary
-#'                                         prediction problems)
-#' @param includeAllOutcomes               (binary) indicating whether to include people with outcomes
-#'                                         who are not observed for the whole at risk period
-#' @param firstExposureOnly                Should only the first exposure per subject be included? Note
-#'                                         thatthis is typically done in the createStudyPopulation
-#'                                         function,
-#' @param washoutPeriod                    The mininum required continuous observation time prior to
-#'                                         indexdate for a person to be included in the cohort.
-#' @param removeSubjectsWithPriorOutcome   Remove subjects that have the outcome prior to the risk
-#'                                         window start?
-#' @param priorOutcomeLookback             How many days should we look back when identifying prior
-#'                                         outcomes?
-#' @param requireTimeAtRisk                Should subject without time at risk be removed?
-#' @param minTimeAtRisk                    The minimum number of days at risk required to be included
-#' @param riskWindowStart                  The start of the risk window (in days) relative to the
-#'                                         startAnchor.
-#' @param startAnchor                      The anchor point for the start of the risk window. Can be
-#'                                         "cohort start" or "cohort end".
-#' @param addExposureDaysToStart           DEPRECATED: Add the length of exposure the start of the risk
-#'                                         window? Use startAnchor instead.
-#' @param riskWindowEnd                    The end of the risk window (in days) relative to the
-#'                                         endAnchor parameter
-#' @param endAnchor                        The anchor point for the end of the risk window. Can be
-#'                                         "cohort start" or "cohort end".
-#' @param addExposureDaysToEnd             DEPRECATED: Add the length of exposure the risk window? Use
-#'                                         endAnchor instead.
-#' @param verbosity                        Sets the level of the verbosity. If the log level is at or
-#'                                         higher in priority than the logger threshold, a message will
-#'                                         print. The levels are:DEBUGHighest verbosity showing all
-#'                                         debug statementsTRACEShowing information about start and end
-#'                                         of stepsINFOShow informative information (Default)WARNShow
-#'                                         warning messagesERRORShow error messagesFATALBe silent
-#'                                         except for fatal errors
-#'
-#' @export
-createPopulationPlpSettingsArgs <- function(binary = T,
-                                            includeAllOutcomes = T,
-                                            firstExposureOnly = FALSE,
-                                            washoutPeriod = 0,
-                                            removeSubjectsWithPriorOutcome = TRUE,
-                                            priorOutcomeLookback = 99999,
-                                            requireTimeAtRisk = F,
-                                            minTimeAtRisk = 365,
-                                            riskWindowStart = 0,
-                                            startAnchor = "cohort start",
-                                            addExposureDaysToStart = NULL,
-                                            riskWindowEnd = 365,
-                                            endAnchor = "cohort start",
-                                            addExposureDaysToEnd = NULL,
-                                            verbosity = "INFO") {
-  # First: get default values:
-  analysis <- list()
-  for (name in names(formals(createPopulationPlpSettingsArgs))) {
-    analysis[[name]] <- get(name)
-  }
-  # Second: overwrite defaults with actual values:
-  values <- lapply(as.list(match.call())[-1], function(x) eval(x, envir = sys.frame(-3)))
-  for (name in names(values)) {
-    if (name %in% names(analysis))
-      analysis[[name]] <- values[[name]]
-  }
-  class(analysis) <- "args"
-  return(analysis)
-}
-
-
-
-
-
 #' Create a parameter object for the function runPlp
 #'
 #' @details
 #' Create an object defining the parameter values.
+#' @param outcomeId              The outcomeId for the prediction.
+#' @param spliteSettings         The split settings.
 #'
-#' @param plpResults             A data frame containig the path to an existing plpResult. The column
-#'                               names should be "outcomeId" and "directory".
-#' @param minCovariateFraction   The minimum fraction of target population who must have a covariate
-#'                               for it to be included in the model training
-#' @param normalizeData          Whether to normalise the covariates before training (Default: TRUE)
-#' @param modelSettings          An object of class modelSettings created using one of the
-#'                               function:setLassoLogisticRegression() A lasso logistic regression
-#'                               model setGradientBoostingMachine() A gradient boosting machine
-#'                               setAdaBoost() An ada boost model setRandomForest() A random forest
-#'                               model setDecisionTree() A decision tree model setCovNN()) A
-#'                               convolutional neural network model setCIReNN() A recurrent neural
-#'                               network model setMLP() A neural network model setDeepNN() A deep
-#'                               neural network model setKNN() A KNN model
-#' @param testSplit              Either 'person' or 'time' specifying the type of evaluation
-#'                               used.'time' find the date where testFraction of patients had an index
-#'                               after the date and assigns patients with an index prior to this date
-#'                               into the training set and post the date into the test set'person'
-#'                               splits the data into test (1-testFraction of the data) andtrain
-#'                               (validationFraction of the data) sets. The split is stratified by the
-#'                               class label.
-#' @param testFraction           The fraction of the data to be used as the test set in the patient
-#'                               split evaluation.
-#' @param trainFraction          A real number between 0 and 1 indicating the train set fraction of the
-#'                               data. If not set trainFraction is equal to 1 - test
-#' @param splitSeed              The seed used to split the test/train set when using a person type
-#'                               testSplit
-#' @param nfold                  The number of folds used in the cross validation (default 3)
-#' @param indexes                A dataframe containing a rowId and index column where the index value
-#'                               of -1 means in the test set, and positive integer represents the cross
-#'                               validation fold (default is NULL)
-#' @param savePlpData            Binary indicating whether to save the plpData object (default is
-#'                               FALSE)
-#' @param savePlpPlots           Binary indicating whether to save the performance plots as pdf files
-#'                               (default is TRUE)
-#' @param saveEvaluation         Binary indicating whether to save the oerformance as csv files
-#'                               (default is TRUE)
-#' @param verbosity              Sets the level of the verbosity. If the log level is at or higher in
-#'                               priority than the logger threshold, a message will print. The levels
-#'                               are:
-#'                               \itemize{
-#'                                 \item {DEBUG}{Highest verbosity showing all debug statements}
-#'                                 \item {TRACE}{Showing information about start and end of steps}
-#'                                 \item {INFO}{Show informative information (Default)}
-#'                                 \item {WARN}{Show warning messages}
-#'                                 \item {ERROR}{Show error messages}
-#'                                 \item {FATAL}{Be silent except for fatal errors}
-#'                               }
-#'
-#'
-#'
-#' @param timeStamp              If TRUE a timestamp will be added to each logging statement.
-#'                               Automatically switched on for TRACE level.
-#' @param analysisId             Identifier for the analysis. It is used to create, e.g., the result
-#'                               folder. Default is a timestamp.
+#' @param matchingSettings       The settings for the construction of the population on which the
+#'                               prediction model will be developed.
+#' @param timepoint              The timepoint to predict risk (survival models only)
 #'
 #' @export
+#'
+createRunPlpAnalysesArgs <- function(
+    outcomeId                  = NULL,
+    splitSettings              = PatientLevelPrediction::createDefaultSplitSetting(),
+    sampleSettings             = PatientLevelPrediction::createSampleSettings(),
+    featureEngineeringSettings = PatientLevelPrediction::createFeatureEngineeringSettings(),
+    preprocessSettings         = PatientLevelPrediction::createPreprocessSettings(),
+    modelSettings              = PatientLevelPrediction::setLassoLogisticRegression(),
+    logSettings                = PatientLevelPrediction::createLogSettings(),
+    executeSettings            = PatientLevelPrediction::createDefaultExecuteSettings(),
+    matchingSettings           = CohortMethod::createMatchOnPsArgs(),
+    timepoint                  = NULL
+) {
 
-createRunPlpSettingsArgs <- function(plpResults = NULL,
-                                     minCovariateFraction = 0.001,
-                                     normalizeData = TRUE,
-                                     modelSettings = PatientLevelPrediction::setLassoLogisticRegression(),
-                                     testSplit = "person",
-                                     testFraction = 0.25,
-                                     trainFraction = NULL,
-                                     splitSeed = NULL,
-                                     nfold = 3,
-                                     indexes = NULL,
-                                     savePlpData = FALSE,
-                                     savePlpPlots = TRUE,
-                                     saveEvaluation = TRUE,
-                                     verbosity = "INFO",
-                                     timeStamp = FALSE,
-                                     analysisId = NULL) {
+  # First: get default values:
+  analysis <- list()
+  for (name in names(formals(createRunPlpAnalysesArgs))) {
+    analysis[[name]] <- get(name)
+  }
+  # Second: overwrite defaults with actual values:
+  values <- lapply(as.list(match.call())[-1], function(x) eval(x, envir = sys.frame(-3)))
+  for (name in names(values)) {
+    if (name %in% names(analysis))
+      analysis[[name]] <- values[[name]]
+  }
+  attr(analysis, "fun") <- "createRunPlpAnalysesArgs"
+  class(analysis) <- "runPlpAnalysesArgs"
+  return(analysis)
+}
+
+
+#' @export
+createRunPlpSettingsArgs <- function(
+    analyses = list(),
+    defaultSettings = createRunPlpAnalysesArgs()
+) {
+
   # First: get default values:
   analysis <- list()
   for (name in names(formals(createRunPlpSettingsArgs))) {
@@ -255,6 +82,30 @@ createRunPlpSettingsArgs <- function(plpResults = NULL,
   attr(analysis, "fun") <- "createRunPlpSettingsArgs"
   class(analysis) <- "runPlpSettingsArgs"
   return(analysis)
+
+}
+
+#' @export
+createRunExistingPlpSettingsArgs <- function(
+    outcomeId,
+    plpResultDirectory,
+    predictionSettings = list()
+) {
+
+  analysis <- list()
+  for (name in names(formals(createRunExistingPlpSettingsArgs))) {
+    analysis[[name]] <- get(name)
+  }
+  # Second: overwrite defaults with actual values:
+  values <- lapply(as.list(match.call())[-1], function(x) eval(x, envir = sys.frame(-3)))
+  for (name in names(values)) {
+    if (name %in% names(analysis))
+      analysis[[name]] <- values[[name]]
+  }
+  attr(analysis, "fun") <- "createRunExistingPlpSettingsArgs"
+  class(analysis) <- "runExistingPlpSettingsArgs"
+  return(analysis)
+
 }
 
 
@@ -273,8 +124,10 @@ createRunPlpSettingsArgs <- function(plpResults = NULL,
 #' An R object of type \code{runSettings}
 #' @export
 
-createRunSettings <- function(runPlpSettings = createRunPlpSettingsArgs(modelSettings = PatientLevelPrediction::setLassoLogisticRegression()),
-                              runCmSettings = createRunCmSettingsArgs()) {
+createRunSettings <- function(
+    runPlpSettings = createRunPlpSettingsArgs(),
+    runCmSettings = createRunCmSettingsArgs()
+) {
 
   res <- list(runPlpSettings = runPlpSettings, runCmSettings = runCmSettings)
   attr(res, "fun") <- "createRunSettings"
@@ -421,19 +274,25 @@ createGetCmDataArgs <- function(studyStartDate = "",
 #'
 #' @export
 
-createCreatePsArgs <- function(excludeCovariateIds = c(),
-                               includeCovariateIds = c(),
-                               maxCohortSizeForFitting = 250000,
-                               errorOnHighCorrelation = TRUE,
-                               stopOnError = TRUE,
-                               prior = createPrior("laplace",
-                                                   exclude = c(0),
-                                                   useCrossValidation = TRUE),
-                               control = createControl(noiseLevel = "silent",
-                                                       cvType = "auto",
-                                                       tolerance = 2e-07,
-                                                       cvRepetitions = 10,
-                                                       startingVariance = 0.01)) {
+createCreatePsArgs <- function(
+    excludeCovariateIds = c(),
+    includeCovariateIds = c(),
+    maxCohortSizeForFitting = 250000,
+    errorOnHighCorrelation = TRUE,
+    stopOnError = TRUE,
+    prior = createPrior(
+      "laplace",
+      exclude = c(0),
+      useCrossValidation = TRUE
+    ),
+    control = createControl(
+      noiseLevel = "silent",
+      cvType = "auto",
+      tolerance = 2e-07,
+      cvRepetitions = 10,
+      startingVariance = 0.01
+    )
+) {
   # First: get default values:
   analysis <- list()
   for (name in names(formals(createCreatePsArgs))) {
@@ -453,47 +312,50 @@ createCreatePsArgs <- function(excludeCovariateIds = c(),
 
 
 
-#' Create a parameter object for running the estimation step Create a parameter
-#' object for running the estimation step. This function is used to create part
-#' of the input of \code{\link[RiskStratifiedEstimation]{createRunSettings}}.
+#' Create a parameter object for defining the estimation analyses.
 #'
-#' @param psMethod                 How should the propensity scores be used? Can
-#'                                 be one of "inversePtWeighted", "stratifyByPs"
-#'                                  or "matchOnPs".
-#' @param label                    A single-word description of the analysis.
-#' @param effectEstimationSettings Parameter object providing further settings
-#'                                 for the implementation of selected \code{psMethod}
-#'                                 to the estimation process. Can be created using
-#'                                 one of
-#'                                 \code{\link[RiskStratifiedEstimation]{createCreateIPWArgs}},
-#'                                 when \code{inversePtWeighted} is selected,
-#'                                 \code{\link[RiskStratifiedEstimation]{createStratifyByPsArgs}}
-#'                                 when \code{stratifyByPs} is selected or
-#'                                 \code{\link[RiskStratifiedEstimation]{createMatchOnPsArgs}}
-#'                                 when \code{matchOnPs} is selected.
-#' @param psSettings               Parameter object for
-#'                                 \code{\link[CohortMethod]{createPs}}
-#' @param createPsThreads          The number of parallel threads for the
-#'                                 estimation of the propensity scores. Default is 1.
-#' @param fitOutcomeModelsThreads  The number of parallel threads for the estimation of the
-#'                                 outcome models.
-#' @param timePoint                The time point after cohort start that absolute differences
-#'                                 should be estimated.
-#' @param riskStrata               The number of risk strata. Default is 4.
+#' @param label                         A single-word description of the analysis.
+#' @param riskStratificationMethod      Can be "equal" for equal-sized risk strata;
+#'                                      "quantile" for user-specified risk quantiles
+#'                                      as thresholds; "custom" for user-specified risk
+#'                                      thresholds
+#' @param stratificationOutcomes        The outcome IDs on which risk stratification
+#'                                      will be carried out. Should be a subset
+#'                                      of the stratification outcomes defined
+#'                                      in the `analysisSettings`. Default is "all".
+#' @param riskStratificationThresholds  The thresholds to be used for risk stratification.
+#'                                      If `riskStratificationMethod` is "equal" then
+#'                                      it should be a single number denoting the number
+#'                                      of equal-sized risk subgroups; if `riskStratificationMethod`
+#'                                      is "quantile", then it is a vector from 0 to 1 (increasing);
+#'                                      if `riskStratificationMethod` is "custom", then it is a vector
+#'                                      with the predicted probabilities to be used as thresholds
+#' @param psMethod                      How should the propensity scores be used? Can
+#'                                      be one of "stratifyByPs" or "matchOnPs".
+#' @param effectEstimationSettings      Parameter object providing further settings
+#'                                      for the implementation of selected \code{psMethod}
+#'                                      to the estimation process. Can be created using
+#'                                      one of
+#'                                      \code{\link[RiskStratifiedEstimation]{createStratifyByPsArgs}}
+#'                                      when \code{stratifyByPs} is selected or
+#'                                      \code{\link[RiskStratifiedEstimation]{createMatchOnPsArgs}}
+#'                                      when \code{matchOnPs} is selected.
+#' @param timePoint                     The time point after cohort start that absolute differences
+#'                                      should be estimated.
 #'
 #' @return
 #' A parameter object for running the the estimation step.
+#'
 #' @export
 
-createRunCmSettingsArgs <- function(
-  psMethod                 = "stratifyByPs",
-  label                    = NULL,
-  effectEstimationSettings = createStratifyByPsArgs(),
-  psSettings               = createCreatePsArgs(),
-  createPsThreads          = 1,
-  fitOutcomeModelsThreads  = 1,
-  timePoint                = 365,
-  riskStrata               = 4
+createRunCmAnalysesArgs <- function(
+    label                        = NULL,
+    riskStratificationMethod     = "equal",
+    stratificationOutcomes       = "all",
+    riskStratificationThresholds = 4,
+    psMethod                     = "stratifyByPs",
+    effectEstimationSettings     = createStratifyByPsArgs(),
+    timePoint                    = 365
 ) {
 
   if (is.null(label)) {
@@ -501,20 +363,75 @@ createRunCmSettingsArgs <- function(
   }
 
   res <- list(
-    psMethod                        = psMethod,
-    label                           = label,
-    psSettings                      = psSettings,
-    effectEstimationSettings        = effectEstimationSettings,
-    createPsThreads                 = createPsThreads,
-    fitOutcomeModelsThreads         = fitOutcomeModelsThreads,
-    riskStrata                      = riskStrata,
-    timePoint                       = timePoint
+    label                        = label,
+    riskStratificationMethod     = riskStratificationMethod,
+    riskStratificationThresholds = riskStratificationThresholds,
+    stratificationOutcomes       = stratificationOutcomes,
+    psMethod                     = psMethod,
+    effectEstimationSettings     = effectEstimationSettings,
+    timePoint                    = timePoint
   )
 
   class(res) <- "args"
 
   return(res)
 
+}
+
+
+
+
+#' Create a parameter object for running the estimation step
+#'
+#' @description
+#' Create a parameter object for running the estimation step. This function is
+#' used to create the computational part of the input of
+#' \code{\link[RiskStratifiedEstimation]{createRunSettings}}.
+#'
+#' @param analyses                  A list of the analyses to run. Each element of
+#'                                  the list can be creaeted using
+#'                                  \code{\link[RiskStratifiedEstimation]{createRunCmAnalysesArgs}}
+#'                                  \code{\link[CohortMethod]{createPs}}
+#' @param psSettings                The settings for estimating the propensity scores
+#' @param createPsThreads           The number of parallel threads for the
+#'                                  estimation of the propensity scores. Default is 1.
+#' @param fitOutcomeModelsThreads   The number of parallel threads for the estimation of the
+#'                                  outcome models.
+#' @param balanceThreads            The number of parallel threads for the estimation
+#'                                  of covariate balance
+#' @param negativeControlThreads    The number of parallel threads for the negative
+#'                                  control analyses
+#' @param runRiskStratifiedNcs      Should risk stratified negative control analyses
+#'                                  be performed? Default is FALSE as it can take
+#'                                  a very long time to complete.
+#'
+#'
+#' @return
+#' A parameter object for running the the estimation step.
+#' @export
+
+createRunCmSettingsArgs <- function(
+    analyses,
+    psSettings                   = createCreatePsArgs(),
+    createPsThreads              = 1,
+    fitOutcomeModelsThreads      = 1,
+    balanceThreads               = 1,
+    negativeControlThreads       = 1,
+    runRiskStratifiedNcs         = FALSE
+) {
+
+  res <- list(
+    analyses                = analyses,
+    psSettings              = psSettings,
+    createPsThreads         = createPsThreads,
+    fitOutcomeModelsThreads = fitOutcomeModelsThreads,
+    balanceThreads          = balanceThreads,
+    negativeControlThreads  = negativeControlThreads,
+    runRiskStratifiedNcs    = runRiskStratifiedNcs
+  )
+  class(res) <- "args"
+
+  return(res)
 }
 
 
@@ -536,9 +453,11 @@ createRunCmSettingsArgs <- function(
 #'
 #' @export
 
-createStratifyByPsArgs <- function(numberOfStrata = 5,
-                                   stratificationColumns = c(),
-                                   baseSelection = "all") {
+createStratifyByPsArgs <- function(
+    numberOfStrata = 5,
+    stratificationColumns = c(),
+    baseSelection = "all"
+) {
   # First: get default values:
   analysis <- list()
   for (name in names(formals(createStratifyByPsArgs))) {
@@ -583,10 +502,12 @@ createStratifyByPsArgs <- function(numberOfStrata = 5,
 #'
 #' @export
 
-createMatchOnPsArgs <- function(caliper = 0.2,
-                                caliperScale = "standardized logit",
-                                maxRatio = 1,
-                                stratificationColumns = c()) {
+createMatchOnPsArgs <- function(
+    caliper = 0.2,
+    caliperScale = "standardized logit",
+    maxRatio = 1,
+    stratificationColumns = c()
+) {
   # First: get default values:
   analysis <- list()
   for (name in names(formals(createMatchOnPsArgs))) {
@@ -641,62 +562,84 @@ createCreateIPWArgs <- function(weightsType = "ATE",
 #' Create a parameter defining the performed risk stratified analysis
 #'
 #'
-#' @param analysisId           The analysis ID.
-#' @param databaseName         The name of the database.
-#' @param treatmentCohortId    The cohort definition id of the treatment cohort in the cohortTable.
-#' @param comparatorCohortId   The cohort definition id of the comparator cohort in the cohortTable.
-#' @param outcomeIds           The cohort definition ids of the outcome cohorts in the outcomeTable.
-#' @param analysisMatrix       Boolean matrix defining the outcomes to be assessed (rows) within risk
-#'                             strata (columns). The order in columns should match the the order of
-#'                             \code{outcomeIds}. Default is the diagonal matrix, which leads to the
-#'                             risk stratified assessment of only the outcome for which the risk strata
-#'                             were defined.
-#' @param mapTreatments        Dataframe containing 2 columns: "exposure_id" with the id numbers of the
-#'                             treatment and comparator cohorts and "exposure_name" the cohort names.
-#' @param mapOutcomes          Dataframe containing 2 columns: "outcome_id" with the cohort names of the
-#'                             outcomes of interest and "outcome_name" with their names.
-#' @param verbosity            Sets the level of the verbosity. If the log level is at or higher in
-#'                             priority than the logger threshold, a message will print. The levels
-#'                             are:
-#'                             \itemize{
-#'                               \item {DEBUG}{Highest verbosity showing all debug statements}
-#'                               \item {TRACE}{Showing information about start and end of steps}
-#'                               \item {INFO}{Show informative information (Default)}
-#'                               \item {WARN}{Show warning messages}
-#'                               \item {ERROR}{Show error messages}
-#'                               \item {FATAL}{Be silent except for fatal errors}
-#'                             }
-#'
-#'
-#'
-#' @param saveDirectory        The directory name where the results of the analyses will be stored.
+#' @param analysisId                The analysis ID.
+#' @param description               Text describing the analysis.
+#' @param databaseName              The name of the database.
+#' @param treatmentCohortId         The cohort definition id of the treatment cohort
+#'                                  in the cohortTable.
+#' @param comparatorCohortId        The cohort definition id of the comparator cohort
+#'                                  in the cohortTable.
+#' @param outcomeIds                The cohort definition ids of the outcome cohorts
+#'                                  in the outcomeTable.
+#' @param analysisMatrix            Boolean matrix defining the outcomes to be assessed
+#'                                  (rows) within risk strata (columns). The order
+#'                                  in columns should match the the order of
+#'                                  \code{outcomeIds}. Default is the diagonal matrix,
+#'                                  which leads to the risk stratified assessment
+#'                                  of only the outcome for which the risk strata
+#'                                  were defined.
+#' @param mapTreatments             Dataframe containing 2 columns: "exposure_id"
+#'                                  with the id numbers of the
+#'                                  treatment and comparator cohorts and "exposure_name"
+#'                                  the cohort names.
+#' @param mapOutcomes               Dataframe containing 2 columns: "outcome_id" with
+#'                                  the cohort names of the outcomes of interest and
+#'                                  "outcome_name" with their names.
+#' @param negativeControlOutcomes   The outcome Ids to be used as negative controls
+#' @param balanceThreads            The number of threads to be used for the estimation
+#'                                  of covariate balance
+#' @param negativeControlThreads    The number of threads to be used for running
+#'                                  the negative control analyses
+#' @param verbosity                 Sets the level of the verbosity. If the log level
+#'                                  is at or higher in priority than the logger threshold,
+#'                                  a message will print. The levels are:
+#'                                  \itemize{
+#'                                    \item {DEBUG}{Highest verbosity showing all debug statements}
+#'                                    \item {TRACE}{Showing information about start and end of steps}
+#'                                    \item {INFO}{Show informative information (Default)}
+#'                                    \item {WARN}{Show warning messages}
+#'                                    \item {ERROR}{Show error messages}
+#'                                    \item {FATAL}{Be silent except for fatal errors}
+#'                                  }
+#' @param saveDirectory             The directory name where the results of the analyses will
+#'                                  be stored.
 #' @return
 #' An analysisSettings object providing the identification information of the analysis.
 #'
 #' @export
 
-createAnalysisSettings <- function(analysisId = NULL,
-                                   databaseName,
-                                   treatmentCohortId,
-                                   comparatorCohortId,
-                                   outcomeIds,
-                                   analysisMatrix = diag(length(outcomeIds)),
-                                   mapTreatments,
-                                   mapOutcomes,
-                                   verbosity = NULL,
-                                   saveDirectory = NULL) {
-
-  res <- list(analysisId = analysisId,
-              databaseName = databaseName,
-              analysisType = analysisType,
-              treatmentCohortId = treatmentCohortId,
-              comparatorCohortId = comparatorCohortId,
-              outcomeIds = outcomeIds,
-              analysisMatrix = analysisMatrix,
-              mapTreatments = mapTreatments,
-              mapOutcomes = mapOutcomes,
-              verbosity = verbosity,
-              saveDirectory = saveDirectory)
+createAnalysisSettings <- function(
+    analysisId = NULL,
+    description = "",
+    databaseName,
+    treatmentCohortId,
+    comparatorCohortId,
+    outcomeIds,
+    analysisMatrix = diag(length(outcomeIds)),
+    mapTreatments,
+    mapOutcomes,
+    negativeControlOutcomes = c(),
+    balanceThreads = 1,
+    negativeControlThreads = 1,
+    verbosity = NULL,
+    saveDirectory = NULL
+) {
+  res <- list(
+    analysisId              = analysisId,
+    description             = description,
+    databaseName            = databaseName,
+    treatmentCohortId       = treatmentCohortId,
+    comparatorCohortId      = comparatorCohortId,
+    outcomeIds              = outcomeIds,
+    analysisMatrix          = analysisMatrix,
+    mapTreatments           = mapTreatments,
+    mapOutcomes             = mapOutcomes,
+    negativeControlOutcomes = negativeControlOutcomes,
+    balanceThreads          = balanceThreads,
+    negativeControlThreads  = negativeControlThreads,
+    verbosity               = verbosity,
+    saveDirectory           = saveDirectory
+  )
 
   attr(res, "fun") <- "createAnalysisSettings"
   class(res) <- "analysisSettings"
@@ -749,22 +692,30 @@ createGetDataSettings <- function(getPlpDataSettings = createGetPlpDataArgs(),
 #
 #' @param populationPlpSettings   Parameter object for the definition of the \code{populationPlp}
 #'                                object created from
-#'                                \code{\link[RiskStratifiedEstimation]{createPopulationPlpSettingsArgs}}.
+#'                                \code{\link[PatientLevelPrediction]{createStudyPopulationSettings}}.
 #' @param populationCmSettings    Parameter object for the definition of the \code{populationCm} object
 #'                                created from
-#'                                \code{\link[RiskStratifiedEstimation]{createPopulationCmSettingsArgs}}.
+#'                                \code{\link[CohortMethod]{createCreateStudyPopulationArgs}}.
+#' @param postProcessing          A function to run on the initial population after
+#'                                creating the prediction and estimation populations
 #'
 #' @export
 
-createPopulationSettings <- function(populationPlpSettings = createPopulationPlpSettingsArgs(),
-                                     populationCmSettings = createPopulationCmSettingsArgs()) {
+createPopulationSettings <- function(
+    populationPlpSettings = PatientLevelPrediction::createStudyPopulationSettings(),
+    populationCmSettings  = CohortMethod::createCreateStudyPopulationArgs(),
+    postProcessing        = "none"
+) {
 
-  res <- list(populationPlpSettings = populationPlpSettings,
-              populationCmSettings = populationCmSettings)
+  res <- list(
+    populationPlpSettings = populationPlpSettings,
+    populationCmSettings  = populationCmSettings,
+    postProcessing        = postProcessing
+  )
 
 
   attr(res, "fun") <- "createPopulationSettings"
-  class(res) <- "populationSettings"
+  class(res)       <- "populationSettings"
 
   return(res)
 
@@ -813,10 +764,12 @@ createPopulationSettings <- function(populationPlpSettings = createPopulationPlp
 
 createDatabaseSettings <- function(cdmVersion = "5",
                                    cdmDatabaseSchema,
+                                   databaseName,
                                    cohortDatabaseSchema = cdmDatabaseSchema,
                                    outcomeDatabaseSchema = cdmDatabaseSchema,
                                    resultsDatabaseSchema = cdmDatabaseSchema,
                                    exposureDatabaseSchema = cdmDatabaseSchema,
+                                   tempEmulationSchema = cdmDatabaseSchema,
                                    cohortTable,
                                    outcomeTable,
                                    exposureTable = "drug_era",
@@ -825,6 +778,7 @@ createDatabaseSettings <- function(cdmVersion = "5",
 
   res <- list(cdmVersion = cdmVersion,
               cdmDatabaseSchema = cdmDatabaseSchema,
+              databaseName = databaseName,
               cohortDatabaseSchema = cohortDatabaseSchema,
               outcomeDatabaseSchema = outcomeDatabaseSchema,
               resultsDatabaseSchema = resultsDatabaseSchema,
@@ -832,6 +786,7 @@ createDatabaseSettings <- function(cdmVersion = "5",
               cohortTable = cohortTable,
               outcomeTable = outcomeTable,
               exposureTable = exposureTable,
+              tempEmulationSchema = tempEmulationSchema,
               mergedCohortTable = mergedCohortTable,
               targetCohortId = targetCohortId)
 

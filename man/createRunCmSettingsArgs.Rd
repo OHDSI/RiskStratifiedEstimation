@@ -2,41 +2,25 @@
 % Please edit documentation in R/CreateArgFuns.R
 \name{createRunCmSettingsArgs}
 \alias{createRunCmSettingsArgs}
-\title{Create a parameter object for running the estimation step Create a parameter
-object for running the estimation step. This function is used to create part
-of the input of \code{\link[RiskStratifiedEstimation]{createRunSettings}}.}
+\title{Create a parameter object for running the estimation step}
 \usage{
 createRunCmSettingsArgs(
-  psMethod = "stratifyByPs",
-  label = NULL,
-  effectEstimationSettings = createStratifyByPsArgs(),
+  analyses,
   psSettings = createCreatePsArgs(),
   createPsThreads = 1,
   fitOutcomeModelsThreads = 1,
-  timePoint = 365,
-  riskStrata = 4
+  balanceThreads = 1,
+  negativeControlThreads = 1,
+  runRiskStratifiedNcs = FALSE
 )
 }
 \arguments{
-\item{psMethod}{How should the propensity scores be used? Can
-be one of "inversePtWeighted", "stratifyByPs"
- or "matchOnPs".}
-
-\item{label}{A single-word description of the analysis.}
-
-\item{effectEstimationSettings}{Parameter object providing further settings
-for the implementation of selected \code{psMethod}
-to the estimation process. Can be created using
-one of
-\code{\link[RiskStratifiedEstimation]{createCreateIPWArgs}},
-when \code{inversePtWeighted} is selected,
-\code{\link[RiskStratifiedEstimation]{createStratifyByPsArgs}}
-when \code{stratifyByPs} is selected or
-\code{\link[RiskStratifiedEstimation]{createMatchOnPsArgs}}
-when \code{matchOnPs} is selected.}
-
-\item{psSettings}{Parameter object for
+\item{analyses}{A list of the analyses to run. Each element of
+the list can be creaeted using
+\code{\link[RiskStratifiedEstimation]{createRunCmAnalysesArgs}}
 \code{\link[CohortMethod]{createPs}}}
+
+\item{psSettings}{The settings for estimating the propensity scores}
 
 \item{createPsThreads}{The number of parallel threads for the
 estimation of the propensity scores. Default is 1.}
@@ -44,16 +28,21 @@ estimation of the propensity scores. Default is 1.}
 \item{fitOutcomeModelsThreads}{The number of parallel threads for the estimation of the
 outcome models.}
 
-\item{timePoint}{The time point after cohort start that absolute differences
-should be estimated.}
+\item{balanceThreads}{The number of parallel threads for the estimation
+of covariate balance}
 
-\item{riskStrata}{The number of risk strata. Default is 4.}
+\item{negativeControlThreads}{The number of parallel threads for the negative
+control analyses}
+
+\item{runRiskStratifiedNcs}{Should risk stratified negative control analyses
+be performed? Default is FALSE as it can take
+a very long time to complete.}
 }
 \value{
 A parameter object for running the the estimation step.
 }
 \description{
-Create a parameter object for running the estimation step Create a parameter
-object for running the estimation step. This function is used to create part
-of the input of \code{\link[RiskStratifiedEstimation]{createRunSettings}}.
+Create a parameter object for running the estimation step. This function is
+used to create the computational part of the input of
+\code{\link[RiskStratifiedEstimation]{createRunSettings}}.
 }
