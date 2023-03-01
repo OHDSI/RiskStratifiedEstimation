@@ -514,6 +514,20 @@ computeRseePsDensity <- function(analysisSettings) {
 # Incidence
 #-------------------------------------------------------------------------------
 
+#' @title            Compute incidence
+#' @description      Computes the incidence for a specific population
+#' @param population A data frame describing the study population as created using the
+#'                   \code{\link[CohortMethod]{createStudyPopulation}} function.
+#'                   This should at least have these columns: personSeqId, treatment,
+#'                   outcomeCount, timeAtRisk.
+#'
+#' @param alpha      Type I error.
+#' @param power      1 - beta, where beta is the type II error.
+#' @param twoSided   Consider a two-sided test?
+#' @param modelType  The type of outcome model that will be used. Possible values
+#'                   are "logistic", "poisson", or "cox". Currently only "cox"
+#'                   is supported.
+#' @return           A tibble with the derived incidence.
 #' @importFrom dplyr %>%
 #' @export
 computeIncidence <- function(
@@ -534,7 +548,11 @@ computeIncidence <- function(
     )
 
   res <- CohortMethod::computeMdrr(
-    population = population
+    population = population,
+    alpha = alpha,
+    power = power,
+    twoSided = twoSided,
+    modelType = modelType
   ) %>%
     dplyr::select(
       -c(
@@ -582,6 +600,18 @@ computeIncidence <- function(
 
 
 
+#' @title           Compute risk stratified incidence
+#' @description     Compute risk stratified incidence for a specific stratification
+#'                  outcome.
+#' @param path      The path to the propensity scores object (list with propensity
+#'                  scores for each risk stratum).
+#' @param alpha      Type I error.
+#' @param power      1 - beta, where beta is the type II error.
+#' @param twoSided   Consider a two-sided test?
+#' @param modelType  The type of outcome model that will be used. Possible values
+#'                   are "logistic", "poisson", or "cox". Currently only "cox"
+#'                   is supported.
+#'
 #' @importFrom dplyr %>%
 #' @export
 computeIncidenceOverall <- function(
@@ -628,6 +658,14 @@ computeIncidenceOverall <- function(
 }
 
 
+
+#' @title Compute risk stratified incidence for all analyses
+#' @description Computes risk stratified incidence for all the analyses that were
+#'              defined when setting up the study.
+#' @param analysisSettings   An \code{analysisSettings} object created with
+#'                           \code{\link[RiskStratifiedEstimation]{createAnalysisSettings}}
+#'
+#' @export
 computeRseeIncidence <- function(analysisSettings) {
   analysisPath <- file.path(
     analysisSettings$saveDirectory,

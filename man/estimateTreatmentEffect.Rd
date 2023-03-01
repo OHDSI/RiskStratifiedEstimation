@@ -10,7 +10,7 @@ estimateTreatmentEffect(ps, analysis)
 \item{ps}{A list of objects created from \code{\link[CohortMethod]{createPs}} estimated within risk
 strata.}
 
-\item{runCmSettings}{The settings for running a \code{CohortMethod} analysis.}
+\item{analysis}{An analysis object.}
 }
 \value{
 A list containing :

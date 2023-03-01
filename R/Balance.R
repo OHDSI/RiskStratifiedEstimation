@@ -20,7 +20,6 @@
 
 
 #' @import data.table
-#' @export
 computeMeansPerGroupFast <- function(cohorts, covariates) {
 
   hasStrata <- "stratumId" %in% colnames(cohorts)
@@ -250,132 +249,21 @@ computeMeansPerGroupFast <- function(cohorts, covariates) {
 }
 
 
-#' @import data.table
-#' @export
-computeCovariateBalance4 <- function(population, cohorts, covariates, covariateRef, subgroupCovariateId = NULL) {
-  ParallelLogger::logTrace("Computing covariate balance")
-  start <- Sys.time()
-
-  if (!is.null(subgroupCovariateId)) {
-    subGroupCovariate <- covariates %>%
-      dplyr::filter(.data$covariateId == subgroupCovariateId)
-
-    if (nrow(subGroupCovariate) == 0) {
-      stop("Cannot find covariate with ID ", subgroupCovariateId)
-    }
-
-    selectCols <- c(
-      "rowId",
-      "treatment"
-    )
-
-    tempCohorts <- cohorts[
-      ,
-      selectCols
-      ]
-
-    if (nrow(tempCohorts) == 0)
-    {
-      stop("Cannot find covariate with ID ", subgroupCovariateId, " in population before matching/trimming")
-    }
-
-    sumTreatment <- sum(tempCohorts$treatment)
-
-    if (sumTreatment == 0 || sumTreatment == nrow(tempCohorts))
-    {
-      stop("Subgroup population before matching/trimming doesn't have both target and comparator")
-    }
-
-    tempCohortsAfterMatching <- population %>%
-      dplyr::filter(.data$rowId %in% subGroupCovariate$rowId) %>%
-      as.data.frame()
-
-    if (nrow(tempCohortsAfterMatching) == 0)
-    {
-      stop("Cannot find covariate with ID ", subgroupCovariateId, " in population after matching/trimming")
-    }
-
-    sumTreatment <- sum(tempCohortsAfterMatching$treatment)
-    if (sumTreatment == 0 || sumTreatment == nrow(tempCohortsAfterMatching))
-    {
-      stop("Subgroup population before matching/trimming doesn't have both target and comparator")
-    }
-
-    cohortMethodData$tempCohorts <- tempCohorts %>%
-      dplyr::select(.data$rowId, .data$treatment)
-
-    cohortMethodData$tempCohortsAfterMatching <- tempCohortsAfterMatching %>%
-      dplyr::select(.data$rowId, .data$treatment, .data$stratumId)
-  }
-  else
-  {
-    tempCohorts <- cohorts[
-      ,
-      list(
-        rowId,
-        treatment
-      )
-    ]
-
-    # selectCols <- c(
-    #   "rowId",
-    #   "treatment"
-    # )
-    #
-    # tempCohorts <- cohorts[
-    #   ,
-    #   selectCols
-    #   ]
-
-
-    # tempCohorts <- data.table::setDT(
-    #   dplyr::collect(
-    #     cohortMethodData$cohorts
-    #   ) %>%
-    #     select(.data$rowId, .data$treatment)
-    # )
-
-    tempCohortsAfterMatching <- data.table::setDT(
-      population %>%
-        dplyr::select(.data$rowId, .data$treatment, .data$stratumId)
-    )
-  }
-  # on.exit(cohortMethodData$tempCohorts <- NULL)
-  # on.exit(cohortMethodData$tempCohortsAfterMatching <- NULL, add = TRUE)
-
-  # covariates <- setDT(
-  #   dplyr::collect(cohortMethodData$covariates))
-  beforeMatching <- computeMeansPerGroupFast(tempCohorts, covariates)
-  afterMatching <- computeMeansPerGroupFast(tempCohortsAfterMatching, covariates)
-
-  colnames(beforeMatching)[colnames(beforeMatching) == "meanTarget"] <- "beforeMatchingMeanTarget"
-  colnames(beforeMatching)[colnames(beforeMatching) == "meanComparator"] <- "beforeMatchingMeanComparator"
-  colnames(beforeMatching)[colnames(beforeMatching) == "sumTarget"] <- "beforeMatchingSumTarget"
-  colnames(beforeMatching)[colnames(beforeMatching) == "sumComparator"] <- "beforeMatchingSumComparator"
-  colnames(beforeMatching)[colnames(beforeMatching) == "sd"] <- "beforeMatchingSd"
-  colnames(afterMatching)[colnames(afterMatching) == "meanTarget"] <- "afterMatchingMeanTarget"
-  colnames(afterMatching)[colnames(afterMatching) == "meanComparator"] <- "afterMatchingMeanComparator"
-  colnames(afterMatching)[colnames(afterMatching) == "sumTarget"] <- "afterMatchingSumTarget"
-  colnames(afterMatching)[colnames(afterMatching) == "sumComparator"] <- "afterMatchingSumComparator"
-  colnames(afterMatching)[colnames(afterMatching) == "sd"] <- "afterMatchingSd"
-
-  balance <- beforeMatching %>%
-    dplyr::full_join(afterMatching, by = "covariateId") %>%
-    dplyr::inner_join(covariateRef, by = "covariateId") %>%
-    dplyr::mutate(
-      beforeMatchingStdDiff = (.data$beforeMatchingMeanTarget - .data$beforeMatchingMeanComparator)/.data$beforeMatchingSd,
-      afterMatchingStdDiff = (.data$afterMatchingMeanTarget - .data$afterMatchingMeanComparator)/.data$afterMatchingSd
-    )
-
-  balance$beforeMatchingStdDiff[balance$beforeMatchingSd == 0] <- 0
-  balance$afterMatchingStdDiff[balance$beforeMatchingSd == 0] <- 0
-  balance <- balance[order(-abs(balance$beforeMatchingStdDiff)), ]
-  balance <- dplyr::as_tibble(balance)
-  delta <- Sys.time() - start
-  cat(paste("Computing covariate balance took", signif(delta, 3), attr(delta, "units"), "\n"))
-  return(balance)
-}
-
+#' @title                      Compute covariate balance
+#' @description                Compute covariate balance before and after
+#'                             adjustment with the propensity scores.
+#' @param population           A data frame containing the people that are
+#'                             remaining after matching and/or trimming.
+#' @param cohorts              The cohorts of a \code{CohortMethodData} object.
+#' @param covariates           The covariates of a \code{CovariateData} object.
+#' @param covariateRef         The covariate reference of a \code{CovariateData}
+#'                             object.
+#' @param subgroupCovariateId  Optional: a covariate ID of a binary covariate that
+#'                             indicates a subgroup of interest. Both the before
+#'                             and after populations will be restricted to this
+#'                             subgroup before computing covariate balance.
+#' @return                     A tibble with the covariate balance before and after
+#'                             matching/trimming.
 #' @export
 computeCovariateBalance <- function(
   population,
@@ -485,7 +373,6 @@ computeCovariateBalance <- function(
 }
 
 
-#' @export
 computeCovariateBalanceOverall <- function(
   path,
   stratOutcome,
@@ -596,7 +483,18 @@ computeCovariateBalanceOverall <- function(
 
 }
 
-
+#' @title                  Compute risk stratified covariate balance
+#' @description            Computes covariate balance within strata of predicted
+#'                         risk for all specified analyses
+#' @param analysisSettings The analysis settings. Should be created using
+#'                         \code{\link[RiskstratifiedEstimation]{createAnalysisSettings}}
+#'
+#' @param getDataSettings  The \code{getDataSettings} object with the
+#'                         \code{cohortMethodDataFolder} pointing to the location
+#'                         where the \code{CohortMethodData} object is stored.
+#' @return                 There is no value returned. The covariate balance results
+#'                         are stored in the proper locations.
+#'
 #' @import data.table
 #' @export
 computeRseeCovariateBalance <- function(

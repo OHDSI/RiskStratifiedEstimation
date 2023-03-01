@@ -31,12 +31,9 @@
 #' @param getDataSettings         An R object of type \code{getDataSettings} created using the function
 #'                                \code{\link[RiskStratifiedEstimation]{createGetDataSettings}}.
 #' @param pathToPs                The path to the \code{RSEE} analysis results.
-#' @param runCmSettings             The settings for running a \code{CohortMethod}
-#'                                analysis created from
-#'                                \code{\link[RiskStratifiedEstimation]{createRunCmSettingsArgs}}.
+#' @param analysis                An analysis object contained in \code{runCmSettings}
 #'
 #' @importFrom dplyr %>%
-#' @export
 
 fitOutcomeModels <- function(
   outcomeId,
@@ -219,8 +216,7 @@ stratifiedKaplanMeier <- function(population, timePoint) {
 #'
 #' @param ps               A list of objects created from \code{\link[CohortMethod]{createPs}} estimated within risk
 #'                         strata.
-#' @param runCmSettings    The settings for running a \code{CohortMethod} analysis.
-#'
+#' @param analysis         An analysis object.
 #' @return                 A list containing :
 #'                         \itemize{
 #'                           \item{relativeRiskReduction}{Hazard ratios along with confidence intervals within risk
@@ -232,7 +228,6 @@ stratifiedKaplanMeier <- function(population, timePoint) {
 #'                         }
 #'
 #'
-#' @export
 
 estimateTreatmentEffect <- function(
   ps,

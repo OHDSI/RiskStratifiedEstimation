@@ -131,9 +131,6 @@ switchOutcome <- function(
 #'
 #' @param analysisSettings           An R object of type \code{analysisSettings} created using the function
 #'                                   \code{\link[RiskStratifiedEstimation]{createAnalysisSettings}}.
-#' @param runSettings                An R object of type \code{runSettings} created using the function
-#'                                   \code{\link[RiskStratifiedEstimation]{createRunSettings}}.
-#'
 #' @return                          Stores the overall results along with the required data to lauch the shiny
 #'                                   application in the `shiny` directory
 

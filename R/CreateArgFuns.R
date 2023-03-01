@@ -23,9 +23,30 @@
 #'
 #' @details
 #' Create an object defining the parameter values.
-#' @param outcomeId              The outcomeId for the prediction.
-#' @param spliteSettings         The split settings.
 #'
+#' @param outcomeId              The outcomeId for the prediction.
+#' @param splitSettings          An object of type splitSettings that specifies
+#'                               how to split the data into train/validation/test.
+#'                               The default settings can be created using
+#'                               \code{\link[PatientLevelPrediction]{createDefaultSplitSetting}}
+#' @param sampleSettings         An object of type \code{sampleSettings} that specifies any
+#'                               under/over sampling to be done. Should be created with
+#'                               \code{\link[PatientLevelPrediction]{createSampleSettings}}
+#' @param featureEngineeringSettings An object of \code{featureEngineeringSettings} specifying
+#'                                   any feature engineering to be learned (using the train data)
+#' @param preprocessSettings      An object of \code{preprocessSettings}. This setting specifies
+#'                                the minimum fraction of target population who must have
+#'                                a covariate for it to be included in the model training
+#'                                and whether to normalise the covariates before training.
+#'                                Should be created with
+#'                                \code{\link[PatientLevelPrediction]{createPreprocessSettings}}.
+#' @param modelSettings           An object of class \code{modelSettings}.
+#' @param logSettings             An object of \code{logSettings} created using
+#'                                \code{\link[PatientLevelPrediction]{createLogSettings}} specifying
+#'                                how the logging is done.
+#' @param executeSettings         An object of type \code{executeSettings} specifying which parts
+#'                                of the analysis to run. Should be created using
+#'                                \code{\link[PatientLevelPrediction]{createExecuteSettings}}.
 #' @param matchingSettings       The settings for the construction of the population on which the
 #'                               prediction model will be developed.
 #' @param timepoint              The timepoint to predict risk (survival models only)
@@ -62,6 +83,17 @@ createRunPlpAnalysesArgs <- function(
 }
 
 
+#' @title                   Create run settings for prediction
+#' @param analyses          A list with settings for the prediction of each of
+#'                          the risk stratification outcomes.
+#'
+#' @param defaultSettings  An object of type \code{runPlpAnalysesArgs} used as
+#'                         the default settings for outcome risk prediction. Should
+#'                         be created with
+#'                         \code{\link[RiskStratifiedEstimation]{createRunPlpAnalysesArgs}}
+#' @return                 An object of type \code{runPlpSettingsArgs} to be passed
+#'                         to \code{\link[RiskStratifiedEstimation]{createRunSettings}}
+#'
 #' @export
 createRunPlpSettingsArgs <- function(
     analyses = list(),
@@ -85,6 +117,14 @@ createRunPlpSettingsArgs <- function(
 
 }
 
+
+
+#' @title Create prediction settings for an existing model
+#' @param outcomeId              The outcome ID of the existing model.
+#'
+#' @param plpResultDirectory     The directory where the existing model is store.d
+#' @param predictionSettings     A list with prediction settings.
+#'
 #' @export
 createRunExistingPlpSettingsArgs <- function(
     outcomeId,
@@ -731,6 +771,7 @@ createPopulationSettings <- function(
 #'                                 Requires read permissions to this database. On SQL Server, this
 #'                                 should specify both the database and the schema, so for example
 #'                                 "cdm_instance.dbo"
+#' @param databaseName             The name of the database.
 #' @param cohortDatabaseSchema     The name of the database schema that is the location where the
 #'                                 cohort data used to define the at risk cohort is available. If
 #'                                 cohortTable = DRUG_ERA, \code{cohortDatabaseSchema} is not used by
@@ -743,6 +784,9 @@ createPopulationSettings <- function(
 #' @param exposureDatabaseSchema   Input of function \code{\link[CohortMethod]{getDbCohortMethodData}}:
 #'                                 The name of the database schema that is the location where the
 #'                                 exposure data used to define the exposure cohorts is available.
+#' @param tempEmulationSchema      Some database platforms like Oracle and Impala do not truly support
+#'                                 temp tables. To emulate temp tables, provide a schema with write
+#'                                 privileges where temp tables can be created.
 #' @param cohortTable              The tablename that contains the at risk cohort. If cohortTable <>
 #'                                 DRUG_ERA, then expectation is cohortTable has format of COHORT
 #'                                 table: cohort_concept_id, SUBJECT_ID, COHORT_START_DATE,
