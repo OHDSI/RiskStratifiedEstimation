@@ -1,6 +1,10 @@
 RiskStratifiedEstimation
 ===========
 
+<!-- badges: start -->
+  [![R-CMD-check](https://github.com/OHDSI/RiskStratifiedEstimation/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/OHDSI/RiskStratifiedEstimation/actions/workflows/R-CMD-check.yaml)
+  <!-- badges: end -->
+
 Introduction
 ============
 RiskStratifiedEstimation is an R package for implementing risk stratified
