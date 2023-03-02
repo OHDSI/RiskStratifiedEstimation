@@ -21,21 +21,25 @@
 
 #' Prepares for the running the PatientLevelPrediction package
 #'
-#' Prepares for running the PatientLevelPrediction package by merging the treatment and comparator cohorts and defining a new covariate for treatment.
+#' Prepares for running the PatientLevelPrediction package by merging the treatment
+#' and comparator cohorts and defining a new covariate for treatment.
 #'
-#' @param treatmentCohortId The treatment cohort id
-#' @param comparatorCohortId The comparator cohort id
-#' @param targetCohortId The id of the merged cohorts
-#' @param cohortDatabaseSchema The name of the database schema that is the location where the cohort data used to define the at risk cohort is available
-#' @param cohortTable The table that contains the treatment and comparator cohorts.
-#' @param resultsDatabaseSchema The name of the database schema to store the new tables. Need to have write access.
-#' @param mergedCohortTable The table that will contain the computeIncidenceAnalysis <- funcitiogmerged cohorts.
-#' @param connectionDetails The connection details required to connect to a database.
+#' @param treatmentCohortId     The treatment cohort id
+#' @param comparatorCohortId    The comparator cohort id
+#' @param targetCohortId        The id of the merged cohorts
+#' @param cohortDatabaseSchema  The name of the database schema that is the location
+#'                              where the cohort data used to define the at risk
+#'                              cohort is available
+#' @param cohortTable           The table that contains the treatment and comparator
+#'                              cohorts.
+#' @param resultsDatabaseSchema The name of the database schema to store the new tables.
+#'                              Need to have write access.
+#' @param mergedCohortTable     The table that will contain the computeIncidenceAnalysis
+#' @param connectionDetails     The connection details required to connect to adatabase.
 #'
-#' @return Creates the tables resultsDatabaseSchema.mergedCohortTable, resultsDatabaseSchema.attributeDefinitionTable and resultsDatabaseSchema.cohortAttributeTable
-#'
-#' @export
-
+#' @return Creates the tables resultsDatabaseSchema.mergedCohortTable,
+#'         resultsDatabaseSchema.attributeDefinitionTable and
+#'         resultsDatabaseSchema.cohortAttributeTable
 prepareForPlpData <- function(
   treatmentCohortId,
   comparatorCohortId,
@@ -98,7 +102,7 @@ addTable <- function(
 
 
 
-#' @importFrom dplyr %>%
+#' @importFrom magrittr %>%
 switchOutcome <- function(
   ps,
   populationCm
@@ -134,10 +138,8 @@ switchOutcome <- function(
 #' @return                          Stores the overall results along with the required data to lauch the shiny
 #'                                   application in the `shiny` directory
 
-#' @importFrom dplyr %>%
+#' @importFrom magrittr %>%
 #' @importFrom stats binom.test density filter quantile sd weights
-#' @export
-
 createOverallResults <- function(analysisSettings) {
 
   predictOutcomes <-
@@ -554,8 +556,7 @@ mergeTempFiles <- function(
 }
 
 
-#' @importFrom dplyr %>%
-#' @export
+#' @importFrom magrittr %>%
 mergeFiles <- function(
   path,
   fileName
@@ -595,8 +596,7 @@ mergeFiles <- function(
 
 
 
-#' @importFrom dplyr %>%
-#' @export
+#' @importFrom magrittr %>%
 mergeAnalysisFiles <- function(
   analysisSettings,
   label,
@@ -620,8 +620,7 @@ mergeAnalysisFiles <- function(
 }
 
 
-#' @importFrom dplyr %>%
-#' @export
+#' @importFrom magrittr %>%
 mergeRseeFiles <- function(
   analysisSettings,
   fileName
@@ -662,9 +661,6 @@ mergeRseeFiles <- function(
 #'
 #' @return                   A dataframe with the absolute risk-stratum specific absolute risk difference estimates,
 #'                           along with 95 percent confidence interval.
-#'
-#' @export
-
 absoluteRiskReduction <- function(
   population,
   timePoint,
@@ -808,9 +804,6 @@ absoluteRiskReduction <- function(
 #'
 #' @return         A dataframe with hazard ratios for treatment effect across risk strata along with 95 percent
 #'                 confidence intervals
-#'
-#' @export
-
 relativeRiskReduction <- function(model){
 
   if (class(model) == "OutcomeModel") {
@@ -835,7 +828,6 @@ relativeRiskReduction <- function(model){
 
 
 
-#' @export
 createMapMatrix <- function(
   riskPredictions,
   analysis

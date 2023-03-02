@@ -19,9 +19,7 @@
 # @author Peter Rijnbeek
 
 
-#' @importFrom dplyr %>%
-#' @export
-
+#' @importFrom magrittr %>%
 evaluatePrediction <- function(
     analysisSettings,
     getDataSettings,
@@ -330,7 +328,6 @@ evaluatePrediction <- function(
 #-------------------------------------------------------------------------------
 # PS density
 #-------------------------------------------------------------------------------
-#' @export
 computePsDensity <- function(population) {
 
   treatmentDensity <- density(
@@ -370,7 +367,6 @@ computePsDensity <- function(population) {
 }
 
 
-#' @export
 computePsDensityOverall <- function(
   path,
   analysisSettings,
@@ -451,7 +447,6 @@ computePsDensityOverall <- function(
 
 
 
-#' @export
 computeRseePsDensity <- function(analysisSettings) {
   analysisPath <- file.path(
     analysisSettings$saveDirectory,
@@ -528,8 +523,7 @@ computeRseePsDensity <- function(analysisSettings) {
 #'                   are "logistic", "poisson", or "cox". Currently only "cox"
 #'                   is supported.
 #' @return           A tibble with the derived incidence.
-#' @importFrom dplyr %>%
-#' @export
+#' @importFrom magrittr %>%
 computeIncidence <- function(
   population,
   alpha = .05,
@@ -612,8 +606,7 @@ computeIncidence <- function(
 #'                   are "logistic", "poisson", or "cox". Currently only "cox"
 #'                   is supported.
 #'
-#' @importFrom dplyr %>%
-#' @export
+#' @importFrom magrittr %>%
 computeIncidenceOverall <- function(
   path,
   alpha = 0.05,
@@ -665,7 +658,6 @@ computeIncidenceOverall <- function(
 #' @param analysisSettings   An \code{analysisSettings} object created with
 #'                           \code{\link[RiskStratifiedEstimation]{createAnalysisSettings}}
 #'
-#' @export
 computeRseeIncidence <- function(analysisSettings) {
   analysisPath <- file.path(
     analysisSettings$saveDirectory,
@@ -750,9 +742,7 @@ computeRseeIncidence <- function(analysisSettings) {
 
 
 
-#' @importFrom dplyr %>%
-#' @export
-
+#' @importFrom magrittr %>%
 predictionPerformance <- function(
   outcomeId,
   analysisSettings
@@ -828,9 +818,7 @@ predictionPerformance <- function(
 }
 
 
-#' @importFrom dplyr %>%
-#' @export
-
+#' @importFrom magrittr %>%
 predictionPerformanceAnalysis <- function(
   analysisSettings,
   save = TRUE

@@ -33,7 +33,7 @@
 #' @param pathToPs                The path to the \code{RSEE} analysis results.
 #' @param analysis                An analysis object contained in \code{runCmSettings}
 #'
-#' @importFrom dplyr %>%
+#' @importFrom magrittr %>%
 
 fitOutcomeModels <- function(
   outcomeId,

@@ -34,8 +34,6 @@
 
 #' @return                        \code{NULL}. The results are all saved.
 #'
-#' @export
-
 fitOutcomeModelsOverall <- function(
   outcomeId,
   analysisSettings,
@@ -145,7 +143,6 @@ fitOutcomeModelsOverall <- function(
 }
 
 
-#' @export
 includeOverallResults <- function(
   analysisSettings,
   getDataSettings,
@@ -389,7 +386,6 @@ includeOverallResults <- function(
 
   return(NULL)
 }
-
 
 
 

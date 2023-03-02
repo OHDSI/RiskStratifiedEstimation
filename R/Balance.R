@@ -264,7 +264,6 @@ computeMeansPerGroupFast <- function(cohorts, covariates) {
 #'                             subgroup before computing covariate balance.
 #' @return                     A tibble with the covariate balance before and after
 #'                             matching/trimming.
-#' @export
 computeCovariateBalance <- function(
   population,
   cohorts,
@@ -496,7 +495,6 @@ computeCovariateBalanceOverall <- function(
 #'                         are stored in the proper locations.
 #'
 #' @import data.table
-#' @export
 computeRseeCovariateBalance <- function(
   analysisSettings,
   getDataSettings

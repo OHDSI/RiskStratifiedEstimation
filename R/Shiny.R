@@ -18,9 +18,10 @@
 # @author Alexandros Rekkas
 # @author Peter Rijnbeek
 
-
+#' @title Risk stratified effect estimation viewer
+#' @description Launches a the shiny application for the exploration of results
+#' @param analysisPath The shiny directory where the results are stored.
 #' @export
-
 rseeViewer <- function(
   analysisPath
 ) {
@@ -42,10 +43,13 @@ rseeViewer <- function(
 
 
 
-
-#' @importFrom dplyr %>%
+#' @title Prepare shiny viewer
+#' @description Combines results from multiple analyses for the shiny application.
+#' @param analysisSettingsList  A list of all the targeted \code{analysisSettings}.
+#' @param saveDirectory         The directory where the results will be written.
+#'
+#' @importFrom magrittr %>%
 #' @export
-
 prepareMultipleRseeViewer <- function(
   analysisSettingsList,
   saveDirectory

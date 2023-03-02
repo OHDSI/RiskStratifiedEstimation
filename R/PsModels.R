@@ -37,10 +37,7 @@
 #'                                   \code{\link[RiskStratifiedEstimation]{createPopulationSettings}}.
 #' @param runSettings                An R object of type \code{runSettings} created using the function
 #'                                   \code{\link[RiskStratifiedEstimation]{createRunSettings}}.
-#' @importFrom dplyr %>%
-#' @export
-
-
+#' @importFrom magrittr %>%
 fitPsModelSwitch <- function(
   predictOutcome,
   compareOutcome,
@@ -227,9 +224,6 @@ fitPsModelSwitch <- function(
 #' @param truncationLevels            The level of truncation expressed in percentiles of the propensity score.
 #'
 #' @return                            A weighted cox regression model.
-#'
-#' @export
-
 outcomeModelWeighted <- function(ps,
                                  calculateWeights = TRUE,
                                  weightsType = 'ATE',
@@ -275,9 +269,6 @@ outcomeModelWeighted <- function(ps,
 #' @param truncationLevels           The level of truncation expressed in percentiles of the propensity score.
 #'
 #' @return                           The ps data frame provided as input along with a weights column
-#'
-#' @export
-
 createIPW <- function(
   ps,
   weightsType = 'ATE',
@@ -350,9 +341,6 @@ createIPW <- function(
 #' @param isNegativeControl          Is the analysis performed for a negative control?
 #'
 #' @return                           \code{NULL}. The results are all saved.
-#'
-#' @export
-
 fitPsModelOverall <- function(
   outcomeId,
   initialPopulation,
@@ -525,9 +513,7 @@ fitPsModelOverall <- function(
 
 #' @return                           \code{NULL}. The results are all saved.
 #'
-#' @export
-#'
-#' @importFrom dplyr %>%
+#' @importFrom magrittr %>%
 
 fitPsModel <- function(
   outcomeId,
@@ -688,7 +674,6 @@ fitPsModel <- function(
 
 
 
-#' @export
 psAnalysis <- function(
   label,
   cohortMethodData,
@@ -789,7 +774,6 @@ psAnalysis <- function(
 }
 
 
-#'@export
 runPsAnalysis <- function(
   cohortMethodData,
   nRiskStrata,
