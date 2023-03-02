@@ -27,7 +27,7 @@ The framework is applied in 5 steps:
 5. *Presentation of results*: Plot relative and absolute treatment effect
    estimates derived on all databases and summarize.
 
-![](vignettes/rsee_process.svg)
+![](man/figures/rsee_process.svg)
   
 Features
 ========
