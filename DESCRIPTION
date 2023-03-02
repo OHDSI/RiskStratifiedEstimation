@@ -41,5 +41,9 @@ Imports:
     magrittr
 Suggests: knitr,
     rmarkdown
+Remotes:
+    ohdsi/PatientLevelPrediction,
+    ohdsi/CohortMethod,
+    ohdsi/FeatureExtraction
 VignetteBuilder: knitr
 URL: https://ohdsi.github.io/RiskStratifiedEstimation/
