@@ -1,7 +1,7 @@
 Package: RiskStratifiedEstimation
 Type: Package
 Title: Risk Stratified Effect Estimation
-Version: 1.0.0
+Version: 1.0.0.9000
 Authors@R: 
     person("Alexandros", "Rekkas", , "a.rekkas@erasmusmc.nl", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-5352-943X"))
