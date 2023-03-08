@@ -260,13 +260,6 @@ estimateTreatmentEffect <- function(
       )
     }
 
-    models <- lapply(
-      ps,
-      CohortMethod::fitOutcomeModel,
-      stratified = FALSE,
-      modelType = "cox"
-    )
-
     cases <- do.call(
       rbind,
       lapply(
