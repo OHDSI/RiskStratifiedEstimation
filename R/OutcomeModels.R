@@ -244,6 +244,22 @@ estimateTreatmentEffect <- function(
       stratificationColumns = analysis$effectEstimationSettings$stratificationColumns
     )
 
+    if (analysis$effectEstimationSettings$maxRatio > 1) {
+      models <- lapply(
+        ps,
+        CohortMethod::fitOutcomeModel,
+        stratified = TRUE,
+        modelType = "cox"
+      )
+    } else {
+      models <- lapply(
+        ps,
+        CohortMethod::fitOutcomeModel,
+        stratified = FALSE,
+        modelType = "cox"
+      )
+    }
+
     models <- lapply(
       ps,
       CohortMethod::fitOutcomeModel,
