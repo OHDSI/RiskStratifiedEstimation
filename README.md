@@ -42,23 +42,6 @@ Features
 - Includes diagnostic functions for the prediction process, including calibration plots and ROC curves demostrating the performance of the developed prediction models in sub-populations of interest.
 - Includes diagnostic functions for the estimation process, including propensity score distribution plots and plots showing covariate balance before and after performing a propensity score-based analysis.
 
-
-
-Screenshots
-===========
-<table border = "">
-<tr valign="top">
-<td width = 50%>
-  <img src="https://github.com/mi-erasmusmc/RiskStratifiedEstimation/blob/develop/vignettes/comparisonPlot.png" alt="CohortMethod propensity score plot" title="RiskStratifiedEstimation comparison plot" />
-</td>
-<td width = 50%>
- <img src="https://github.com/mi-erasmusmc/RiskStratifiedEstimation/blob/develop/vignettes/balance.png" alt="CohortMethod covariate balance plot" title="RiskStratifiedEstimation weighted Kaplan-Meier estimate" />
-</td>
-</tr><tr>
-<td>Comparison plot across risk strata</td><td>Covariate balance plot</td>
-</tr>
-</table>
-
 Technology
 ============
 RiskStratifiedEstimation is being developed in R.
