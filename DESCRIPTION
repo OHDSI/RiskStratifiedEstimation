@@ -40,11 +40,17 @@ Imports:
     reshape2,
     DT,
     magrittr
-Suggests: knitr,
-    rmarkdown
+Suggests: 
+    covr,
+    Eunomia,
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0)
 Remotes:
     ohdsi/PatientLevelPrediction,
     ohdsi/CohortMethod,
+    ohdsi/Eunomia,
     ohdsi/FeatureExtraction
 VignetteBuilder: knitr
 URL: https://ohdsi.github.io/RiskStratifiedEstimation/
+Config/testthat/edition: 3

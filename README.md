@@ -3,6 +3,7 @@ RiskStratifiedEstimation
 
 <!-- badges: start -->
   [![R-CMD-check](https://github.com/OHDSI/RiskStratifiedEstimation/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/OHDSI/RiskStratifiedEstimation/actions/workflows/R-CMD-check.yaml)
+  [![codecov.io](https://codecov.io/github/OHDSI/RiskStratifiedEstimation/coverage.svg?branch=19-implement-testing)](https://codecov.io/github/OHDSI/RiskStratifiedEstimation?branch=19-implement-testing)
   <!-- badges: end -->
 
 Introduction
