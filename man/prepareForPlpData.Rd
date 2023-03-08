@@ -22,19 +22,26 @@ prepareForPlpData(
 
 \item{targetCohortId}{The id of the merged cohorts}
 
-\item{cohortDatabaseSchema}{The name of the database schema that is the location where the cohort data used to define the at risk cohort is available}
+\item{cohortDatabaseSchema}{The name of the database schema that is the location
+where the cohort data used to define the at risk
+cohort is available}
 
-\item{cohortTable}{The table that contains the treatment and comparator cohorts.}
+\item{cohortTable}{The table that contains the treatment and comparator
+cohorts.}
 
-\item{resultsDatabaseSchema}{The name of the database schema to store the new tables. Need to have write access.}
+\item{resultsDatabaseSchema}{The name of the database schema to store the new tables.
+Need to have write access.}
 
-\item{mergedCohortTable}{The table that will contain the merged cohorts.}
+\item{mergedCohortTable}{The table that will contain the computeIncidenceAnalysis}
 
-\item{connectionDetails}{The connection details required to connect to a database.}
+\item{connectionDetails}{The connection details required to connect to adatabase.}
 }
 \value{
-Creates the tables resultsDatabaseSchema.mergedCohortTable, resultsDatabaseSchema.attributeDefinitionTable and resultsDatabaseSchema.cohortAttributeTable
+Creates the tables resultsDatabaseSchema.mergedCohortTable,
+        resultsDatabaseSchema.attributeDefinitionTable and
+        resultsDatabaseSchema.cohortAttributeTable
 }
 \description{
-Prepares for running the PatientLevelPrediction package by merging the treatment and comparator cohorts and defining a new covariate for treatment.
+Prepares for running the PatientLevelPrediction package by merging the treatment
+and comparator cohorts and defining a new covariate for treatment.
 }

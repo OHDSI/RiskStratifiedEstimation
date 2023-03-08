@@ -9,9 +9,6 @@ createOverallResults(analysisSettings)
 \arguments{
 \item{analysisSettings}{An R object of type \code{analysisSettings} created using the function
 \code{\link[RiskStratifiedEstimation]{createAnalysisSettings}}.}
-
-\item{runSettings}{An R object of type \code{runSettings} created using the function
-\code{\link[RiskStratifiedEstimation]{createRunSettings}}.}
 }
 \value{
 Stores the overall results along with the required data to lauch the shiny

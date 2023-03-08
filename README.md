@@ -1,13 +1,37 @@
 RiskStratifiedEstimation
 ===========
 
+<!-- badges: start -->
+  [![R-CMD-check](https://github.com/OHDSI/RiskStratifiedEstimation/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/OHDSI/RiskStratifiedEstimation/actions/workflows/R-CMD-check.yaml)
+  <!-- badges: end -->
+
 Introduction
 ============
-RiskStratifiedEstimation is an R package for implementing risk stratified analyses for the assessment of treatment effect heterogeneity in an observational database in the OMOP Common Data Model. The package combines functionality of [PatientLevelPrediction](https://github.com/OHDSI/PatientLevelPrediction) and [CohortMethod](https://github.com/OHDSI/CohortMethod) R packages.
+RiskStratifiedEstimation is an R package for implementing risk stratified
+analyses for the assessment of treatment effect heterogeneity in an
+observational database in the OMOP Common Data Model. The package combines
+functionality of
+[PatientLevelPrediction](https://github.com/OHDSI/PatientLevelPrediction) and
+[CohortMethod](https://github.com/OHDSI/CohortMethod) R packages.
 
-The figure below illustrates the overall process of performing a risk-based analysis of treatment effect heterogeneity using the RiskStratifiedEstimation package. (A) Starting from a treatment (top), a comparator (bottom) and an outcome (middle) cohort we estimate the propensity scores on the entire target population. (B) We match patients on the propensity scores and estimate the prediction model. Since we match patients we develop the prediction model on smaller subset of the initial population and, therefore, the number of patients is smaller in B compared to A. (C) We apply the prediction model on the entire population (green: lower 25% of the risk distribution; yellow: patients with risk between 25% and 50% of the risk distribution; orange: patients with risk between 50% and 75% of the risk distribution; red: patients at risk higher than 75% of the risk distribution). (D) We separate in risk subgroups, here quarters. Within risk quarters propensity scores are estimated again and relative and absolute treatment effects are estimated.
+The framework is applied in 5 steps:
+1. *Definition of the research problem*: Requires the definition of (at
+   least) three cohorts. The **treatment cohort** with instructions on which
+   patients are to be considered as receiving the treatment of interest; the
+   **comparator cohort** with instructions on which patients are to be
+   considered as receiving the comparator treatment; one (or more) **outcome
+   cohort(s)** with instructions on which patients are to be considered as
+   having the outcome(s) of interest.
+2. *Database identification*: Databases mapped to OMOP-CDM on which the cohort
+   definitions will be applied in order to generate the study population.
+3. *Prediction*: Develop one (or more) prediction model(s) on the outcome(s) of
+   interest on the pooled treatment and comparator cohorts in each database.
+4. *Estimation*: Run diagnostincs and derive estimates of both relative and
+   absolute treatment effects within strata of predicted risk.
+5. *Presentation of results*: Plot relative and absolute treatment effect
+   estimates derived on all databases and summarize.
 
-  <img src="https://github.com/mi-erasmusmc/RiskStratifiedEstimation/blob/develop/vignettes/rsee_process.jpg" alt="CohortMethod propensity score plot" title="RiskStratifiedEstimation comparison plot" />
+![](man/figures/rsee_process.svg)
   
 Features
 ========
@@ -18,23 +42,6 @@ Features
 - Includes diagnostic functions for the prediction process, including calibration plots and ROC curves demostrating the performance of the developed prediction models in sub-populations of interest.
 - Includes diagnostic functions for the estimation process, including propensity score distribution plots and plots showing covariate balance before and after performing a propensity score-based analysis.
 
-
-
-Screenshots
-===========
-<table border = "">
-<tr valign="top">
-<td width = 50%>
-  <img src="https://github.com/mi-erasmusmc/RiskStratifiedEstimation/blob/develop/vignettes/comparisonPlot.png" alt="CohortMethod propensity score plot" title="RiskStratifiedEstimation comparison plot" />
-</td>
-<td width = 50%>
- <img src="https://github.com/mi-erasmusmc/RiskStratifiedEstimation/blob/develop/vignettes/balance.png" alt="CohortMethod covariate balance plot" title="RiskStratifiedEstimation weighted Kaplan-Meier estimate" />
-</td>
-</tr><tr>
-<td>Comparison plot across risk strata</td><td>Covariate balance plot</td>
-</tr>
-</table>
-
 Technology
 ============
 RiskStratifiedEstimation is being developed in R.
@@ -43,7 +50,7 @@ System Requirements
 ============
 Requires R (version 3.1.0 or higher). Installation on Windows requires [RTools](http://cran.r-project.org/bin/windows/Rtools/). Libraries used in RiskStratifiedEstimation require Java.
 
-Dependencies
+Dependencies (HADES)
 ============
  * Cyclops
  * DatabaseConnector
@@ -52,6 +59,7 @@ Dependencies
  * ParallelLogger
  * CohortMethod
  * PatientLevelPrediction
+ * EmpiricalCalibration
 
 Getting Started
 ===============
@@ -61,8 +69,8 @@ Getting Started
 3. In R, use the following commands to download and install RiskStratifiedEstimation:
 
   ```r
-  install.packages("devtools")
-  devtools::install_github("OHDSI/RiskStratifiedEstimation")
+  install.packages("remotes")
+  remotes::install_github("OHDSI/RiskStratifiedEstimation")
   ```
 
 Getting Involved
@@ -70,7 +78,7 @@ Getting Involved
 * Vignette: [Study example](https://github.com/mi-erasmusmc/RiskStratifiedEstimation/tree/develop/inst/doc/StudyExample.pdf)
 * Package manual: [RiskStratifiedEstimation.pdf](https://github.com/mi-erasmusmc/RiskStratifiedEstimation/blob/develop/extras/RiskStratifiedEstimation-manual.pdf)
 * Developer questions/comments/feedback: <a href="http://forums.ohdsi.org/c/developers">OHDSI Forum</a>
-* We use the <a href="../../issues">GitHub issue tracker</a> for all bugs/issues/enhancements
+* We use the <a href="https://github.com/OHDSI/RiskStratifiedEstimation/issues">GitHub issue tracker</a> for all bugs/issues/enhancements
 
 License
 =======
@@ -80,6 +88,6 @@ Development
 ===========
 RiskStratifiedEstimation is being developed in R Studio.
 
-RiskStratifiedEstimation is ready for use.
+RiskStratifiedEstimation is still in beta phase.
 
 

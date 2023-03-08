@@ -20,7 +20,6 @@
 
 
 #' @import data.table
-#' @export
 computeMeansPerGroupFast <- function(cohorts, covariates) {
 
   hasStrata <- "stratumId" %in% colnames(cohorts)
@@ -39,7 +38,7 @@ computeMeansPerGroupFast <- function(cohorts, covariates) {
       ]
   }
 
-  if (hasStrata && any(stratumSize %>% pull(.data$N) > 1))
+  if (hasStrata && any(stratumSize %>% dplyr::pull(.data$N) > 1))
   {
 
     keyCols <- c(
@@ -250,15 +249,34 @@ computeMeansPerGroupFast <- function(cohorts, covariates) {
 }
 
 
-#' @import data.table
-#' @export
-computeCovariateBalance4 <- function(population, cohorts, covariates, covariateRef, subgroupCovariateId = NULL) {
+#' @title                      Compute covariate balance
+#' @description                Compute covariate balance before and after
+#'                             adjustment with the propensity scores.
+#' @param population           A data frame containing the people that are
+#'                             remaining after matching and/or trimming.
+#' @param cohorts              The cohorts of a \code{CohortMethodData} object.
+#' @param covariates           The covariates of a \code{CovariateData} object.
+#' @param covariateRef         The covariate reference of a \code{CovariateData}
+#'                             object.
+#' @param subgroupCovariateId  Optional: a covariate ID of a binary covariate that
+#'                             indicates a subgroup of interest. Both the before
+#'                             and after populations will be restricted to this
+#'                             subgroup before computing covariate balance.
+#' @return                     A tibble with the covariate balance before and after
+#'                             matching/trimming.
+computeCovariateBalance <- function(
+  population,
+  cohorts,
+  covariates,
+  covariateRef,
+  subgroupCovariateId = NULL
+) {
   ParallelLogger::logTrace("Computing covariate balance")
   start <- Sys.time()
 
   if (!is.null(subgroupCovariateId)) {
     subGroupCovariate <- covariates %>%
-      filter(.data$covariateId == subgroupCovariateId)
+      dplyr::filter(.data$covariateId == subgroupCovariateId)
 
     if (nrow(subGroupCovariate) == 0) {
       stop("Cannot find covariate with ID ", subgroupCovariateId)
@@ -287,7 +305,7 @@ computeCovariateBalance4 <- function(population, cohorts, covariates, covariateR
     }
 
     tempCohortsAfterMatching <- population %>%
-      filter(.data$rowId %in% subGroupCovariate$rowId) %>%
+      dplyr::filter(.data$rowId %in% subGroupCovariate$rowId) %>%
       as.data.frame()
 
     if (nrow(tempCohortsAfterMatching) == 0)
@@ -302,10 +320,10 @@ computeCovariateBalance4 <- function(population, cohorts, covariates, covariateR
     }
 
     cohortMethodData$tempCohorts <- tempCohorts %>%
-      select(.data$rowId, .data$treatment)
+      dplyr::select(.data$rowId, .data$treatment)
 
     cohortMethodData$tempCohortsAfterMatching <- tempCohortsAfterMatching %>%
-      select(.data$rowId, .data$treatment, .data$stratumId)
+      dplyr::select(.data$rowId, .data$treatment, .data$stratumId)
   }
   else
   {
@@ -317,34 +335,11 @@ computeCovariateBalance4 <- function(population, cohorts, covariates, covariateR
       )
     ]
 
-    # selectCols <- c(
-    #   "rowId",
-    #   "treatment"
-    # )
-    #
-    # tempCohorts <- cohorts[
-    #   ,
-    #   selectCols
-    #   ]
-
-
-    # tempCohorts <- data.table::setDT(
-    #   dplyr::collect(
-    #     cohortMethodData$cohorts
-    #   ) %>%
-    #     select(.data$rowId, .data$treatment)
-    # )
-
     tempCohortsAfterMatching <- data.table::setDT(
       population %>%
-        select(.data$rowId, .data$treatment, .data$stratumId)
+        dplyr::select(.data$rowId, .data$treatment, .data$stratumId)
     )
   }
-  # on.exit(cohortMethodData$tempCohorts <- NULL)
-  # on.exit(cohortMethodData$tempCohortsAfterMatching <- NULL, add = TRUE)
-
-  # covariates <- setDT(
-  #   dplyr::collect(cohortMethodData$covariates))
   beforeMatching <- computeMeansPerGroupFast(tempCohorts, covariates)
   afterMatching <- computeMeansPerGroupFast(tempCohortsAfterMatching, covariates)
 
@@ -360,9 +355,9 @@ computeCovariateBalance4 <- function(population, cohorts, covariates, covariateR
   colnames(afterMatching)[colnames(afterMatching) == "sd"] <- "afterMatchingSd"
 
   balance <- beforeMatching %>%
-    full_join(afterMatching, by = "covariateId") %>%
-    inner_join(covariateRef, by = "covariateId") %>%
-    mutate(
+    dplyr::full_join(afterMatching, by = "covariateId") %>%
+    dplyr::inner_join(covariateRef, by = "covariateId") %>%
+    dplyr::mutate(
       beforeMatchingStdDiff = (.data$beforeMatchingMeanTarget - .data$beforeMatchingMeanComparator)/.data$beforeMatchingSd,
       afterMatchingStdDiff = (.data$afterMatchingMeanTarget - .data$afterMatchingMeanComparator)/.data$afterMatchingSd
     )
@@ -377,20 +372,13 @@ computeCovariateBalance4 <- function(population, cohorts, covariates, covariateR
 }
 
 
-
-#' @import data.table
-#' @export
-computeCovariatebalanceBase <- function(
-  analysisSettings,
-  runCmSettings,
-  covariates,
-  covariateRef,
-  cohorts,
+computeCovariateBalanceOverall <- function(
+  path,
   stratOutcome,
-  estOutcome
-)
-{
-
+  analysisType,
+  analysisSettings,
+  getDataSettings
+) {
 
   saveDir <- file.path(
     analysisSettings$saveDirectory,
@@ -398,167 +386,10 @@ computeCovariatebalanceBase <- function(
     "shiny"
   )
 
-  if (!dir.exists(saveDir)) {
-    dir.create(
-      saveDir,
-      recursive = TRUE
-    )
-  }
-
-  # if (is.null(cohortMethodData)) {
-  #   cohortMethodData <-
-  #     CohortMethod::loadCohortMethodData(
-  #       file = getDataSettings$cohortMethodDataFolder
-  #     )
-  # }
-
-  analysisPath <- file.path(
-
-    analysisSettings$saveDirectory,
-    analysisSettings$analysisId
-  )
-
-
-  ps <- tryCatch(
-    {
-      if (stratOutcome == estOutcome) {
-
-        readRDS(
-          file.path(
-            analysisPath,
-            "Estimation",
-            stratOutcome,
-            "ps.rds"
-          )
-        )
-      } else {
-        readRDS(
-          file.path(
-            analysisPath,
-            "Estimation",
-            stratOutcome,
-            estOutcome,
-            "ps.rds"
-          )
-        )
-
-      }
-    },
-    error = function(e) {
-      e$message
-    }
-  )
-
-  if (is.character(ps)) {
-    return(NULL)
-  } else {
-
-    if (runCmSettings$psMethod == "matchOnPs") {
-      ps <- lapply(
-        ps,
-        CohortMethod::matchOnPs,
-        caliper      = runCmSettings$effectEstimationSettings$caliper,
-        caliperScale = runCmSettings$effectEstimationSettings$caliperScale,
-        maxRatio     = runCmSettings$effectEstimationSettings$maxRatio
-      )
-    } else if (runCmSettings$psMethod == "stratifyByPs") {
-      ps <- lapply(
-        ps,
-        CohortMethod::stratifyByPs,
-        numberOfStrata = runCmSettings$effectEstimationSettings$numberOfStrata,
-        baseSelection  = runCmSettings$effectEstimationSettings$baseSelection
-      )
-    }
-
-    ps <- lapply(
-      ps,
-      data.table::setDT
-    )
-
-    covariateBalance <- tryCatch(
-      {
-        computeCovariateBalanceOverall(
-          ps,
-          covariates = covariates,
-          covariateRef = covariateRef,
-          cohorts = cohorts,
-          analysisSettings = analysisSettings,
-          runCmSettings = runCmSettings
-        )
-      },
-      error = function(e) {
-        e$message
-      }
-    )
-
-    if (!is.character(covariateBalance)) {
-      covariateBalance %>%
-        dplyr::mutate(
-          database = analysisSettings$databaseName,
-          analysisId = analysisSettings$analysisId,
-          stratOutcome = stratOutcome,
-          estOutcome = estOutcome,
-          treatmentId = analysisSettings$treatmentCohortId,
-          comparatorId = analysisSettings$comparatorCohortId,
-          analysisType = runCmSettings$label
-        ) %>%
-        dplyr::select(
-          c(
-            "riskStratum",
-            "covariateId",
-            "covariateName",
-            "beforeMatchingStdDiff",
-            "afterMatchingStdDiff",
-            "database",
-            "analysisId",
-            "stratOutcome",
-            "estOutcome",
-            "treatmentId",
-            "comparatorId",
-            "analysisType"
-          )
-        ) %>%
-        saveRDS(
-          file.path(
-            saveDir,
-            paste0(
-              paste(
-                "balance",
-                analysisSettings$analysisId,
-                runCmSettings$label,
-                analysisSettings$databaseName,
-                analysisSettings$treatmentCohortId,
-                analysisSettings$comparatorCohortId,
-                stratOutcome,
-                estOutcome,
-                sep = "_"
-              ),
-              ".rds"
-            )
-          )
-        )
-    }
-  }
-}
-
-
-
-#' @import data.table
-#' @export
-computeCovariateBalanceAnalysis2 <- function(
-  analysisSettings,
-  runCmSettings,
-  getDataSettings = NULL,
-  balanceThreads = 1
-)
-{
-
-  predictOutcomes <-
-    analysisSettings$outcomeIds[which(colSums(analysisSettings$analysisMatrix) != 0)]
-
   cohortMethodData <- CohortMethod::loadCohortMethodData(
     file = getDataSettings$cohortMethodDataFolder
   )
+
   cohorts <- data.table::setDT(
     dplyr::collect(
       cohortMethodData$cohorts
@@ -577,9 +408,102 @@ computeCovariateBalanceAnalysis2 <- function(
     )
   )
 
+  estOutcome <- as.numeric(
+    basename(
+      path
+    )
+  )
+
+  psFileLocation <- file.path(
+    path,
+    "ps_analysis.rds"
+  )
+
+  if (!file.exists(psFileLocation)) {
+    return()
+  }
+
+  ps <- readRDS(psFileLocation)
+
+  lapply(
+    ps,
+    computeCovariateBalance,
+    cohorts      = cohorts,
+    covariates   = covariates,
+    covariateRef = covariateRef,
+  ) %>%
+    dplyr::bind_rows(
+      .id = "riskStratum"
+    ) %>%
+    dplyr::mutate(
+      riskStratum  = paste0("Q", riskStratum),
+      database     = analysisSettings$databaseName,
+      analysisId   = analysisSettings$analysisId,
+      stratOutcome = stratOutcome,
+      estOutcome   = estOutcome,
+      treatmentId  = analysisSettings$treatmentCohortId,
+      comparatorId = analysisSettings$comparatorCohortId,
+      analysisType = analysisType
+    ) %>%
+    dplyr::select(
+      riskStratum,
+      covariateId,
+      covariateName,
+      beforeMatchingStdDiff,
+      afterMatchingStdDiff,
+      database,
+      analysisId,
+      stratOutcome,
+      estOutcome,
+      treatmentId,
+      comparatorId,
+      analysisType
+    ) %>%
+    saveRDS(
+      file = file.path(
+        saveDir,
+        paste0(
+          paste(
+            "balance",
+            analysisSettings$analysisId,
+            analysisSettings$databaseName,
+            analysisType,
+            analysisSettings$treatmentCohortId,
+            analysisSettings$comparatorCohortId,
+            stratOutcome,
+            estOutcome,
+            sep = "_"
+          ),
+          ".rds"
+        )
+      )
+    )
+
+
+}
+
+#' @title                  Compute risk stratified covariate balance
+#' @description            Computes covariate balance within strata of predicted
+#'                         risk for all specified analyses
+#' @param analysisSettings The analysis settings. Should be created using
+#'                         \code{\link[RiskstratifiedEstimation]{createAnalysisSettings}}
+#'
+#' @param getDataSettings  The \code{getDataSettings} object with the
+#'                         \code{cohortMethodDataFolder} pointing to the location
+#'                         where the \code{CohortMethodData} object is stored.
+#' @return                 There is no value returned. The covariate balance results
+#'                         are stored in the proper locations.
+#'
+#' @import data.table
+computeRseeCovariateBalance <- function(
+  analysisSettings,
+  getDataSettings
+) {
+
   analysisPath <- file.path(
     analysisSettings$saveDirectory,
-    analysisSettings$analysisId
+    analysisSettings$analysisId,
+    "Estimation"
   )
 
   saveDir <- file.path(
@@ -588,98 +512,48 @@ computeCovariateBalanceAnalysis2 <- function(
     "shiny"
   )
 
-  if (!dir.exists(saveDir)) {
-    dir.create(
-      saveDir,
-      recursive = TRUE
-    )
-  }
+  labels <- list.dirs(
+    path = analysisPath,
+    recursive = FALSE
+  )
 
-  for (predictOutcome in predictOutcomes)
-  {
+  cluster <- ParallelLogger::makeCluster(
+    analysisSettings$balanceThreads
+  )
 
-    predLoc <- which(analysisSettings$outcomeIds == predictOutcome)
-    compLoc <- analysisSettings$analysisMatrix[, predLoc]
-    compareOutcomes <- analysisSettings$outcomeIds[as.logical(compLoc)]
-    compareOutcomes <- compareOutcomes[compareOutcomes != predictOutcome]
-    compareOutcomes <- sort(
-      compareOutcomes[compareOutcomes != predictOutcome]
-    )
+  ParallelLogger::clusterRequire(
+    cluster,
+    "RiskStratifiedEstimation"
+  )
 
-    estOutcomes <- c(
-      predictOutcome,
-      compareOutcomes
+  for (i in seq_along(labels)) {
+    predictOutcomeDirs <- list.dirs(
+      path       = labels[i],
+      recursive  = FALSE,
+      full.names = TRUE
     )
 
-
-    cluster <- ParallelLogger::makeCluster(analysisSettings$balanceThreads)
-    ParallelLogger::clusterRequire(
-      cluster,
-      "RiskStratifiedEstimation"
-    )
-    ParallelLogger::clusterRequire(
-      cluster,
-      "data.table"
-    )
-    ParallelLogger::clusterRequire(
-      cluster,
-      "dplyr"
+    predictOutcomes <- as.numeric(
+      basename(
+        predictOutcomeDirs
+      )
     )
 
-    dummy <- ParallelLogger::clusterApply(
-      cluster = cluster,
-      x = estOutcomes,
-      fun = computeCovariatebalanceBase,
-      analysisSettings = analysisSettings,
-      runCmSettings = runCmSettings,
-      covariates = covariates,
-      covariateRef = covariateRef,
-      cohorts = cohorts,
-      stratOutcome = predictOutcome
-    )
-
-    ParallelLogger::stopCluster(cluster)
-  }
-}
-
-
-
-#' @import data.table
-#' @export
-computeCovariateBalanceOverall <- function(
-  ps,
-  covariates,
-  covariateRef,
-  cohorts,
-  analysisSettings,
-  runCmSettings
-)
-{
-
-
-  psMethod <- runCmSettings$psMethod
-
-  if (psMethod == "stratifyByPs" | psMethod == "matchOnPs") {
-
-    covariateBalanceList <- lapply(
-      ps,
-      computeCovariateBalance4,
-      covariates = covariates,
-      covariateRef = covariateRef,
-      cohorts = cohorts
-    ) %>%
-      dplyr::bind_rows(
-        .id = "riskStratum"
-      ) %>%
-      dplyr::mutate(
-        riskStratum = paste0(
-          "Q",
-          riskStratum
-        )
+    for (j in seq_along(predictOutcomes)) {
+      compareOutcomeDirs <- list.dirs(
+        predictOutcomeDirs[j],
+        recursive = FALSE
       )
 
+      dummy <- ParallelLogger::clusterApply(
+        cluster          = cluster,
+        x                = compareOutcomeDirs,
+        fun              = computeCovariateBalanceOverall,
+        analysisSettings = analysisSettings,
+        getDataSettings  = getDataSettings,
+        stratOutcome     = predictOutcomes[j],
+        analysisType     = basename(labels[i])
+      )
+    }
   }
-
-  return(covariateBalanceList)
-
 }

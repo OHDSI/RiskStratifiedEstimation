@@ -1,19 +1,16 @@
 library(dplyr)
+
 shiny::shinyServer(
   function(
     input,
     output,
     session
-  )
-  {
-
-
+  ) {
     shiny::observe(
       {
-        stratificationOutcome <- input$stratOutcome
         filteredEstimationOutcomes <- mappedOverallRelativeResults %>%
           dplyr::filter(
-            stratOutcome == stratificationOutcome
+            stratOutcome == stratOutcome
           ) %>%
           dplyr::select(
             estOutcome
@@ -41,9 +38,7 @@ shiny::shinyServer(
           mappedOverallAbsoluteResults = mappedOverallAbsoluteResults,
           mappedOverallCasesResults = mappedOverallCasesResults
         )
-
         return(results)
-
       }
     )
 
@@ -57,12 +52,43 @@ shiny::shinyServer(
           db = input$database,
           overallMappedOverallRelativeResults = overallMappedOverallRelativeResults
         )
+        return(results)
       }
     )
 
+    if (hasNegativeControls) {
+      negativeControlsSubset <- shiny::reactive(
+        {
+          results <- getNegativeControls(
+            treat = input$treatment,
+            comp = input$comparator,
+            strat = input$stratOutcome,
+            anal = input$analysis,
+            db = input$database,
+            negativeControls = negativeControls
+          )
+        }
+      )
+    }
+
+    if (hasOverallNegativeControls) {
+      overallNegativeControlsSubset <- shiny::reactive(
+        {
+          results <- getResultsOverall(
+            treat = input$treatment,
+            comp = input$comparator,
+            anal = input$analysis,
+            db = input$database,
+            overallMappedOverallRelativeResults = overallNegativeControls
+          )
+          return(results)
+        }
+      )
+    }
+
+
     incidenceSubset <- shiny::reactive(
       {
-
         res <- getIncidence(
           treat = input$treatment,
           comp = input$comparator,
@@ -202,18 +228,14 @@ shiny::shinyServer(
             mark = ",",
             digits = 0
           )
-
         return(table)
-
       }
     )
 
 
     output$mainTableIncidence <- DT::renderDataTable(
       {
-
         res <- incidenceSubset()
-
         treatment <- res$treatment[1]
         comparator <- res$comparator[1]
         outcome <- res$stratOutcome[1]
@@ -276,7 +298,6 @@ shiny::shinyServer(
                 )
               )
             )
-
           ) %>%
           DT::formatCurrency(
             columns =  "treatmentPersons",
@@ -357,18 +378,57 @@ shiny::shinyServer(
             upper
           )
 
+        tableColNames <-  c(
+          "Database",
+          "Analysis",
+          "Treatment",
+          "Comparator",
+          "Outcome",
+          "Hazard ratio",
+          "Lower",
+          "Upper"
+        )
+
+        if (hasOverallNegativeControls) {
+          ncs <- overallNegativeControlsSubset() %>%
+            dplyr::mutate(logRr = log(estimate))
+          dat <- overallResultSubset() %>%
+            dplyr::mutate(logRr = log(estimate))
+          mod <- EmpiricalCalibration::fitSystematicErrorModel(
+            logRr =  ncs$logRr,
+            seLogRr = ncs$seLogRr,
+            trueLogRr = rep(0, nrow(ncs))
+          )
+          table <- table %>%
+            dplyr::bind_cols(
+              EmpiricalCalibration::calibrateConfidenceInterval(
+                logRr = dat$logRr,
+                seLogRr = dat$seLogRr,
+                model = mod
+              ) %>%
+                dplyr::mutate(
+                  calibratedEstimate = round(exp(logRr), digits = 2),
+                  calibratedLower = round(exp(logLb95Rr), digits = 2),
+                  calibratedUpper = round(exp(logUb95Rr), digits = 2)
+                ) %>%
+                dplyr::select(
+                  calibratedEstimate,
+                  calibratedLower,
+                  calibratedUpper
+                )
+            )
+          tableColNames <- c(
+            tableColNames,
+            "Calibrated HR",
+            "Calibrated lower",
+            "Calibrated upper"
+          )
+
+        }
+
         table <- DT::datatable(
           data = table,
-          colnames = c(
-            "Database",
-            "Analysis",
-            "Treatment",
-            "Comparator",
-            "Outcome",
-            "Hazard ratio",
-            "Lower",
-            "Upper"
-          ),
+          colnames = tableColNames,
           caption = htmltools::tags$caption(
             style = "caption-side: top; text-align: left;",
             "Table 2: Overall hazard ratios comparing treatment",
@@ -398,12 +458,11 @@ shiny::shinyServer(
 
     output$mainTableRelative <- DT::renderDataTable(
       {
-
         res <- resultSubset()
-
         treatment <- res$relative$treatment[1]
         comparator <- res$relative$comparator[1]
         outcome <- res$relative$stratOutcome[1]
+        analysisType <- res$relative$analysisType[1]
 
         table <- res$relative %>%
           dplyr::mutate(
@@ -427,7 +486,46 @@ shiny::shinyServer(
             analysisType,
             combined
           ) %>%
-          tidyr::spread(riskStratum, combined) %>%
+          tidyr::spread(riskStratum, combined)
+
+        if (hasNegativeControls) {
+          ncs <- negativeControlsSubset() %>%
+            dplyr::mutate(logRr = log(estimate))
+          tmp <- calibrateRiskStrataCis(
+            negativeControls = ncs,
+            positiveControls = res$relative %>%
+              dplyr::mutate(
+                logRr = log(estimate)
+              )
+          ) %>%
+            dplyr::mutate(
+              combined = paste(
+                round(estimate, 2),
+                paste0(
+                  "(",
+                  round(lower, 2),
+                  ", ",
+                  round(upper, 2),
+                  ") [CAL]"
+                )
+              ),
+              analysisType = analysisType
+            ) %>%
+            dplyr::select(
+              Outcome,
+              analysisType,
+              riskStratum,
+              combined
+            ) %>%
+            tidyr::spread(riskStratum, combined)
+
+          table <- table %>%
+            dplyr::bind_rows(
+              tmp
+            )
+        }
+
+        table %>%
           DT::datatable(
             caption = htmltools::tags$caption(
               style = "caption-side: top; text-align: left;",
@@ -665,7 +763,7 @@ shiny::shinyServer(
       }
     )
 
-    output$overallBalanceTable <- DT::renderDataTable(
+    output$overallBalanceTable <- DT::renderDT(
       {
         res <- overallBalanceSubset() %>%
           dplyr::mutate(
@@ -713,78 +811,19 @@ shiny::shinyServer(
 
     output$evaluationPlotPs <- shiny::renderPlot(
       {
-
         psDensitySubset() %>%
+          dplyr::mutate(
+            treatment = ifelse(
+              treatment == 1,
+              treatmentId,
+              comparatorId
+            )
+          ) %>%
           dplyr::left_join(
             mapExposures,
             by = c("treatment" = "exposure_id")
           ) %>%
-          ggplot2::ggplot(
-            ggplot2::aes(
-              x = x,
-              y = y
-            )
-          ) +
-          ggplot2::geom_density(
-            stat = "identity",
-            ggplot2::aes(
-              color = exposure_name,
-              group = exposure_name,
-              fill = exposure_name
-            )
-          ) +
-          ggplot2::facet_grid(~riskStratum) +
-          ggplot2::ylab(
-            label = "Density"
-          ) +
-          ggplot2::xlab(
-            label = "Preference score"
-          ) +
-          ggplot2::scale_fill_manual(
-            values = c(
-              rgb(
-                red = 0.8,
-                green = 0,
-                blue = 0,
-                alpha = 0.5
-              ),
-              rgb(
-                red = 0,
-                green = 0,
-                blue = 0.8,
-                alpha = 0.5
-              )
-            )
-          ) +
-          ggplot2::scale_color_manual(
-            values = c(
-              rgb(
-                red = 0.8,
-                green = 0,
-                blue = 0,
-                alpha = 0.5
-              ),
-              rgb(
-                red = 0,
-                green = 0,
-                blue = 0.8,
-                alpha = 0.5
-              )
-            )
-          ) +
-          ggplot2::theme(
-            legend.title = ggplot2::element_blank(),
-            legend.position = "top",
-            legend.text = ggplot2::element_text(
-              margin = ggplot2::margin(
-                t = 0,
-                r = 0.5,
-                b = 0,
-                l = 0.1,
-                unit = "cm"
-              )
-            )
-          )
+          plotPsDensity(riskStratified = TRUE)
       }
     )
 
@@ -811,71 +850,7 @@ shiny::shinyServer(
             mapExposures,
             by = c("treatment" = "exposure_id")
           ) %>%
-          ggplot2::ggplot(
-            ggplot2::aes(
-              x = x,
-              y = y
-            )
-          ) +
-          ggplot2::geom_density(
-            stat = "identity",
-            ggplot2::aes(
-              color = exposure_name,
-              group = exposure_name,
-              fill = exposure_name
-            )
-          ) +
-          ggplot2::ylab(
-            label = "Density"
-          ) +
-          ggplot2::xlab(
-            label = "Preference score"
-          ) +
-          ggplot2::scale_fill_manual(
-            values = c(
-              rgb(
-                red = 0.8,
-                green = 0,
-                blue = 0,
-                alpha = 0.5
-              ),
-              rgb(
-                red = 0,
-                green = 0,
-                blue = 0.8,
-                alpha = 0.5
-              )
-            )
-          ) +
-          ggplot2::scale_color_manual(
-            values = c(
-              rgb(
-                red = 0.8,
-                green = 0,
-                blue = 0,
-                alpha = 0.5
-              ),
-              rgb(
-                red = 0,
-                green = 0,
-                blue = 0.8,
-                alpha = 0.5
-              )
-            )
-          ) +
-          ggplot2::theme(
-            legend.title = ggplot2::element_blank(),
-            legend.position = "top",
-            legend.text = ggplot2::element_text(
-              margin = ggplot2::margin(
-                t = 0,
-                r = 0.5,
-                b = 0,
-                l = 0.1,
-                unit = "cm"
-              )
-            )
-          )
+          plotPsDensity()
       }
     )
 
@@ -1061,15 +1036,15 @@ shiny::shinyServer(
             )
           ) %>%
           dplyr::select(
-            auc,
+            AUROC,
             cohort
           ) %>%
           dplyr::mutate(
-            auc = paste(
+            AUROC = paste(
               "AUC:",
               paste0(
                 round(
-                  100*auc,
+                  100*AUROC,
                   digits = 2
                 ),
                 "%"
@@ -1089,7 +1064,7 @@ shiny::shinyServer(
             vjust = "top",
             alpha = 0.8,
             ggplot2::aes(
-              label = auc
+              label = AUROC
             ),
             size = 5.5
           )
@@ -1099,36 +1074,70 @@ shiny::shinyServer(
       }
     )
 
-    showInfoBox <- function(title, htmlFileName) {
-      showModal(
-        modalDialog(
-          title = title,
-          easyClose = TRUE,
-          footer = NULL,
-          size = "l",
-          HTML(
-            readChar(
-              htmlFileName,
-              file.info(htmlFileName)$size)
-          )
+    output$overallNegativeControlsPlot <- shiny::renderPlot(
+      {
+        dat <- overallResultSubset() %>%
+          dplyr::mutate(logRr = log(estimate))
+        ncs <- overallNegativeControlsSubset()
+        null <- EmpiricalCalibration::fitNull(
+          logRr = ncs$logRr,
+          seLogRr = ncs$seLogRr
         )
-      )
-    }
+
+        EmpiricalCalibration::plotCalibrationEffect(
+          logRrNegatives = ncs$logRr,
+          seLogRrNegatives = ncs$seLogRr,
+          logRrPositives = dat$logRr,
+          seLogRrPositives = dat$seLogRr,
+          null = null
+        )
+      }
+    )
+
+    output$negativeControlsPlot <- shiny::renderPlot(
+      {
+        dat <- resultSubset()
+        relative <- dat$relative %>%
+          dplyr::mutate(logRr = log(estimate))
+        ncs <- negativeControlsSubset()
+        plotRiskStratifiedNegativeControls(
+          negativeControls = ncs,
+          positiveControls = relative
+        )
+      }
+    )
+
 
     observeEvent(
       input$testInfo,
       {
-        showInfoBox(
-          "Database information",
-          file.path(
-            pathToHtml,
-            paste(
-              input$database,
-              "html",
-              sep = "."
-            )
+        targetHtmlFile <- file.path(
+          pathToHtml,
+          paste(
+            input$database,
+            "html",
+            sep = "."
           )
         )
+        if (!file.exists(targetHtmlFile)) {
+          shinyalert::shinyalert(
+            title = "Database description",
+            text = "Not available",
+            size = "l",
+          closeOnClickOutside = TRUE,
+          confirmButtonCol = "#3B5866"
+          )
+        } else {
+          shinyalert::shinyalert(
+            title = "Database description",
+            shiny::includeHTML(targetHtmlFile),
+            type = "",
+            html = TRUE,
+            size = "l",
+            closeOnClickOutside = TRUE,
+            confirmButtonCol = "#3B5866"
+          )
+        }
       }
     )
   }

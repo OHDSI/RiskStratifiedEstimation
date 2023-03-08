@@ -75,7 +75,7 @@ shiny::shinyUI(
           ),
           infoId = "testInfo"
         ),
-        shiny::checkboxGroupInput(
+        shiny::radioButtons(
           "analysis",
           "Analysis",
           unique(analysisTypeOptions),
@@ -87,7 +87,7 @@ shiny::shinyUI(
             "estOutcomeEstimation",
             "Evaluate outcome",
             choices = unique(mapOutcomes$outcome_name),
-            selected = ""
+            selected = unique(mapOutcomes$outcome_name)[1]
           )
         ),
         shiny::conditionalPanel(
@@ -157,8 +157,16 @@ shiny::shinyUI(
                       title = "Covariate balance table",
                       width = NULL,
                       collapsible = TRUE,
-                      DT::dataTableOutput("overallBalanceTable")
+                      # DT::dataTableOutput("overallBalanceTable")
+                      DT::DTOutput("overallBalanceTable")
                     )
+                  )
+                ),
+                shiny::tabPanel(
+                  "Systematic error",
+                  shiny::plotOutput(
+                    "overallNegativeControlsPlot",
+                    height = "600px"
                   )
                 )
               )
@@ -179,6 +187,13 @@ shiny::shinyUI(
               "Risk stratified analysis",
               plotly::plotlyOutput(
                 "combinedPlot",
+                height = "800px"
+              )
+            ),
+            shiny::tabPanel(
+              "Systematic Error",
+              shiny::plotOutput(
+                "negativeControlsPlot",
                 height = "600px"
               )
             )

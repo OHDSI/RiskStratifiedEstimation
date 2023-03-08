@@ -18,141 +18,80 @@
 # @author Alexandros Rekkas
 # @author Peter Rijnbeek
 
-
+#' @title Risk stratified effect estimation viewer
+#' @description Launches a the shiny application for the exploration of results
+#' @param analysisPath The shiny directory where the results are stored.
 #' @export
-
 rseeViewer <- function(
-    analysisPath
-)
-{
+  analysisPath
+) {
 
-    appDir <- system.file(
-        "shiny",
-        package = "RiskStratifiedEstimation"
+  appDir <- system.file(
+    "shiny",
+    package = "RiskStratifiedEstimation"
+  )
+  .GlobalEnv$shinySettings <- analysisPath
+  shiny::runApp(appDir)
+  on.exit(
+    rm(
+      shinySettings,
+      env = .GlobalEnv
     )
-    .GlobalEnv$shinySettings <- analysisPath
-    shiny::runApp(appDir)
-    on.exit(
-        rm(
-            shinySettings,
-            env = .GlobalEnv
-        )
-    )
+  )
 
 }
 
 
-#' @importFrom dplyr %>%
+
+#' @title Prepare shiny viewer
+#' @description Combines results from multiple analyses for the shiny application.
+#' @param analysisSettingsList  A list of all the targeted \code{analysisSettings}.
+#' @param saveDirectory         The directory where the results will be written.
+#'
+#' @importFrom magrittr %>%
 #' @export
-
 prepareMultipleRseeViewer <- function(
-    pathList,
-    saveDirectory
-)
-{
+  analysisSettingsList,
+  saveDirectory
+) {
 
-    saveDir <- file.path(
-        saveDirectory,
-        "multipleRseeAnalyses"
+  pathList <- list()
+  for (i in seq_along(analysisSettingsList)) {
+    tmp <- analysisSettingsList[[i]]
+    pathList[[i]] <- file.path(
+      tmp$saveDirectory,
+      tmp$analysisId,
+      "shiny"
     )
+  }
 
-    if (!dir.exists(saveDir)) {
-        dir.create(
-            saveDir,
-            recursive = TRUE
-        )
-    }
+  saveDir <- file.path(
+    saveDirectory,
+    "multipleRseeAnalyses"
+  )
 
-    createAnlysisPath <- function(
-        path,
-        file
+  if (!dir.exists(saveDir)) {
+    dir.create(
+      saveDir,
+      recursive = TRUE
     )
+  }
 
-    {
-        res <- file.path(
-            path,
-            file
-        )
-        return(res)
-    }
+  createAnlysisPath <- function(
+    path,
+    file
+  ) {
+    res <- file.path(
+      path,
+      file
+    )
+    return(res)
+  }
 
-    analysisDirs <- sapply(
-        pathList,
-        createAnlysisPath,
-        file = "analyses.rds"
-    )
-    lapply(
-        analysisDirs,
-        readRDS
-    ) %>%
-        plyr::join_all(
-            type = "full"
-        ) %>%
-        saveRDS(
-            file.path(
-                saveDir,
-                "analyses.rds"
-            )
-        )
-    analysisDirs <- sapply(
-        pathList,
-        createAnlysisPath,
-        file = "map_exposures.rds"
-    )
-    lapply(
-        analysisDirs,
-        readRDS
-    ) %>%
-        plyr::join_all(
-            type = "full"
-        ) %>%
-        saveRDS(
-            file.path(
-                saveDir,
-                "map_exposures.rds"
-            )
-        )
-    analysisDirs <- sapply(
-        pathList,
-        createAnlysisPath,
-        file = "map_outcomes.rds"
-    )
-    lapply(
-        analysisDirs,
-        readRDS
-    ) %>%
-        plyr::join_all(
-            type = "full"
-        ) %>%
-        saveRDS(
-            file.path(
-                saveDir,
-                "map_outcomes.rds"
-            )
-        )
-
-    analysisDirs <- sapply(
-        pathList,
-        createAnlysisPath,
-        file = "incidence.rds"
-    )
-    lapply(
-        analysisDirs,
-        readRDS
-    ) %>%
-        dplyr::bind_rows() %>%
-        saveRDS(
-            file.path(
-                saveDir,
-                "incidence.rds"
-            )
-        )
-
-    analysisDirs <- sapply(
-      pathList,
-      createAnlysisPath,
-      file = "incidenceOverall.rds"
-    )
+  mergeFun <- function(
+    analysisDirs,
+    file
+  ) {
     lapply(
       analysisDirs,
       readRDS
@@ -161,104 +100,189 @@ prepareMultipleRseeViewer <- function(
       saveRDS(
         file.path(
           saveDir,
-          "incidenceOverall.rds"
+          paste(
+            file,
+            "rds",
+            sep = "."
+          )
         )
       )
+  }
 
-    analysisDirs <- sapply(
-        pathList,
-        createAnlysisPath,
-        file = "predictionPerformance.rds"
-    )
-    lapply(
-        analysisDirs,
-        readRDS
+  analysisDirs <- sapply(
+    pathList,
+    createAnlysisPath,
+    file = "analyses.rds"
+  )
+  lapply(
+    analysisDirs,
+    readRDS
+  ) %>%
+    plyr::join_all(
+      type = "full"
     ) %>%
-        dplyr::bind_rows() %>%
-        saveRDS(
-            file.path(
-                saveDir,
-                "predictionPerformance.rds"
-            )
-        )
-
-    analysisDirs <- sapply(
-        pathList,
-        createAnlysisPath,
-        file = "mappedOverallResults.rds"
+    saveRDS(
+      file.path(
+        saveDir,
+        "analyses.rds"
+      )
     )
-    lapply(
-        analysisDirs,
-        readRDS
+  analysisDirs <- sapply(
+    pathList,
+    createAnlysisPath,
+    file = "map_exposures.rds"
+  )
+  lapply(
+    analysisDirs,
+    readRDS
+  ) %>%
+    plyr::join_all(
+      type = "full"
     ) %>%
-        dplyr::bind_rows() %>%
-        saveRDS(
-            file.path(
-                saveDir,
-                "mappedOverallResults.rds"
-            )
-        )
-
-    analysisDirs <- sapply(
-        pathList,
-        createAnlysisPath,
-        file = "mappedOverallAbsoluteResults.rds"
+    saveRDS(
+      file.path(
+        saveDir,
+        "map_exposures.rds"
+      )
     )
-    lapply(
-        analysisDirs,
-        readRDS
-    ) %>%
-        dplyr::bind_rows() %>%
-        saveRDS(
-            file.path(
-                saveDir,
-                "mappedOverallAbsoluteResults.rds"
-            )
-        )
 
-    analysisDirs <- sapply(
-        pathList,
-        createAnlysisPath,
-        file = "mappedOverallRelativeResults.rds"
+  analysisDirs <- sapply(
+    pathList,
+    createAnlysisPath,
+    file = "map_outcomes.rds"
+  )
+  lapply(
+    analysisDirs,
+    readRDS
+  ) %>%
+    plyr::join_all(
+      type = "full"
+    ) %>%
+    saveRDS(
+      file.path(
+        saveDir,
+        "map_outcomes.rds"
+      )
     )
-    lapply(
-        analysisDirs,
-        readRDS
-    ) %>%
-        dplyr::bind_rows() %>%
-        saveRDS(
-            file.path(
-                saveDir,
-                "mappedOverallRelativeResults.rds"
-            )
-        )
 
-    analysisDirs <- sapply(
-        pathList,
-        createAnlysisPath,
-        file = "mappedOverallCasesResults.rds"
-    )
-    lapply(
-        analysisDirs,
-        readRDS
-    ) %>%
-        dplyr::bind_rows() %>%
-        saveRDS(
-            file.path(
-                saveDir,
-                "mappedOverallCasesResults.rds"
-            )
-        )
+  analysisDirs <- sapply(
+    pathList,
+    createAnlysisPath,
+    file = "incidence.rds"
+  )
 
-    for (path in pathList) {
-        filesToCopy <- list.files(
-            path,
-            pattern = "^overall|^auc|^bal|^ps|cal",
-            full.names = TRUE
+  mergeFun(
+    analysisDirs = analysisDirs,
+    file = "incidence"
+  )
+
+  analysisDirs <- sapply(
+    pathList,
+    createAnlysisPath,
+    file = "incidenceOverall.rds"
+  )
+
+  mergeFun(
+    analysisDirs = analysisDirs,
+    file = "incidenceOverall"
+  )
+
+  analysisDirs <- sapply(
+    pathList,
+    createAnlysisPath,
+    file = "predictionPerformance.rds"
+  )
+  mergeFun(
+    analysisDirs = analysisDirs,
+    file = "predictionPerformance"
+  )
+
+  analysisDirs <- sapply(
+    pathList,
+    createAnlysisPath,
+    file = "mappedOverallResults.rds"
+  )
+  mergeFun(
+    analysisDirs = analysisDirs,
+    file = "mappedOverallResults"
+  )
+
+  analysisDirs <- sapply(
+    pathList,
+    createAnlysisPath,
+    file = "mappedOverallAbsoluteResults.rds"
+  )
+  mergeFun(
+    analysisDirs = analysisDirs,
+    file = "mappedOverallAbsoluteResults"
+  )
+
+  analysisDirs <- sapply(
+    pathList,
+    createAnlysisPath,
+    file = "mappedOverallRelativeResults.rds"
+  )
+  mergeFun(
+    analysisDirs = analysisDirs,
+    file = "mappedOverallRelativeResults"
+  )
+
+  analysisDirs <- sapply(
+    pathList,
+    createAnlysisPath,
+    file = "mappedOverallCasesResults.rds"
+  )
+  mergeFun(
+    analysisDirs = analysisDirs,
+    file = "mappedOverallCasesResults"
+  )
+
+  negativeControlPathList <- list()
+  for (i in seq_along(analysisSettingsList)) {
+    tmp <- analysisSettingsList[[i]]
+    if (!is.null(tmp$negativeControlOutcomes)) {
+      negativeControlPathList <- c(
+        negativeControlPathList,
+        file.path(
+          tmp$saveDirectory,
+          tmp$analysisId,
+          "shiny"
         )
-        file.copy(
-            filesToCopy,
-            saveDir
-        )
+      )
     }
+  }
+
+  if (length(negativeControlPathList) != 0) {
+    analysisDirs <- sapply(
+      negativeControlPathList,
+      createAnlysisPath,
+      file = "negativeControls.rds"
+    )
+    mergeFun(
+      analysisDirs = analysisDirs,
+      file = "negativeControls"
+    )
+
+    analysisDirs <- sapply(
+      negativeControlPathList,
+      createAnlysisPath,
+      file = "mappedOverallResultsNegativeControls.rds"
+    )
+    mergeFun(
+      analysisDirs = analysisDirs,
+      file = "mappedOverallResultsNegativeControls"
+    )
+  }
+
+  for (path in pathList) {
+    filesToCopy <- list.files(
+      path,
+      pattern = "^overall|^auc|^bal|^ps|cal",
+      full.names = TRUE
+    )
+    file.copy(
+      filesToCopy,
+      saveDir
+    )
+  }
 }
