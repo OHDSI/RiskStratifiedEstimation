@@ -1,9 +1,10 @@
 Package: RiskStratifiedEstimation
 Type: Package
 Title: Risk Stratified Effect Estimation
-Version: 0.9.0.9000
-Author: Alexandros Rekkas 
-Maintainer: Alexandros Rekkas  <a.rekkas@erasmusmc.nl>
+Version: 1.0.0
+Authors@R: 
+    person("Alexandros", "Rekkas", , "a.rekkas@erasmusmc.nl", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-5352-943X"))
 Description: RiskStratifiedEstimation is an R package for implementing risk stratified analyses of treamtnet effect in an observational database in the OMOP Common Data Model. It combines functionality of PatientLevelPrediction and CohortMethod R packages to extract and analyze data from a database in the OMOP Common Data Model format. Analyses are performed in two distinct steps. First, a prediction step is implemented, where personalized risks are derived from a large set of covariates applying one of various possible prediction methods. In the second step, risk stratified treatment comparisons are performed. Large scale regularized regression is used to fit the propensity model. Inverse probability of treatment weights are calculated and truncated within strata of predicted risk. Only weighted Cox regression models are supported for the outcome model. 
 License: Apache License (>=2)
 Encoding: UTF-8
