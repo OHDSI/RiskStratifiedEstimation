@@ -735,10 +735,12 @@ runRiskStratifiedEstimation <- function(
 
   ParallelLogger::clusterRequire(
     cluster,
-    c(
-      "RiskStratifiedEstimation",
-      "CohortMethod"
-    )
+    "RiskStratifiedEstimation"
+  )
+
+  ParallelLogger::clusterRequire(
+    cluster,
+    "CohortMethod"
   )
 
   for (i in seq_along(analysisLabels)) {
