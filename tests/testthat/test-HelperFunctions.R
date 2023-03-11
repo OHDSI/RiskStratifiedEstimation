@@ -43,3 +43,48 @@ test_that("prepareForPlpData works", {
   expect_equal(mergedCounts$n, sum(cohortCounts$n))
 })
 
+test_that("createMapMatrix works", {
+  ps <- data.frame(
+    rowId = 1:4,
+    value = c(.1, .2, .3, .4)
+  )
+
+  analysisEqual <- list(
+    riskStratificationMethod = "equal",
+    riskStratificationThresholds = 4
+  )
+
+  analysisQuantile <- list(
+    riskStratificationMethod = "quantile",
+    riskStratificationThresholds = c(0, .5, 1)
+  )
+
+  analysisCustom <- list(
+    riskStratificationMethod = "custom",
+    riskStratificationThresholds = function(prediction) {
+      prediction %>%
+        dplyr::mutate(
+          riskStratum = dplyr::case_when(
+            value < .2 ~ 1,
+            value < .4 ~ 2,
+            TRUE       ~ 3
+          )
+        )
+    }
+  )
+
+  expect_equal(
+    createMapMatrix(ps, analysisEqual) %>% dplyr::pull(riskStratum),
+    1:4
+  )
+
+  expect_equal(
+    createMapMatrix(ps, analysisQuantile) %>% dplyr::pull(riskStratum),
+    c(1, 1, 2, 2)
+  )
+
+  expect_equal(
+    createMapMatrix(ps, analysisCustom) %>% dplyr::pull(riskStratum),
+    c(1, 2, 2, 3)
+  )
+})
