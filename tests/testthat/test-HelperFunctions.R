@@ -88,3 +88,18 @@ test_that("createMapMatrix works", {
     c(1, 2, 2, 3)
   )
 })
+
+test_that("addTable works", {
+  connectionDetails <- Eunomia::getEunomiaConnectionDetails()
+  Eunomia::createCohorts(connectionDetails)
+  resultsDatabaseSchema <- "main"
+  table <- "test_table"
+
+  addTable(connectionDetails, resultsDatabaseSchema, table)
+  connection <- DatabaseConnector::connect(connectionDetails)
+  tables <- DatabaseConnector::dbListTables(connection, "main")
+
+  expect_true(
+    "test_table" %in% tables
+  )
+})
