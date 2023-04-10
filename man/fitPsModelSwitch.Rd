@@ -5,6 +5,7 @@
 \title{Fits switched propensity score models}
 \usage{
 fitPsModelSwitch(
+  analysis,
   predictOutcome,
   compareOutcome,
   initialPopulation,

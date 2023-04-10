@@ -4,7 +4,7 @@
 \alias{createOverallResults}
 \title{Combines the overall results}
 \usage{
-createOverallResults(analysisSettings)
+createOverallResults(analysisSettings, runSettings)
 }
 \arguments{
 \item{analysisSettings}{An R object of type \code{analysisSettings} created using the function

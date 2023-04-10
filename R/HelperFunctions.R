@@ -140,13 +140,10 @@ switchOutcome <- function(
 
 #' @importFrom magrittr %>%
 #' @importFrom stats binom.test density filter quantile sd weights
-createOverallResults <- function(analysisSettings) {
+createOverallResults <- function(analysisSettings, runSettings) {
 
-  predictOutcomes <-
-    analysisSettings$outcomeIds[which(colSums(analysisSettings$analysisMatrix) != 0)]
 
   negativeControls <- analysisSettings$negativeControlOutcomes
-  analysisLabels <- analysisSettings$analysisLabels
 
   pathToResults <- file.path(
     analysisSettings$saveDirectory,
@@ -175,6 +172,15 @@ createOverallResults <- function(analysisSettings) {
     "Matched",
     "Treatment",
     "Comparator"
+  )
+
+  predictOutcomes <- unique(
+    unlist(
+      rlist::list.map(
+        runSettings$runCmSettings$analyses,
+        stratificationOutcome
+      )
+    )
   )
 
   for (predictOutcome in predictOutcomes) {
@@ -210,9 +216,6 @@ createOverallResults <- function(analysisSettings) {
               "auc",
               predictionPopulation,
               analysisSettings$analysisId,
-              analysisSettings$databaseName,
-              analysisSettings$treatmentCohortId,
-              analysisSettings$comparatorCohortId,
               predictOutcome,
               sep = "_"
             ),
@@ -263,9 +266,6 @@ createOverallResults <- function(analysisSettings) {
                 "calibration",
                 predictionPopulation,
                 analysisSettings$analysisId,
-                analysisSettings$databaseName,
-                analysisSettings$treatmentCohortId,
-                analysisSettings$comparatorCohortId,
                 predictOutcome,
                 sep = "_"
               ),
@@ -305,6 +305,7 @@ createOverallResults <- function(analysisSettings) {
     pathToResults,
     typeOfResult,
     analysisSettings,
+    runSettings,
     isNegativeControl = FALSE
   ) {
 
@@ -346,14 +347,23 @@ createOverallResults <- function(analysisSettings) {
     return(res)
   }
 
+  runLabels <- unlist(
+    rlist::list.map(
+      runSettings$runCmSettings$analyses,
+      label
+    )
+  )
+
   relativeTmp <- absoluteTmp <- casesTmp <- list()
   relativeNcTmp <- absoluteNcTmp <- casesNcTmp <- list()
-  for (i in seq_along(analysisLabels)) {
+  names(runLabels) <- NULL
+
+  for (i in seq_along(runLabels)) {
     relativeTmp[[i]] <- purrr::map_dfr(
       .x = predictOutcomes,
       .f = mergePredictOutcomes,
       pathToResults = pathToResults,
-      label = analysisLabels[i],
+      label = runLabels[i],
       analysisSettings = analysisSettings,
       typeOfResult = "relative"
     )
@@ -363,7 +373,7 @@ createOverallResults <- function(analysisSettings) {
       .x = predictOutcomes,
       .f = mergePredictOutcomes,
       pathToResults = pathToResults,
-      label = analysisLabels[i],
+      label = runLabels[i],
       analysisSettings = analysisSettings,
       typeOfResult = "absolute"
     )
@@ -373,7 +383,7 @@ createOverallResults <- function(analysisSettings) {
       .x = predictOutcomes,
       .f = mergePredictOutcomes,
       pathToResults = pathToResults,
-      label = analysisLabels[i],
+      label = runLabels[i],
       analysisSettings = analysisSettings,
       typeOfResult = "cases"
     )
@@ -384,23 +394,11 @@ createOverallResults <- function(analysisSettings) {
         .x = predictOutcomes,
         .f = mergePredictOutcomes,
         pathToResults = pathToResults,
-        label = analysisLabels[i],
+        label = runLabels[i],
         analysisSettings = analysisSettings,
         typeOfResult = "relative",
         isNegativeControl = TRUE
       )
-
-      # relativeNcTmp[[i]] <- lapply(
-      #   predictOutcomes,
-      #   mergePredictOutcomes,
-      #   pathToResults = pathToResults,
-      #   label = analysisLabels[i],
-      #   analysisSettings = analysisSettings,
-      #   typeOfResult = "relative",
-      #   isNegativeControl = TRUE
-      # ) %>%
-      #   dplyr::bind_rows()
-
       closeAllConnections()
     }
   }
@@ -410,7 +408,10 @@ createOverallResults <- function(analysisSettings) {
     saveRDS(
       file.path(
         saveDir,
-        "mappedOverallRelativeResults.rds"
+        paste0(
+          paste("mappedOverallRelativeResults", analysisSettings$analysisId, sep = "_"),
+          ".rds"
+        )
       )
     )
 
@@ -419,7 +420,10 @@ createOverallResults <- function(analysisSettings) {
     saveRDS(
       file.path(
         saveDir,
-        "mappedOverallAbsoluteResults.rds"
+        paste0(
+          paste("mappedOverallAbsoluteResults", analysisSettings$analysisId, sep = "_"),
+          ".rds"
+        )
       )
     )
 
@@ -428,7 +432,10 @@ createOverallResults <- function(analysisSettings) {
     saveRDS(
       file.path(
         saveDir,
-        "mappedOverallCasesResults.rds"
+        paste0(
+          paste("mappedOverallCasesResults", analysisSettings$analysisId, sep = "_"),
+          ".rds"
+        )
       )
     )
 
@@ -438,40 +445,79 @@ createOverallResults <- function(analysisSettings) {
       saveRDS(
         file.path(
           saveDir,
-          "negativeControls.rds"
+          paste0(
+            paste("negativeControls", analysisSettings$analysisId, sep = "_"),
+            ".rds"
+          )
         )
       )
   }
 
   analysisSettings$mapOutcomes %>%
+    dplyr::mutate(
+      analysisId = analysisSettings$analysisId
+    ) %>%
+    dplyr::relocate(analysisId) %>%
     saveRDS(
       file.path(
         saveDir,
-        "map_outcomes.rds"
+        paste0(
+          paste("map_outcomes", analysisSettings$analysisId, sep = "_"),
+          ".rds"
+        )
       )
     )
 
   analysisSettings$mapTreatments %>%
+    dplyr::mutate(
+      analysisId = analysisSettings$analysisId
+    ) %>%
+    dplyr::relocate(analysisId) %>%
     saveRDS(
       file.path(
         saveDir,
-        "map_exposures.rds"
+        paste0(
+          paste("map_exposures", analysisSettings$analysisId, sep = "_"),
+          ".rds"
+        )
       )
     )
 
-  dplyr::tibble(
-    analysis_id = analysisSettings$analysisId,
-    description = analysisSettings$description,
-    database = analysisSettings$databaseName,
-    analysis_label = analysisSettings$analysisLabels,
-    treatment_id = analysisSettings$treatmentCohortId,
-    comparator_id = analysisSettings$comparatorCohortId,
-    row.names = NULL
-  ) %>%
+  unlist(
+    rlist::list.map(
+      runSettings$runCmSettings$analyses,
+      label
+    )
+  )
+
+  numberOfAnalyses <- length(runSettings$runCmSettings$analyses)
+  analyses <- data.frame(
+    analysisId = rep(analysisSettings$analysisId, numberOfAnalyses),
+    runLabel = rep(NA_character_, numberOfAnalyses),
+    stratificationOutcome = rep(NA_integer_, numberOfAnalyses),
+    riskStratificationMethodLabel = rep(NA_character_, numberOfAnalyses),
+    psAdjustmentMethodLabel = rep(NA_character_, numberOfAnalyses),
+    estimationOutcomes = rep(NA_character_, numberOfAnalyses)
+  )
+
+  for (i in seq_along(runSettings$runCmSettings$analyses)) {
+    currentAnalysis <- runSettings$runCmSettings$analyses[[i]]
+    analyses$runLabel[i] <- currentAnalysis$label
+    analyses$stratificationOutcome <- currentAnalysis$stratificationOutcome
+    analyses$riskStratificationMethodLabel <- currentAnalysis$riskStratificationMethod$label
+    analyses$psAdjustmentMethodLabel <- currentAnalysis$psAdjustmentMethod$label
+    analyses$estimationOutcomes <- paste(currentAnalysis$estimationOutcomes, collapse = ",")
+
+  }
+
+  analyses %>%
     saveRDS(
       file.path(
         saveDir,
-        "analyses.rds"
+        paste0(
+          paste("analyses", analysisSettings$analysisId, sep = "_"),
+          ".rds"
+        )
       )
     )
 

@@ -39,6 +39,7 @@
 #'                                   \code{\link[RiskStratifiedEstimation]{createRunSettings}}.
 #' @importFrom magrittr %>%
 fitPsModelSwitch <- function(
+  analysis,
   predictOutcome,
   compareOutcome,
   initialPopulation,
@@ -106,23 +107,7 @@ fitPsModelSwitch <- function(
       riskWindowEnd                  = populationCmSettings$riskWindowEnd,
       endAnchor                      = populationCmSettings$endAnchor,
       censorAtNewRiskWindow          = populationCmSettings$censorAtNewRiskWindow
-    ) # %>%
-  # dplyr::mutate(
-  #   cohortStartDate = lubridate::as_date(
-  #     cohortStartDate
-  #   )
-  # ) %>%
-  # dplyr::left_join(
-  #   cohorts,
-  #   by = c(
-  #     "rowId",
-  #     # "subjectId",
-  #     "cohortStartDate",
-  #     "daysFromObsStart",
-  #     "daysToCohortEnd",
-  #     "daysToObsEnd"
-  #   )
-  # )
+    )
 
   ParallelLogger::logInfo(
     paste(
@@ -187,15 +172,14 @@ fitPsModelSwitch <- function(
 
   analysisLabels <- names(runSettings$runCmSettings$analyses)
 
-  failed <- purrr::map(
-    .x               = analysisLabels,
-    .f               = psAnalysis,
+  failed <- psAnalysis(
+    label = analysis$label,
+    runSettings = runSettings,
+    riskPredictions = riskPredictions,
     cohortMethodData = cohortMethodData,
-    predictOutcome   = predictOutcome,
-    compareOutcome   = compareOutcome,
     analysisSettings = analysisSettings,
-    runSettings      = runSettings,
-    riskPredictions  = riskPredictions
+    predictOutcome  = predictOutcome,
+    compareOutcome = compareOutcome
   )
 
 
@@ -516,7 +500,7 @@ fitPsModelOverall <- function(
 #' @importFrom magrittr %>%
 
 fitPsModel <- function(
-  outcomeId,
+  analysisId,
   initialPopulation,
   runSettings,
   getDataSettings,
@@ -524,12 +508,9 @@ fitPsModel <- function(
   analysisSettings
 ) {
 
-  analysisPath <- file.path(
-    analysisSettings$saveDirectory,
-    analysisSettings$analysisId
-  )
+  analysis <- runSettings$runCmSettings$analyses[[analysisId]]
 
-  analysisLabels <- names(runSettings$runCmSettings$analyses)
+  stratificationOutcome <- analysis$stratificationOutcome
 
   ParallelLogger::logInfo(
     "Reading cohort method data"
@@ -556,7 +537,7 @@ fitPsModel <- function(
   populationPlp <- PatientLevelPrediction::createStudyPopulation(
     plpData            = plpData,
     population         = initialPopulation,
-    outcomeId          = outcomeId,
+    outcomeId          = stratificationOutcome,
     populationSettings = populationPlpSettings
   ) %>%
     dplyr::tibble() %>%
@@ -570,7 +551,7 @@ fitPsModel <- function(
   populationCm <- CohortMethod::createStudyPopulation(
     cohortMethodData               = cohortMethodData,
     population                     = initialPopulation,
-    outcomeId                      = outcomeId,
+    outcomeId                      = stratificationOutcome,
     firstExposureOnly              = populationCmSettings$firstExposureOnly,
     restrictToCommonPeriod         = populationCmSettings$restrictToCommonPeriod,
     washoutPeriod                  = populationCmSettings$washoutPeriod,
@@ -602,7 +583,7 @@ fitPsModel <- function(
 
   pathToPlpResult <- runSettings$runPlpSettings$plpResults %>%
     dplyr::filter(
-      outcomeId == !!outcomeId
+      outcomeId == stratificationOutcome
     ) %>%
     dplyr::select(
       "directory"
@@ -633,12 +614,6 @@ fitPsModel <- function(
   ) %>%
     dplyr::tibble()
 
-  # riskPredictions <- predictionResult$model$predict(
-  #   plpData = plpData,
-  #   population = populationCm
-  # ) %>%
-  #   dplyr::tibble()
-
   attr(populationCm, "metaData") <- populationCmMetaData  # Delete that?
 
   ParallelLogger::logInfo(
@@ -649,28 +624,26 @@ fitPsModel <- function(
     "Estimating propensity scores within risk strata"
   )
 
-  tmp <- purrr::map(
-    .x               = analysisLabels,
-    .f               = psAnalysis,
-    runSettings      = runSettings,
-    riskPredictions  = riskPredictions,
+  tmp <- psAnalysis(
+    label = analysis$label,
+    runSettings = runSettings,
+    riskPredictions = riskPredictions,
     cohortMethodData = cohortMethodData,
     analysisSettings = analysisSettings,
-    predictOutcome   = outcomeId,
-    compareOutcome   = outcomeId
+    predictOutcome = stratificationOutcome,
+    compareOutcome = stratificationOutcome
   )
 
   ParallelLogger::logInfo(
     paste(
-      "Saved the map matrix for outcome",
-      outcomeId
+      "Saved the map matrix for the analysis:",
+      crayon::blue(analysis$label)
     )
   )
 
   return(tmp)
 
 }
-
 
 
 
@@ -684,18 +657,10 @@ psAnalysis <- function(
   runSettings
 ) {
   analysis <- runSettings$runCmSettings$analyses[[label]]
-  stratOutcomes <- analysis$stratificationOutcomes
-  if (stratOutcomes != "all") {
-    if (!predictOutcome %in% stratOutcomes) {
-      return(NULL)
-    }
-  }
+  # stratOutcome <- analysis$stratificationOutcome
 
   if (predictOutcome == compareOutcome) {
-    mapMatrix <- createMapMatrix(
-      riskPredictions = riskPredictions,
-      analysis        = analysis
-    )
+    mapMatrix <- analysis$riskStratificationMethod$riskStratificationThresholds(riskPredictions)
   } else {
     startingPath <- file.path(
       analysisSettings$saveDirectory,
@@ -715,7 +680,6 @@ psAnalysis <- function(
       dplyr::select(
         c(
           "rowId",
-          # "subjectId",
           "treatment",
           "value",
           "labels",
@@ -724,27 +688,6 @@ psAnalysis <- function(
       ) %>%
       dplyr::inner_join(riskPredictions)
   }
-
-  # nRiskStrata <- ifelse(
-  #   analysis$riskStratificationMethod == "equal",
-  #   yes = analysis$riskStratificationThresholds,
-  #   no  = length(analysis$riskStratificationThresholds) - 1
-  # )
-
-  riskStratificationMethod <- analysis$riskStratificationMethod
-  if (riskStratificationMethod == "equal") {
-    nRiskStrata <- analysis$riskStratificationThresholds
-  } else if (riskStratificationMethod == "quantile") {
-    nRiskStrata <- length(analysis$riskStratificationThresholds) - 1
-  } else if (riskStratificationMethod == "custom") {
-    nRiskStrata <- length(unique(mapMatrix$riskStratum))
-  }
-
-  # nRiskStrata <- dplyr::case_when(
-  #   riskStratificationMethod == "equal"    ~ analysis$riskStratificationThresholds,
-  #   riskStratificationMethod == "quantile" ~ length(analysis$riskStratificationThresholds) - 1,
-  #   riskStratificationMethod == "custom"   ~ length(unique(mapMatrix$riskStratum))
-  # )
 
   saveDir <- file.path(
     analysisSettings$saveDirectory,
@@ -764,7 +707,6 @@ psAnalysis <- function(
 
   failed <- runPsAnalysis(
     cohortMethodData = cohortMethodData,
-    nRiskStrata      = nRiskStrata,
     mapMatrix        = mapMatrix,
     runSettings      = runSettings,
     saveDir          = saveDir
@@ -776,7 +718,6 @@ psAnalysis <- function(
 
 runPsAnalysis <- function(
   cohortMethodData,
-  nRiskStrata,
   mapMatrix,
   runSettings,
   saveDir
@@ -784,6 +725,7 @@ runPsAnalysis <- function(
 
   ps <- list()
   failed <- FALSE
+  nRiskStrata <- length(unique(mapMatrix$riskStratum))
   for (i in 1:nRiskStrata) {
     population <- mapMatrix %>%
       dplyr::filter(riskStratum == i) %>%

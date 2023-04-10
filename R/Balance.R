@@ -375,7 +375,7 @@ computeCovariateBalance <- function(
 computeCovariateBalanceOverall <- function(
   path,
   stratOutcome,
-  analysisType,
+  runLabel,
   analysisSettings,
   getDataSettings
 ) {
@@ -436,14 +436,14 @@ computeCovariateBalanceOverall <- function(
       .id = "riskStratum"
     ) %>%
     dplyr::mutate(
-      riskStratum  = paste0("Q", riskStratum),
-      database     = analysisSettings$databaseName,
-      analysisId   = analysisSettings$analysisId,
+      riskStratum = paste0("Q", riskStratum),
+      database = analysisSettings$databaseName,
+      analysisId = analysisSettings$analysisId,
       stratOutcome = stratOutcome,
-      estOutcome   = estOutcome,
-      treatmentId  = analysisSettings$treatmentCohortId,
+      estOutcome = estOutcome,
+      treatmentId = analysisSettings$treatmentCohortId,
       comparatorId = analysisSettings$comparatorCohortId,
-      analysisType = analysisType
+      runLabel = runLabel
     ) %>%
     dplyr::select(
       riskStratum,
@@ -457,8 +457,9 @@ computeCovariateBalanceOverall <- function(
       estOutcome,
       treatmentId,
       comparatorId,
-      analysisType
+      runLabel
     ) %>%
+    dplyr::relocate(analysisId, runLabel) %>%
     saveRDS(
       file = file.path(
         saveDir,
@@ -466,11 +467,7 @@ computeCovariateBalanceOverall <- function(
           paste(
             "balance",
             analysisSettings$analysisId,
-            analysisSettings$databaseName,
-            analysisType,
-            analysisSettings$treatmentCohortId,
-            analysisSettings$comparatorCohortId,
-            stratOutcome,
+            runLabel,
             estOutcome,
             sep = "_"
           ),
@@ -552,7 +549,7 @@ computeRseeCovariateBalance <- function(
         analysisSettings = analysisSettings,
         getDataSettings  = getDataSettings,
         stratOutcome     = predictOutcomes[j],
-        analysisType     = basename(labels[i])
+        runLabel     = basename(labels[i])
       )
     }
   }

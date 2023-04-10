@@ -418,8 +418,47 @@ createRunCmAnalysesArgs <- function(
 
 }
 
+#' Create a parameter object for defining the estimation analyses.
+#'
+#' @param label                         Label of the analysis (no spaces allowed).
+#' @param description                   Description of the analysis.
+#' @param stratificationOutcome         The outcome ID on which risk stratification
+#'                                      will be carried out. Should be one of the
+#'                                      stratification outcomes defined in the
+#'                                      `analysisSettings`.
+#' @param estimationOutcomes            Outcomes to estimate risk-stratified treatment
+#'                                      effects.
+#' @param riskStratificationMethod      Risk stratification method
+#' @param psAdjustmentMethod            Propensity score adjustment method
+#' @param timePoint                     The time point after cohort start that absolute differences
+#'                                      should be estimated.
+#'
+#' @return
+#' A parameter object for running the the estimation step.
+#'
+#' @export
 
+createRunCmAnalysis <- function(
+  label,
+  description = "",
+  stratificationOutcome,
+  estimationOutcomes,
+  riskStratificationMethod,
+  psAdjustmentMethod,
+  timePoint
+) {
+  res <- list(
+    label = label,
+    description = description,
+    stratificationOutcome = stratificationOutcome,
+    estimationOutcomes = estimationOutcomes,
+    riskStratificationMethod = riskStratificationMethod,
+    psAdjustmentMethod = psAdjustmentMethod,
+    timePoint = timePoint
+  )
 
+  return(res)
+}
 
 #' Create a parameter object for running the estimation step
 #'
@@ -479,7 +518,7 @@ createRunCmSettingsArgs <- function(
 
 #' Create a parameter object for the function stratifyByPs
 #'
-#' @details
+#' @description
 #' Create an object defining the parameter values.
 #'
 #' @param numberOfStrata          How many strata? The boundaries of the strata are automatically
@@ -509,7 +548,7 @@ createStratifyByPsArgs <- function(
     if (name %in% names(analysis))
       analysis[[name]] <- values[[name]]
   }
-  class(analysis) <- "args"
+  analysis$psMethod <- "stratifyByPs"
   return(analysis)
 }
 
@@ -559,7 +598,7 @@ createMatchOnPsArgs <- function(
     if (name %in% names(analysis))
       analysis[[name]] <- values[[name]]
   }
-  class(analysis) <- "args"
+  analysis$psMethod <- "matchOnPs"
   return(analysis)
 }
 
@@ -863,4 +902,34 @@ createGetCovariateSettings <- function(covariateSettingsCm = FeatureExtraction::
 
   return(res)
 
+}
+
+#' @export
+createRiskStratificationMethod <- function(
+    label,
+    descritption = "",
+    riskStratificationThresholds
+) {
+  return(
+    list(
+      label = label,
+      description = descritption,
+      riskStratificationThresholds = riskStratificationThresholds
+    )
+  )
+}
+
+#' @export
+createPsAdjsutmentMethod <- function(
+    label,
+    description = "",
+    psAdjustmentSettings
+) {
+  return(
+    list(
+      label = label,
+      description = description,
+      psAdjustmentSettings = psAdjustmentSettings
+    )
+  )
 }

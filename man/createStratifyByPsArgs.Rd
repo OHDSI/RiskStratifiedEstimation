@@ -23,8 +23,5 @@ be determined? Strata are defined as equally-sized strata inside this
 selection. Possible values are "all", "target", and "comparator".}
 }
 \description{
-Create a parameter object for the function stratifyByPs
-}
-\details{
 Create an object defining the parameter values.
 }

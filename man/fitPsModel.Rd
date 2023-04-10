@@ -5,7 +5,7 @@
 \title{Calculate propensity scores for a specific outcome}
 \usage{
 fitPsModel(
-  outcomeId,
+  analysisId,
   initialPopulation,
   runSettings,
   getDataSettings,
@@ -14,9 +14,6 @@ fitPsModel(
 )
 }
 \arguments{
-\item{outcomeId}{The outcome of interest for which the esitmation is performed. That is the outcome for
-which risk stratification is performed.}
-
 \item{initialPopulation}{The initial population on the subset of which
 the propensity scores will be estimated.}
 
@@ -31,6 +28,9 @@ the propensity scores will be estimated.}
 
 \item{analysisSettings}{An R object of type \code{analysisSettings} created using the function
 \code{\link[RiskStratifiedEstimation]{createAnalysisSettings}}.}
+
+\item{outcomeId}{The outcome of interest for which the esitmation is performed. That is the outcome for
+which risk stratification is performed.}
 }
 \value{
 \code{NULL}. The results are all saved.

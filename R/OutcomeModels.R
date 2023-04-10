@@ -39,7 +39,8 @@ fitOutcomeModels <- function(
   outcomeId,
   getDataSettings,
   pathToPs,
-  analysis
+  analysis,
+  analysisId
 ) {
 
   ParallelLogger::logInfo(
@@ -97,14 +98,18 @@ fitOutcomeModels <- function(
   if (!is.character(treatmentEffects)) {
 
     saveRDS(
-      treatmentEffects$relativeRiskReduction,
+      treatmentEffects$relativeRiskReduction %>%
+        dplyr::mutate(analysisId = analysisId) %>%
+        dplyr::relocate(analysisId, runLabel, riskStratum),
       file = file.path(
         analysisPath,
         "relativeRiskReduction.rds"
       )
     )
     saveRDS(
-      treatmentEffects$absoluteRiskReduction,
+      treatmentEffects$absoluteRiskReduction %>%
+        dplyr::mutate(analysisId = analysisId) %>%
+        dplyr::relocate(analysisId, runLabel, riskStratum),
       file = file.path(
         analysisPath,
         "absoluteRiskReduction.rds"
@@ -118,7 +123,9 @@ fitOutcomeModels <- function(
       )
     )
     saveRDS(
-      treatmentEffects$cases,
+      treatmentEffects$cases %>%
+        dplyr::mutate(analysisId = analysisId) %>%
+        dplyr::relocate(analysisId, runLabel, riskStratum),
       file = file.path(
         analysisPath,
         "cases.rds"
@@ -233,18 +240,19 @@ estimateTreatmentEffect <- function(
   ps,
   analysis
 ) {
-
-  if (analysis$psMethod == "matchOnPs") {
+  psAdjustmentSettings <- analysis$psAdjustmentMethod$psAdjustmentSettings
+  psMethod <- psAdjustmentSettings$psMethod
+  if (psMethod == "matchOnPs") {
     ps <- lapply(
       ps,
       CohortMethod::matchOnPs,
-      caliper = analysis$effectEstimationSettings$caliper,
-      caliperScale = analysis$effectEstimationSettings$caliperScale,
-      maxRatio = analysis$effectEstimationSettings$maxRatio,
-      stratificationColumns = analysis$effectEstimationSettings$stratificationColumns
+      caliper = psAdjustmentSettings$caliper,
+      caliperScale = psAdjustmentSettings$caliperScale,
+      maxRatio = psAdjustmentSettings$maxRatio,
+      stratificationColumns = psAdjustmentSettings$stratificationColumns
     )
 
-    if (analysis$effectEstimationSettings$maxRatio > 1) {
+    if (psAdjustmentSettings$maxRatio > 1) {
       models <- lapply(
         ps,
         CohortMethod::fitOutcomeModel,
@@ -266,7 +274,7 @@ estimateTreatmentEffect <- function(
         ps,
         getCounts,
         timePoint = analysis$timePoint,
-        psMethod = analysis$psMethod
+        psMethod = psMethod
       )
     )
 
@@ -292,7 +300,7 @@ estimateTreatmentEffect <- function(
         ps,
         absoluteRiskReduction,
         timePoint = analysis$timePoint,
-        psMethod = analysis$psMethod
+        psMethod = psMethod
       )
     )
 
@@ -331,13 +339,13 @@ estimateTreatmentEffect <- function(
       1:riskStrata
     )
 
-  } else if (analysis$psMethod == "stratifyByPs") {
+  } else if (psMethod == "stratifyByPs") {
     ps <- lapply(
       ps,
       CohortMethod::stratifyByPs,
-      numberOfStrata = analysis$effectEstimationSettings$numberOfStrata,
-      stratificationColumns = analysis$effectEstimationSettings$stratificationColumns,
-      baseSelection = analysis$effectEstimationSettings$baseSelection
+      numberOfStrata = psAdjustmentSettings$numberOfStrata,
+      stratificationColumns = psAdjustmentSettings$stratificationColumns,
+      baseSelection = psAdjustmentSettings$baseSelection
     )
 
     ParallelLogger::logInfo(
@@ -350,7 +358,7 @@ estimateTreatmentEffect <- function(
         ps,
         getCounts,
         timePoint = analysis$timePoint,
-        psMethod = analysis$psMethod
+        psMethod = psMethod
       )
     )
 
@@ -379,7 +387,7 @@ estimateTreatmentEffect <- function(
         ps,
         absoluteRiskReduction,
         timePoint = analysis$timePoint,
-        psMethod = analysis$psMethod
+        psMethod = psMethod
       )
     )
 
@@ -427,9 +435,12 @@ estimateTreatmentEffect <- function(
 
   return(
     list(
-      relativeRiskReduction = rrr %>% dplyr::mutate(analysisType = analysis$label),
-      absoluteRiskReduction = arr %>% dplyr::mutate(analysisType = analysis$label),
-      cases = cases %>% dplyr::mutate(analysisType = analysis$label),
+      relativeRiskReduction = rrr %>%
+        dplyr::mutate(runLabel = analysis$label),
+      absoluteRiskReduction = arr %>%
+        dplyr::mutate(runLabel = analysis$label),
+      cases = cases %>%
+        dplyr::mutate(runLabel = analysis$label),
       models = models,
       ps = ps
     )

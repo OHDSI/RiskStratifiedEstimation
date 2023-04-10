@@ -371,7 +371,7 @@ computePsDensityOverall <- function(
   path,
   analysisSettings,
   stratOutcome,
-  analysisType
+  runLabel
 ) {
 
   analysisPath <- file.path(
@@ -415,15 +415,16 @@ computePsDensityOverall <- function(
       )
     ) %>%
     dplyr::mutate(
-      database     = analysisSettings$databaseName,
-      analysisId   = analysisSettings$analysisId,
+      database = analysisSettings$databaseName,
+      analysisId = analysisSettings$analysisId,
       stratOutcome = stratOutcome,
-      estOutcome   = estOutcome,
-      treatmentId  = analysisSettings$treatmentCohortId,
+      estOutcome = estOutcome,
+      treatmentId = analysisSettings$treatmentCohortId,
       comparatorId = analysisSettings$comparatorCohortId,
-      analysisType = analysisType
+      runLabel = runLabel
     ) %>%
     dplyr::tibble() %>%
+    dplyr::relocate(analysisId, runLabel) %>%
     saveRDS(
       file = file.path(
         saveDir,
@@ -431,11 +432,7 @@ computePsDensityOverall <- function(
           paste(
             "psDensity",
             analysisSettings$analysisId,
-            analysisSettings$databaseName,
-            analysisType,
-            analysisSettings$treatmentCohortId,
-            analysisSettings$comparatorCohortId,
-            stratOutcome,
+            runLabel,
             estOutcome,
             sep = "_"
           ),
@@ -494,11 +491,11 @@ computeRseePsDensity <- function(analysisSettings) {
 
       dummy <- ParallelLogger::clusterApply(
         cluster = cluster,
-        x       = compareOutcomeDirs,
-        fun     = computePsDensityOverall,
+        x = compareOutcomeDirs,
+        fun = computePsDensityOverall,
         analysisSettings = analysisSettings,
         stratOutcome = predictOutcomes[j],
-        analysisType = basename(labels[i])
+        runLabel = basename(labels[i])
       )
     }
   }
@@ -685,58 +682,58 @@ computeRseeIncidence <- function(analysisSettings) {
     "RiskStratifiedEstimation"
   )
   for (i in seq_along(labels)) {
-    predictOutcomeDirs <- list.dirs(
+    predictOutcomeDir <- list.dirs(
       path       = labels[i],
       recursive  = FALSE,
       full.names = TRUE
     )
 
-    predictOutcomes <- as.numeric(
+    predictOutcome <- as.numeric(
       basename(
-        predictOutcomeDirs
+        predictOutcomeDir
       )
     )
 
-    for (j in seq_along(predictOutcomes)) {
-      compareOutcomeDirs <- list.dirs(
-        predictOutcomeDirs[j],
-        recursive = FALSE
-      )
-      tmp <- ParallelLogger::clusterApply(
-        cluster = cluster,
-        x       = compareOutcomeDirs,
-        fun     = computeIncidenceOverall
-      )
+    compareOutcomeDirs <- list.dirs(
+      predictOutcomeDir,
+      recursive = FALSE
+    )
+    tmp <- ParallelLogger::clusterApply(
+      cluster = cluster,
+      x       = compareOutcomeDirs,
+      fun     = computeIncidenceOverall
+    )
 
-      do.call(
-        rbind,
-        tmp
+    do.call(
+      rbind,
+      tmp
+    ) %>%
+      dplyr::mutate(
+        database = analysisSettings$databaseName,
+        analysisId = analysisSettings$analysisId,
+        stratOutcome = predictOutcome,
+        treatmentId = analysisSettings$treatmentCohortId,
+        comparatorId = analysisSettings$comparatorCohortId,
+        runLabel = basename(labels[i])
       ) %>%
-        dplyr::mutate(
-          database = analysisSettings$databaseName,
-          analysisId = analysisSettings$analysisId,
-          stratOutcome = predictOutcomes[j],
-          treatmentId = analysisSettings$treatmentCohortId,
-          comparatorId = analysisSettings$comparatorCohortId,
-          analysisType = basename(labels[i])
-        ) %>%
-        dplyr::tibble() %>%
-        saveRDS(
-          file.path(
-            saveDir,
-            paste0(
-              paste(
-                "tmp",
-                "incidence",
-                basename(labels[i]),
-                predictOutcomes[j],
-                sep = "_"
-              ),
-              ".rds"
-            )
+      dplyr::tibble() %>%
+      dplyr::relocate(analysisId, runLabel) %>%
+      saveRDS(
+        file.path(
+          saveDir,
+          paste0(
+            paste(
+              "tmp",
+              "incidence",
+              analysisSettings$analysisId,
+              basename(labels[i]),
+              predictOutcome,
+              sep = "_"
+            ),
+            ".rds"
           )
         )
-    }
+      )
   }
 }
 
@@ -848,7 +845,10 @@ predictionPerformanceAnalysis <- function(
       performance,
       file.path(
         saveDir,
-        "predictionPerformance.rds"
+        paste0(
+          paste("predictionPerformance", analysisSettings$analysisId, sep = "_"),
+          ".rds"
+        )
       )
     )
   }
