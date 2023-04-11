@@ -8,25 +8,128 @@ if (is.null(.GlobalEnv$shinySettings)) {
   analysisPath <- .GlobalEnv$shinySettings
 }
 
+assembleFileName <- function(path, fileName, suffix) {
+  file.path(
+    path,
+    paste0(
+      paste(fileName, suffix, sep = "_"),
+      ".rds"
+    )
+  )
+}
+
+addConceptNames <- function(data, mapExposures, mapOutcomes) {
+  data %>%
+    dplyr::left_join(
+      mapOutcomes,
+      by = c(
+        "analysisId" = "analysisId",
+        "outcomeId" = "outcome_id"
+      )
+    ) %>%
+    dplyr::select(-"outcomeId") %>%
+    dplyr::rename(
+      "stratOutcome" = "outcome_name"
+    ) %>%
+    dplyr::left_join(
+      mapExposures,
+      by = c(
+        "analysisId" = "analysisId",
+        "treatmentId" = "exposure_id"
+      )
+    ) %>%
+    dplyr::select(-"treatmentId") %>%
+    dplyr::rename(
+      "treatment" = "exposure_name"
+    ) %>%
+    dplyr::left_join(
+      mapExposures,
+      by = c(
+        "analysisId" = "analysisId",
+        "comparatorId" = "exposure_id"
+      )
+    ) %>%
+    dplyr::select(-"comparatorId") %>%
+    dplyr::rename("comparator" = "exposure_name") %>%
+    return()
+}
+
 pathToHtml <- file.path(
   analysisPath,
   "html"
 )
+analysesFile <- list.files(
+  analysisPath,
+  pattern = "analyses"
+)
 
+analyses <- readRDS(file.path(analysisPath, analysesFile))
 
+if (length(unique(analyses$analysisId)) == 1) {
+  suffix <- analyses$analysisId[1]
+} else {
+  suffix <- "combined"
+}
+
+stratOptions <- "Acute myocardial infarction"
 mapOutcomes <- readRDS(
 	file.path(
 		analysisPath,
-		"map_outcomes.rds"
+		paste0(
+		  paste("map_outcomes", suffix, sep = "_"),
+		  ".rds"
+		)
 	)
-)
+) %>%
+  dplyr::select(analysisId, outcome_id, outcome_name)
 
 mapExposures <- readRDS(
 	file.path(
 		analysisPath,
-		"map_exposures.rds"
+		paste0(
+		  paste("map_exposures", suffix, sep = "_"),
+		  ".rds"
+		)
 	)
-)
+) %>%
+  dplyr::select(analysisId, exposure_id, exposure_name)
+
+
+analyses <- analyses %>%
+  dplyr::left_join(
+    mapOutcomes,
+    by = c(
+      "analysisId" = "analysisId",
+      "stratificationOutcome" = "outcome_id"
+    )
+  ) %>%
+  dplyr::select(-"stratificationOutcome") %>%
+  dplyr::rename(
+    "stratificationOutcome" = "outcome_name"
+  ) %>%
+  dplyr::left_join(
+    mapExposures,
+    by = c(
+      "analysisId" = "analysisId",
+      "treatmentCohortId" = "exposure_id"
+    )
+  ) %>%
+  dplyr::select(-"treatmentCohortId") %>%
+  dplyr::rename(
+    "treatmentCohort" = "exposure_name"
+  ) %>%
+  dplyr::left_join(
+    mapExposures,
+    by = c(
+      "analysisId" = "analysisId",
+      "comparatorCohortId" = "exposure_id"
+    )
+  ) %>%
+  dplyr::select(-"comparatorCohortId") %>%
+  dplyr::rename(
+    "comparatorCohort" = "exposure_name"
+  )
+
 
 overallAnalysisFiles <- list.files(
   analysisPath,
@@ -37,89 +140,36 @@ if (!is.null(overallAnalysisFiles)) {
   overallAnalysis <- TRUE
 
   overallMappedOverallRelativeResults <- readRDS(
-    file.path(
-    analysisPath,
-    "mappedOverallResults.rds"
-    )
+    assembleFileName(analysisPath, "mappedOverallResults", suffix)
   ) %>%
-    dplyr::left_join(
-      mapOutcomes,
-      by = c(
-        "outcomeId" = "outcome_id"
-      )
-    ) %>%
-    dplyr::select(-"outcomeId") %>%
-    dplyr::rename(
-      "stratOutcome" = "outcome_name"
-    ) %>%
-    dplyr::left_join(
-      mapExposures,
-      by = c(
-        "treatmentId" = "exposure_id"
-      )
-    ) %>%
-    dplyr::select(-"treatmentId") %>%
-    dplyr::rename(
-      "treatment" = "exposure_name"
-    ) %>%
-    dplyr::left_join(
-      mapExposures,
-      by = c(
-        "comparatorId" = "exposure_id"
-      )
-    ) %>%
-    dplyr::select(-"comparatorId") %>%
-    dplyr::rename("comparator" = "exposure_name")
-
+    addConceptNames(
+      mapExposures = mapExposures,
+      mapOutcomes = mapOutcomes
+    )
 
   overallIncidence <- readRDS(
-    file.path(
-      analysisPath,
-      "incidenceOverall.rds"
-    )
+    assembleFileName(analysisPath, "incidenceOverall", suffix)
   ) %>%
-    dplyr::left_join(
-      mapOutcomes,
-      by = c(
-        "outcomeId" = "outcome_id"
-      )
-    ) %>%
-    dplyr::select(-"outcomeId") %>%
-    dplyr::rename(
-      "stratOutcome" = "outcome_name"
-    ) %>%
-    dplyr::left_join(
-      mapExposures,
-      by = c(
-        "treatmentId" = "exposure_id"
-      )
-    ) %>%
-    dplyr::select(-"treatmentId") %>%
-    dplyr::rename(
-      "treatment" = "exposure_name"
-    ) %>%
-    dplyr::left_join(
-      mapExposures,
-      by = c(
-        "comparatorId" = "exposure_id"
-      )
-    ) %>%
-    dplyr::select(-"comparatorId") %>%
-    dplyr::rename("comparator" = "exposure_name")
+    addConceptNames(
+      mapExposures = mapExposures,
+      mapOutcomes = mapOutcomes
+    )
 }
 
 hasOverallNegativeControls <- FALSE
-if (file.exists(file.path(analysisPath, "mappedOverallResultsNegativeControls.rds"))) {
+testFile <- list.files(
+  analysisPath,
+  pattern = "mappedOverallResultsNegativeControls"
+)
+if (length(testFile) != 0) {
   hasOverallNegativeControls <- TRUE
   overallNegativeControls <- readRDS(
-    file.path(
-      analysisPath,
-      "mappedOverallResultsNegativeControls.rds"
-    )
+    assembleFileName(analysisPath, "mappedOverallResultsNegativeControls", suffix)
   ) %>%
     dplyr::left_join(
       mapExposures,
       by = c(
+        "analysisId" = "analysisId",
         "treatmentId" = "exposure_id"
       )
     ) %>%
@@ -130,6 +180,7 @@ if (file.exists(file.path(analysisPath, "mappedOverallResultsNegativeControls.rd
     dplyr::left_join(
       mapExposures,
       by = c(
+        "analysisId" = "analysisId",
         "comparatorId" = "exposure_id"
       )
     ) %>%
@@ -141,17 +192,20 @@ if (file.exists(file.path(analysisPath, "mappedOverallResultsNegativeControls.rd
 }
 
 hasNegativeControls <- FALSE
-if (file.exists(file.path(analysisPath, "negativeControls.rds"))) {
+testFile <- list.files(
+  analysisPath,
+  pattern = "negativeControls"
+)
+if (length(testFile) != 0) {
+
   hasNegativeControls <- TRUE
   negativeControls <- readRDS(
-    file.path(
-      analysisPath,
-      "negativeControls.rds"
-    )
+      assembleFileName(analysisPath, "negativeControls", suffix)
   ) %>%
     dplyr::left_join(
       mapOutcomes,
       by = c(
+        "analysisId" = "analysisId",
         "stratOutcome" = "outcome_id"
       )
     ) %>%
@@ -162,6 +216,7 @@ if (file.exists(file.path(analysisPath, "negativeControls.rds"))) {
     dplyr::left_join(
       mapExposures,
       by = c(
+        "analysisId" = "analysisId",
         "treatment" = "exposure_id"
       )
     ) %>%
@@ -172,6 +227,7 @@ if (file.exists(file.path(analysisPath, "negativeControls.rds"))) {
     dplyr::left_join(
       mapExposures,
       by = c(
+        "analysisId" = "analysisId",
         "comparator" = "exposure_id"
       )
     ) %>%
@@ -181,47 +237,44 @@ if (file.exists(file.path(analysisPath, "negativeControls.rds"))) {
     )
 }
 
-analyses <- readRDS(
-	file.path(
-		analysisPath,
-		"analyses.rds"
-	)
-) %>%
-  dplyr::left_join(
-    mapExposures,
-    by = c(
-     "treatment_id" = "exposure_id"
-    )
-  ) %>%
-  dplyr::rename(
-    "treatment" = "exposure_name"
-  ) %>%
-  dplyr::left_join(
-    mapExposures,
-    by = c(
-      "comparator_id" = "exposure_id"
-    )
-  ) %>%
-  dplyr::rename(
-    "comparator" = "exposure_name"
-  ) %>%
-  dplyr::select(
-    -c(
-      "treatment_id",
-      "comparator_id"
-    )
-  )
+# analyses <- readRDS(
+# 	file.path(
+# 		analysisPath,
+# 		"analyses.rds"
+# 	)
+# ) %>%
+#   dplyr::left_join(
+#     mapExposures,
+#     by = c(
+#      "treatment_id" = "exposure_id"
+#     )
+#   ) %>%
+#   dplyr::rename(
+#     "treatment" = "exposure_name"
+#   ) %>%
+#   dplyr::left_join(
+#     mapExposures,
+#     by = c(
+#       "comparator_id" = "exposure_id"
+#     )
+#   ) %>%
+#   dplyr::rename(
+#     "comparator" = "exposure_name"
+#   ) %>%
+#   dplyr::select(
+#     -c(
+#       "treatment_id",
+#       "comparator_id"
+#     )
+#   )
 
-incidence <-
-	readRDS(
-		file.path(
-			analysisPath,
-			"incidence.rds"
-		)
+incidence <- readRDS(
+  assembleFileName(analysisPath, "incidence", suffix)
 	) %>%
 	dplyr::left_join(
 		mapOutcomes,
 		by = c(
+		  "analysisId" = "analysisId",
 			"estOutcome" = "outcome_id"
 		)
 	) %>%
@@ -232,6 +285,7 @@ incidence <-
 	dplyr::left_join(
 		mapOutcomes,
 		by = c(
+		  "analysisId" = "analysisId",
 			"stratOutcome" = "outcome_id"
 		)
 	) %>%
@@ -242,6 +296,7 @@ incidence <-
 	dplyr::left_join(
 		mapExposures,
 		by = c(
+		  "analysisId" = "analysisId",
 			"treatmentId" = "exposure_id"
 		)
 	) %>%
@@ -252,6 +307,7 @@ incidence <-
 	dplyr::left_join(
 		mapExposures,
 		by = c(
+		  "analysisId" = "analysisId",
 			"comparatorId" = "exposure_id"
 		)
 	) %>%
@@ -260,15 +316,13 @@ incidence <-
 
 predictionPerformance <-
 	readRDS(
-		file.path(
-			analysisPath,
-			"predictionPerformance.rds"
-		)
+	  assembleFileName(analysisPath, "predictionPerformance", suffix)
 	) %>%
   tibble() %>%
 	dplyr::left_join(
 		mapOutcomes,
 		by = c(
+		  "analysisId" = "analysisId",
 			"stratOutcome" = "outcome_id"
 		)
 	) %>%
@@ -279,6 +333,7 @@ predictionPerformance <-
 	dplyr::left_join(
 		mapExposures,
 		by = c(
+		  "analysisId" = "analysisId",
 			"treatmentId" = "exposure_id"
 		)
 	) %>%
@@ -289,6 +344,7 @@ predictionPerformance <-
 	dplyr::left_join(
 		mapExposures,
 		by = c(
+		  "analysisId" = "analysisId",
 			"comparatorId" = "exposure_id"
 		)
 	) %>%
@@ -299,14 +355,12 @@ predictionPerformance <-
 
 mappedOverallAbsoluteResults <-
 	readRDS(
-		file.path(
-			analysisPath,
-			"mappedOverallAbsoluteResults.rds"
-		)
+	  assembleFileName(analysisPath, "mappedOverallAbsoluteResults", suffix)
 	) %>%
 	dplyr::left_join(
 		mapOutcomes,
 		by = c(
+		  "analysisId" = "analysisId",
 			"estOutcome" = "outcome_id"
 		)
 	) %>%
@@ -317,6 +371,7 @@ mappedOverallAbsoluteResults <-
 	dplyr::left_join(
 		mapOutcomes,
 		by = c(
+		  "analysisId" = "analysisId",
 			"stratOutcome" = "outcome_id"
 		)
 	) %>%
@@ -327,6 +382,7 @@ mappedOverallAbsoluteResults <-
 	dplyr::left_join(
 		mapExposures,
 		by = c(
+		  "analysisId" = "analysisId",
 			"treatment" = "exposure_id"
 		)
 	) %>%
@@ -337,6 +393,7 @@ mappedOverallAbsoluteResults <-
 	dplyr::left_join(
 		mapExposures,
 		by = c(
+		  "analysisId" = "analysisId",
 			"comparator" = "exposure_id"
 		)
 	) %>%
@@ -347,14 +404,12 @@ mappedOverallAbsoluteResults <-
 
 mappedOverallRelativeResults <-
 	readRDS(
-		file.path(
-			analysisPath,
-			"mappedOverallRelativeResults.rds"
-		)
+	  assembleFileName(analysisPath, "mappedOverallRelativeResults", suffix)
 	) %>%
 	dplyr::left_join(
 		mapOutcomes,
 		by = c(
+		  "analysisId" = "analysisId",
 			"estOutcome" = "outcome_id"
 		)
 	) %>%
@@ -365,6 +420,7 @@ mappedOverallRelativeResults <-
 	dplyr::left_join(
 		mapOutcomes,
 		by = c(
+		  "analysisId" = "analysisId",
 			"stratOutcome" = "outcome_id"
 		)
 	) %>%
@@ -375,6 +431,7 @@ mappedOverallRelativeResults <-
 	dplyr::left_join(
 		mapExposures,
 		by = c(
+		  "analysisId" = "analysisId",
 			"treatment" = "exposure_id"
 		)
 	) %>%
@@ -385,6 +442,7 @@ mappedOverallRelativeResults <-
 	dplyr::left_join(
 		mapExposures,
 		by = c(
+		  "analysisId" = "analysisId",
 			"comparator" = "exposure_id"
 		)
 	) %>%
@@ -396,14 +454,12 @@ mappedOverallRelativeResults <-
 
 mappedOverallCasesResults <-
 	readRDS(
-		file.path(
-			analysisPath,
-			"mappedOverallCasesResults.rds"
-		)
+	  assembleFileName(analysisPath, "mappedOverallCasesResults", suffix)
 	) %>%
 	dplyr::left_join(
 		mapOutcomes,
 		by = c(
+		  "analysisId" = "analysisId",
 			"estOutcome" = "outcome_id"
 		)
 	) %>%
@@ -414,6 +470,7 @@ mappedOverallCasesResults <-
 	dplyr::left_join(
 		mapOutcomes,
 		by = c(
+		  "analysisId" = "analysisId",
 			"stratOutcome" = "outcome_id"
 		)
 	) %>%
@@ -424,6 +481,7 @@ mappedOverallCasesResults <-
 	dplyr::left_join(
 		mapExposures,
 		by = c(
+		  "analysisId" = "analysisId",
 			"treatment" = "exposure_id"
 		)
 	) %>%
@@ -434,6 +492,7 @@ mappedOverallCasesResults <-
 	dplyr::left_join(
 		mapExposures,
 		by = c(
+		  "analysisId" = "analysisId",
 			"comparator" = "exposure_id"
 		)
 	) %>%
@@ -443,18 +502,101 @@ mappedOverallCasesResults <-
 	)
 
 
-databaseOptions <- unique(
-  analyses$database
-)
+databaseOptions <- unique(analyses$database)
 
 analysisTypeOptions <- unique(
-  analyses$analysis_label
+  analyses$analysis_type
 )
 
-stratOptions <- unique(
-	mappedOverallAbsoluteResults$stratOutcome
-)
+# ==============================================================================
+# Functions
+# ==============================================================================
 
+getOutcomeNames <- function(string, mapOutcomes) {
+  tibble(
+    outcomeId = as.numeric(
+      stringr::str_split(string, pattern = ";", simplify = TRUE)
+    )
+  ) %>%
+    dplyr::left_join(mapOutcomes, by = c("outcomeId" = "outcome_id")) %>%
+    dplyr::distinct(outcome_name) %>%
+    dplyr::pull()
+}
+
+stratIsEst <- function(choices, stratOutcome) {
+  if (stratOutcome %in% choices) {
+    return(stratOutcome)
+  } else {
+    choices[1]
+  }
+}
+
+constructFileName <- function(
+    prefix,
+    analysisPath,
+    analysisId,
+    runLabel,
+    estOutcome = NULL,
+    mapOutcomes = NULL
+) {
+  if (is.null(estOutcome)) {
+    file.path(
+      analysisPath,
+      paste0(
+        paste(prefix, analysisId, runLabel, sep = "_"),
+        ".rds"
+      )
+    ) %>%
+      return()
+  } else {
+
+    estOutcomeId <- mapOutcomes %>%
+      dplyr::filter(outcome_name == estOutcome) %>%
+      dplyr::pull(outcome_id)
+    file.path(
+      analysisPath,
+      paste0(
+        paste(prefix, analysisId, runLabel, estOutcomeId, sep = "_"),
+        ".rds"
+      )
+    ) %>%
+      return()
+  }
+}
+
+getAnalysis <- function(
+    analyses,
+    database,
+    treatmentCohort,
+    comparatorCohort
+) {
+  analyses %>%
+    dplyr::filter(
+      database == !!database,
+      treatmentCohort  == !!treatmentCohort,
+      comparatorCohort == !!comparatorCohort
+    ) %>%
+    dplyr::distinct(analysisId) %>%
+    pull()
+}
+
+getRunLabel <- function(
+    analyses,
+    analysisId,
+    stratificationOutcome,
+    riskStratificationMethod,
+    psAdjsutmentMethod
+) {
+  analyses %>%
+    dplyr::filter(
+      analysisId == !!analysisId,
+      stratificationOutcome == !!stratificationOutcome,
+      riskStratificationMethod == !!riskStratificationMethod,
+      psAdjsutmentMethod == !!psAdjsutmentMethod
+    ) %>%
+    dplyr::distinct(runLabel) %>%
+    pull()
+}
 
 getResults <- function(
   treat, comp, strat, est, db, anal,
@@ -916,7 +1058,8 @@ combinedPlot <- function(
   cases <- cases %>%
     dplyr::mutate(
       analysisType_estOutcome = paste(
-        analysisType,
+        analysisId,
+        runLabel,
         estOutcome,
         sep = "/"
       )
@@ -925,7 +1068,8 @@ combinedPlot <- function(
   relative <- relative %>%
     dplyr::mutate(
       analysisType_estOutcome = paste(
-        analysisType,
+        analysisId,
+        runLabel,
         estOutcome,
         sep = "/"
       )
@@ -934,7 +1078,8 @@ combinedPlot <- function(
   absolute <- absolute %>%
     dplyr::mutate(
       analysisType_estOutcome = paste(
-        analysisType,
+        analysisId,
+        runLabel,
         estOutcome,
         sep = "/"
       )
@@ -955,13 +1100,13 @@ combinedPlot <- function(
 		)
 	)
 
-	numberOfAnalyses <- length(
-		unique(
-			cases$analysisType
-		)
-	)
+	# numberOfAnalyses <- length(
+	# 	unique(
+	# 		cases$analysisType
+	# 	)
+	# )
 
-	numberOfPoints <- numberOfOutcomes * numberOfAnalyses
+	numberOfPoints <- numberOfOutcomes # * numberOfAnalyses
 	if (numberOfPoints > 4) {
 		stop("No more than 4 outcomes can be plotted at the same time")
 	}

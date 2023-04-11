@@ -6,124 +6,125 @@ shiny::shinyServer(
     output,
     session
   ) {
+
     shiny::observe(
       {
-        filteredEstimationOutcomes <- mappedOverallRelativeResults %>%
-          dplyr::filter(
-            stratOutcome == stratOutcome
-          ) %>%
-          dplyr::select(
-            estOutcome
+        estOutcomes <- input$estOutcome
+        shiny::updateSelectInput(
+          inputId = "estOutcomeEstimation",
+          choices = estOutcomes,
+          selected = estOutcomes[1]
+        )
+      }
+    )
+
+    currentAnalysis <- shiny::reactive(
+      {
+        result <- analyses %>%
+          getAnalysis(
+            database = input$database,
+            treatmentCohort = input$treatment,
+            comparatorCohort = input$comparator
+          )
+        return(result)
+      }
+    )
+
+    currentRunLabel <- shiny::reactive(
+      {
+        analysis <- currentAnalysis()
+        result <- analyses %>%
+          getRunLabel(
+            analysisId = analysis,
+            stratificationOutcome = input$stratOutcome,
+            riskStratificationMethod = input$riskStratificationMethod,
+            psAdjsutmentMethod = input$psAdjsutmentMethod
           )
 
+        return(result)
+      }
+    )
+
+
+    shiny::observe(
+      {
+        newChoicesStratOutcome <- analyses %>%
+          dplyr::filter(
+            analysisId == currentAnalysis(),
+          ) %>%
+          dplyr::distinct(stratificationOutcome) %>%
+          dplyr::pull()
 
         shiny::updateSelectInput(
-          session = session,
+          inputId = "stratOutcome",
+          choices = newChoicesStratOutcome
+        )
+      }
+    )
+
+    shiny::observe(
+      {
+        estOutcomes <- analyses %>%
+          dplyr::filter(
+            analysisId == currentAnalysis(),
+            runLabel == currentRunLabel()
+          ) %>%
+          dplyr::pull(estimationOutcomes)
+        newChoices <- getOutcomeNames(estOutcomes, mapOutcomes)
+        shiny::updateSelectInput(
           inputId = "estOutcome",
-          choices = unique(filteredEstimationOutcomes)
+          choices = newChoices,
+          selected = stratIsEst(newChoices, input$stratOutcome)
         )
       }
     )
 
-    resultSubset <- shiny::reactive(
+    shiny::observe(
       {
-        results <- getResults(
-          treat = input$treatment,
-          comp = input$comparator,
-          strat = input$stratOutcome,
-          est = input$estOutcome,
-          anal = input$analysis,
-          db = input$database,
-          mappedOverallRelativeResults = mappedOverallRelativeResults,
-          mappedOverallAbsoluteResults = mappedOverallAbsoluteResults,
-          mappedOverallCasesResults = mappedOverallCasesResults
+        newChoices <- analyses %>%
+          dplyr::filter(
+            analysisId == currentAnalysis(),
+            runLabel == currentRunLabel()
+          ) %>%
+          dplyr::pull(riskStratificationMethodLabel)
+        shiny::updateSelectInput(
+          inputId = "riskStratificationMethod",
+          choices = newChoices,
+          selected = newChoices[1]
         )
-        return(results)
       }
     )
 
-    overallResultSubset <- shiny::reactive(
+    shiny::observe(
       {
-        results <- getResultsOverall(
-          treat = input$treatment,
-          comp = input$comparator,
-          strat = input$stratOutcome,
-          anal = input$analysis,
-          db = input$database,
-          overallMappedOverallRelativeResults = overallMappedOverallRelativeResults
+        newChoices <- analyses %>%
+          dplyr::filter(
+            analysisId == currentAnalysis(),
+            runLabel == currentRunLabel()
+          ) %>%
+          dplyr::pull(psAdjustmentMethodLabel)
+        shiny::updateSelectInput(
+          inputId = "psAdjsutmentMethod",
+          choices = newChoices,
+          selected = newChoices[1]
         )
-        return(results)
       }
     )
 
-    if (hasNegativeControls) {
-      negativeControlsSubset <- shiny::reactive(
-        {
-          results <- getNegativeControls(
-            treat = input$treatment,
-            comp = input$comparator,
-            strat = input$stratOutcome,
-            anal = input$analysis,
-            db = input$database,
-            negativeControls = negativeControls
+    currentOverallIncidence <- shiny::reactive(
+      {
+        result <- overallIncidence %>%
+          dplyr::filter(
+            analysisId == currentAnalysis(),
+            runLabel == currentRunLabel()
           )
-        }
-      )
-    }
-
-    if (hasOverallNegativeControls) {
-      overallNegativeControlsSubset <- shiny::reactive(
-        {
-          results <- getResultsOverall(
-            treat = input$treatment,
-            comp = input$comparator,
-            anal = input$analysis,
-            db = input$database,
-            overallMappedOverallRelativeResults = overallNegativeControls
-          )
-          return(results)
-        }
-      )
-    }
-
-
-    incidenceSubset <- shiny::reactive(
-      {
-        res <- getIncidence(
-          treat = input$treatment,
-          comp = input$comparator,
-          strat = input$stratOutcome,
-          est = input$estOutcome,
-          anal = input$analysis,
-          db = input$database,
-          incidence = incidence
-        )
-
-        return(res)
-
-      }
-    )
-
-    overallIncidenceSubset <- shiny::reactive(
-      {
-        res <- getIncidenceOverall(
-          treat = input$treatment,
-          comp = input$comparator,
-          strat = input$stratOutcome,
-          anal = input$analysis,
-          db = input$database,
-          incidence = overallIncidence
-        )
-
-        return(res)
-
+        return(result)
       }
     )
 
     output$overallIncidence <- DT::renderDataTable(
       {
-
-        res <- overallIncidenceSubset()
+        res <- currentOverallIncidence()
 
         treatment <- res$treatment[1]
         comparator <- res$comparator[1]
@@ -132,7 +133,6 @@ shiny::shinyServer(
         table <- res %>%
           dplyr::select(
             stratOutcome,
-            analysisType,
             treatmentPersons,
             treatmentDays,
             treatmentOutcomes,
@@ -150,7 +150,6 @@ shiny::shinyServer(
             table,
             colnames = c(
               "Outcome",
-              "Analysis",
               "Treatment subjects",
               "Treatment years",
               "Treatment events",
@@ -232,10 +231,21 @@ shiny::shinyServer(
       }
     )
 
-
+    currentIncidence <- shiny::reactive(
+      {
+        result <- incidence %>%
+          dplyr::filter(
+            analysisId == currentAnalysis(),
+            runLabel == currentRunLabel(),
+            estOutcome %in% input$estOutcome
+          )
+        return(result)
+      }
+    )
     output$mainTableIncidence <- DT::renderDataTable(
       {
-        res <- incidenceSubset()
+        res <- currentIncidence()
+
         treatment <- res$treatment[1]
         comparator <- res$comparator[1]
         outcome <- res$stratOutcome[1]
@@ -243,7 +253,6 @@ shiny::shinyServer(
         table <- res %>%
           dplyr::select(
             estOutcome,
-            analysisType,
             riskStratum,
             treatmentPersons,
             treatmentDays,
@@ -341,15 +350,50 @@ shiny::shinyServer(
             mark = ",",
             digits = 0
           )
-
         return(table)
-
       }
     )
 
+    currentOverallResults <- shiny::reactive(
+      {
+        result <- overallMappedOverallRelativeResults %>%
+          dplyr::filter(
+            analysisId == currentAnalysis(),
+            runLabel == currentRunLabel()
+          )
+        return(result)
+      }
+    )
+
+    if (hasNegativeControls) {
+      currentNegativeControls <- shiny::reactive(
+        {
+          result <- negativeControls %>%
+            dplyr::filter(
+              analysisId == currentAnalysis(),
+              runLabel == currentRunLabel()
+            )
+          return(result)
+        }
+      )
+    }
+
+    if (hasOverallNegativeControls) {
+      currentOverallNegativeControls <- shiny::reactive(
+        {
+          result <- overallNegativeControls %>%
+            dplyr::filter(
+              analysisId == currentAnalysis(),
+              runLabel == currentRunLabel()
+            )
+          return(result)
+        }
+      )
+    }
+
     output$overallResults <- DT::renderDataTable(
       {
-        res <- overallResultSubset()
+        res <- currentOverallResults()
 
         # table <- res
         table <- res %>%
@@ -369,7 +413,6 @@ shiny::shinyServer(
           ) %>%
           dplyr::select(
             database,
-            analysisType,
             treatment,
             comparator,
             stratOutcome,
@@ -380,7 +423,6 @@ shiny::shinyServer(
 
         tableColNames <-  c(
           "Database",
-          "Analysis",
           "Treatment",
           "Comparator",
           "Outcome",
@@ -390,9 +432,9 @@ shiny::shinyServer(
         )
 
         if (hasOverallNegativeControls) {
-          ncs <- overallNegativeControlsSubset() %>%
+          ncs <- currentOverallNegativeControls() %>%
             dplyr::mutate(logRr = log(estimate))
-          dat <- overallResultSubset() %>%
+          dat <- currentOverallResults() %>%
             dplyr::mutate(logRr = log(estimate))
           mod <- EmpiricalCalibration::fitSystematicErrorModel(
             logRr =  ncs$logRr,
@@ -456,316 +498,55 @@ shiny::shinyServer(
       }
     )
 
-    output$mainTableRelative <- DT::renderDataTable(
+    currentOverallPsDensity <- shiny::reactive(
       {
-        res <- resultSubset()
-        treatment <- res$relative$treatment[1]
-        comparator <- res$relative$comparator[1]
-        outcome <- res$relative$stratOutcome[1]
-        analysisType <- res$relative$analysisType[1]
-
-        table <- res$relative %>%
-          dplyr::mutate(
-            combined = paste(
-              round(estimate, 2),
-              paste0(
-                "(",
-                round(lower, 2),
-                ", ",
-                round(upper, 2),
-                ")"
-              )
-            )
-          ) %>%
-          dplyr::rename(
-            Outcome = estOutcome
-          ) %>%
-          dplyr::select(
-            Outcome,
-            riskStratum,
-            analysisType,
-            combined
-          ) %>%
-          tidyr::spread(riskStratum, combined)
-
-        if (hasNegativeControls) {
-          ncs <- negativeControlsSubset() %>%
-            dplyr::mutate(logRr = log(estimate))
-          tmp <- calibrateRiskStrataCis(
-            negativeControls = ncs,
-            positiveControls = res$relative %>%
-              dplyr::mutate(
-                logRr = log(estimate)
-              )
-          ) %>%
-            dplyr::mutate(
-              combined = paste(
-                round(estimate, 2),
-                paste0(
-                  "(",
-                  round(lower, 2),
-                  ", ",
-                  round(upper, 2),
-                  ") [CAL]"
-                )
-              ),
-              analysisType = analysisType
-            ) %>%
-            dplyr::select(
-              Outcome,
-              analysisType,
-              riskStratum,
-              combined
-            ) %>%
-            tidyr::spread(riskStratum, combined)
-
-          table <- table %>%
-            dplyr::bind_rows(
-              tmp
-            )
-        }
-
-        table %>%
-          DT::datatable(
-            caption = htmltools::tags$caption(
-              style = "caption-side: top; text-align: left;",
-              "Table 2: Hazard ratios comparing treatment",
-              htmltools::em(
-                paste0(
-                  "(",
-                  treatment,
-                  ")"
-                )
-              ),
-              "to comparator",
-              htmltools::em(
-                paste0(
-                  "(",
-                  comparator,
-                  ")"
-                )
-              ),
-              "within strata of predicted risk",
-              htmltools::em(
-                paste0(
-                  "(",
-                  outcome,
-                  ")"
-                )
-              )
-
-            )
-          )
-
-        return(table)
-
-      }
-    )
-
-    output$mainTableAbsolute <- DT::renderDataTable(
-      {
-
-        res <- resultSubset()
-
-        treatment <- res$absolute$treatment[1]
-        comparator <- res$absolute$comparator[1]
-        outcome <- res$absolute$stratOutcome[1]
-
-        table <-
-          res$absolute %>%
-          dplyr::mutate(
-            combined = paste(
-              round(100*estimate, 2),
-              paste0(
-                "(",
-                round(100*lower, 2),
-                ", ",
-                round(100*upper, 2),
-                ")"
-              )
-            )
-          ) %>%
-          dplyr::rename(
-            Outcome = estOutcome
-          ) %>%
-          dplyr::select(
-            Outcome,
-            riskStratum,
-            combined,
-            analysisType
-          ) %>%
-          tidyr::spread(riskStratum, combined) %>%
-          DT::datatable(
-            caption = htmltools::tags$caption(
-              style = "caption-side: top; text-align: left;",
-              "Table 3: Absolute risk reduction (%) when comparing treatment",
-              htmltools::em(
-                paste0(
-                  "(",
-                  treatment,
-                  ")"
-                )
-              ),
-              "to comparator",
-              htmltools::em(
-                paste0(
-                  "(",
-                  comparator,
-                  ")"
-                )
-              ),
-              "within strata of predicted risk",
-              htmltools::em(
-                paste0(
-                  "(",
-                  outcome,
-                  ")"
-                )
-              )
-            )
-          )
-
-
-        return(table)
-
-      }
-    )
-
-
-    output$combinedPlot <- plotly::renderPlotly(
-      {
-
-        res <- resultSubset()
-
-        plot <-
-          combinedPlot(
-            cases = res$cases,
-            relative = res$relative,
-            absolute = res$absolute,
-            treatment = input$treatment,
-            comparator = input$comparator
-          )
-        return(plot)
-
-      }
-    )
-
-    shiny::observe(
-      {
-        x <- input$estOutcome
-
-        shiny::updateSelectInput(
-          session = session,
-          inputId = "estOutcomeEstimation",
-          choices = x
-        )
-      }
-    )
-
-
-    balanceSubset <- shiny::reactive(
-      {
-        res <- getBalance(
-          treat = input$treatment,
-          comp = input$comparator,
-          strat = input$stratOutcome,
-          anal = input$analysis,
-          est = input$estOutcomeEstimation,
-          db = input$database,
-          analyses = analyses,
-          mapExposures = mapExposures,
-          mapOutcomes = mapOutcomes,
-          analysisPath = analysisPath)
-        return(res)
-      }
-    )
-
-    output$balanceTable <- DT::renderDataTable(
-      {
-        res <- balanceSubset() %>%
-          dplyr::mutate(
-            afterMatchingStdDiff = abs(
-              round(
-                .$afterMatchingStdDiff,
-                2
-              )
-            ),
-            beforeMatchingStdDiff = abs(
-              round(
-                .$beforeMatchingStdDiff,
-                2
-              )
-            )
-          ) %>%
-          dplyr::select(
-            c(
-              "covariateId",
-              "riskStratum",
-              "covariateName",
-              "beforeMatchingStdDiff",
-              "afterMatchingStdDiff"
-            )
-          )
-
-        DT::datatable(
-          res,
-          colnames = c(
-            "Covariate Id",
-            "Risk stratum",
-            "Covariate name",
-            "Before",
-            "After"
-          ),
-          options = list(
-            order = list(
-              5,
-              "desc"
-            )
-          )
-        ) %>%
-          return()
-      }
-    )
-
-    overallBalanceSubset <- shiny::reactive(
-      {
-        res <- getBalance(
-          treat = input$treatment,
-          comp = input$comparator,
-          strat = input$stratOutcome,
-          anal = input$analysis,
-          est = input$estOutcomeEstimation,
-          db = input$database,
-          analyses = analyses,
-          mapExposures = mapExposures,
-          mapOutcomes = mapOutcomes,
+        fileLocation <- constructFileName(
+          prefix = "overall_psDensity",
           analysisPath = analysisPath,
-          isOverall = TRUE
+          analysisId = currentAnalysis(),
+          runLabel = currentRunLabel()
         )
-        return(res)
+
+        result <- readRDS(fileLocation)
+        return(result)
       }
     )
-
-    psDensitySubset <- shiny::reactive(
+    output$overallEvaluationPlotPs <- shiny::renderPlot(
       {
-        res <- getPsDensity(
-          treat = input$treatment,
-          comp = input$comparator,
-          strat = input$stratOutcome,
-          anal = input$analysis,
-          est = input$estOutcomeEstimation,
-          db = input$database,
-          analyses = analyses,
-          mapExposures = mapExposures,
-          mapOutcomes = mapOutcomes,
-          analysisPath = analysisPath)
-        return(res)
+        currentOverallPsDensity() %>%
+          dplyr::left_join(
+            mapExposures,
+            by = c("treatment" = "exposure_id")
+          ) %>%
+          plotPsDensity()
       }
     )
 
+    currentOverallBalance <- shiny::reactive(
+      {
+        fileLocation <- constructFileName(
+          prefix = "overall_balance",
+          analysisPath = analysisPath,
+          analysisId = currentAnalysis(),
+          runLabel = currentRunLabel()
+        )
+
+        result <- readRDS(fileLocation)
+        return(result)
+      }
+    )
+    output$overallEvaluationPlotBalance <- shiny::renderPlot(
+      {
+        currentOverallBalance() %>%
+          CohortMethod::plotCovariateBalanceScatterPlot(
+            beforeLabel = "Before stratification",
+            afterLabel = "After stratification"
+          )
+      }
+    )
     output$overallBalanceTable <- DT::renderDT(
       {
-        res <- overallBalanceSubset() %>%
+        res <- currentOverallBalance() %>%
           dplyr::mutate(
             afterMatchingStdDiff = abs(
               round(
@@ -808,277 +589,11 @@ shiny::shinyServer(
       }
     )
 
-
-    output$evaluationPlotPs <- shiny::renderPlot(
-      {
-        psDensitySubset() %>%
-          dplyr::mutate(
-            treatment = ifelse(
-              treatment == 1,
-              treatmentId,
-              comparatorId
-            )
-          ) %>%
-          dplyr::left_join(
-            mapExposures,
-            by = c("treatment" = "exposure_id")
-          ) %>%
-          plotPsDensity(riskStratified = TRUE)
-      }
-    )
-
-    overallPsDensitySubset <- reactive(
-      {
-        res <- getPsDensityOverall(
-          treat = input$treatment,
-          comp = input$comparator,
-          strat = input$stratOutcome,
-          anal = input$analysis,
-          db = input$database,
-          analyses = analyses,
-          mapExposures = mapExposures,
-          mapOutcomes = mapOutcomes,
-          analysisPath = analysisPath)
-        return(res)
-      }
-    )
-    output$overallEvaluationPlotPs <- shiny::renderPlot(
-      {
-
-        overallPsDensitySubset() %>%
-          dplyr::left_join(
-            mapExposures,
-            by = c("treatment" = "exposure_id")
-          ) %>%
-          plotPsDensity()
-      }
-    )
-
-    output$evaluationPlotBalance <- shiny::renderPlot(
-      {
-        balanceSubset() %>%
-          CohortMethod::plotCovariateBalanceScatterPlot(
-            beforeLabel = "Before stratification",
-            afterLabel = "After stratification"
-          ) +
-          ggplot2::facet_grid(
-            ~riskStratum
-          )
-      }
-    )
-
-    output$overallEvaluationPlotBalance <- shiny::renderPlot(
-      {
-        overallBalanceSubset() %>%
-          CohortMethod::plotCovariateBalanceScatterPlot(
-            beforeLabel = "Before stratification",
-            afterLabel = "After stratification"
-          )
-      }
-    )
-
-    calibrationSubset <- shiny::reactive(
-      {
-        res <- getCalibration(
-          treat = input$treatment,
-          comp = input$comparator,
-          strat = input$stratOutcome,
-          db = input$database,
-          anal = input$analysis,
-          predictionPopulation = input$predictionPopulation,
-          analyses = analyses,
-          mapExposures = mapExposures,
-          mapOutcomes = mapOutcomes,
-          analysisPath = analysisPath)
-        return(res)
-      }
-    )
-
-    output$calibrationPlot <- shiny::renderPlot(
-      {
-        calibrationSubset() %>%
-          dplyr::mutate(
-            cohort = factor(
-              .$cohort,
-              levels = c(
-                "Matched",
-                "EntirePopulation",
-                "Treatment",
-                "Comparator"
-              )
-            )
-          ) %>%
-          ggplot2::ggplot(
-            ggplot2::aes(
-              x = averagePredictedProbability,
-              y = observedIncidence,
-              ymin = lower,
-              ymax = upper
-            )
-          ) +
-          ggplot2::geom_point(
-            size = 2,
-            color = "black"
-          ) +
-          ggplot2::geom_errorbar() +
-          ggplot2::geom_line(
-            colour = 'darkgrey'
-          ) +
-          ggplot2::geom_abline(
-            intercept = 0,
-            slope = 1,
-            linetype = 5,
-            size = 0.4,
-            show.legend = TRUE
-          ) +
-          ggplot2::scale_x_continuous(
-            name = "Average Predicted Probability"
-          ) +
-          ggplot2::scale_y_continuous(
-            name = "Observed Fraction With Outcome"
-          ) +
-          ggplot2::facet_grid(
-            ~cohort
-          ) +
-          ggplot2::theme_bw()
-
-      }
-    )
-
-    aucSubset <- shiny::reactive(
-      {
-        res <- getAuc(
-          treat = input$treatment,
-          comp = input$comparator,
-          strat = input$stratOutcome,
-          db = input$database,
-          anal = input$analysis,
-          predictionPopulation = input$predictionPopulation,
-          analyses = analyses,
-          mapExposures = mapExposures,
-          mapOutcomes = mapOutcomes,
-          analysisPath = analysisPath)
-        return(res)
-      }
-    )
-
-    predictionPerformanceSubset <- shiny::reactive(
-      {
-        res <- getPredictionPerformance(
-          treat = input$treatment,
-          comp = input$comparator,
-          strat = input$stratOutcome,
-          coh = input$predictionPopulation,
-          db = input$database,
-          predictionPerformance = predictionPerformance
-        )
-        return(res)
-      }
-    )
-
-    output$discriminationPlot <- shiny::renderPlot(
-      {
-        plot <-
-          aucSubset() %>%
-          dplyr::mutate(
-            cohort = factor(
-              .$cohort,
-              levels = c(
-                "Matched",
-                "EntirePopulation",
-                "Treatment",
-                "Comparator"
-              )
-            )
-          ) %>%
-          ggplot2::ggplot(
-            ggplot2::aes(
-              x = fpRate,
-              y = sens
-            )
-          ) +
-          ggplot2::geom_abline(
-            intercept = 0,
-            slope = 1
-          ) +
-          ggplot2::geom_area(
-            color = grDevices::rgb(
-              red = 0,
-              green = 0,
-              blue = 0.8,
-              alpha = 0.8
-            ),
-            fill = grDevices::rgb(
-              red = 0,
-              green = 0,
-              blue = 0.8,
-              alpha = 0.4
-            )
-          ) +
-          ggplot2::scale_x_continuous(
-            name = "1 - specificity"
-          ) +
-          ggplot2::scale_y_continuous(
-            name = "Sensitivity"
-          ) +
-          ggplot2::theme_bw()
-
-        labels <- predictionPerformanceSubset() %>%
-          dplyr::mutate(
-            cohort = factor(
-              .$cohort,
-              levels = c(
-                "Matched",
-                "EntirePopulation",
-                "Treatment",
-                "Comparator"
-              )
-            )
-          ) %>%
-          dplyr::select(
-            AUROC,
-            cohort
-          ) %>%
-          dplyr::mutate(
-            AUROC = paste(
-              "AUC:",
-              paste0(
-                round(
-                  100*AUROC,
-                  digits = 2
-                ),
-                "%"
-              )
-            )
-          )
-
-        plot <- plot +
-          ggplot2::facet_grid(
-            ~cohort
-          ) +
-          ggplot2::geom_label(
-            data = labels,
-            x = .05,
-            y = .05,
-            hjust = "left",
-            vjust = "top",
-            alpha = 0.8,
-            ggplot2::aes(
-              label = AUROC
-            ),
-            size = 5.5
-          )
-
-        return(plot)
-
-      }
-    )
-
     output$overallNegativeControlsPlot <- shiny::renderPlot(
       {
-        dat <- overallResultSubset() %>%
+        dat <- currentOverallResults() %>%
           dplyr::mutate(logRr = log(estimate))
-        ncs <- overallNegativeControlsSubset()
+        ncs <- currentOverallNegativeControls()
         null <- EmpiricalCalibration::fitNull(
           logRr = ncs$logRr,
           seLogRr = ncs$seLogRr
@@ -1094,12 +609,224 @@ shiny::shinyServer(
       }
     )
 
+    currentRelativeResults <- shiny::reactive(
+      {
+        result <- mappedOverallRelativeResults %>%
+          dplyr::filter(
+            analysisId == currentAnalysis(),
+            runLabel == currentRunLabel(),
+            estOutcome %in% input$estOutcome
+          )
+        return(result)
+      }
+    )
+
+    output$mainTableRelative <- DT::renderDataTable(
+      {
+
+        res <- currentRelativeResults()
+        treatment <- res$treatment[1]
+        comparator <- res$comparator[1]
+        outcome <- res$stratOutcome[1]
+
+        table <- res %>%
+          dplyr::mutate(
+            combined = paste(
+              round(estimate, 2),
+              paste0(
+                "(",
+                round(lower, 2),
+                ", ",
+                round(upper, 2),
+                ")"
+              )
+            )
+          ) %>%
+          dplyr::rename(
+            Outcome = estOutcome
+          ) %>%
+          dplyr::select(
+            Outcome,
+            riskStratum,
+            combined
+          ) %>%
+          tidyr::spread(riskStratum, combined)
+
+        if (hasNegativeControls) {
+          ncs <- currentNegativeControls() %>%
+            dplyr::mutate(logRr = log(estimate))
+          tmp <- calibrateRiskStrataCis(
+            negativeControls = ncs,
+            positiveControls = res %>%
+              dplyr::mutate(
+                logRr = log(estimate)
+              )
+          ) %>%
+            dplyr::mutate(
+              combined = paste(
+                round(estimate, 2),
+                paste0(
+                  "(",
+                  round(lower, 2),
+                  ", ",
+                  round(upper, 2),
+                  ") [CAL]"
+                )
+              )
+            ) %>%
+            dplyr::select(
+              Outcome,
+              riskStratum,
+              combined
+            ) %>%
+            tidyr::spread(riskStratum, combined)
+
+          table <- table %>%
+            dplyr::bind_rows(
+              tmp
+            )
+        }
+
+        table %>%
+          DT::datatable(
+            caption = htmltools::tags$caption(
+              style = "caption-side: top; text-align: left;",
+              "Table 2: Hazard ratios comparing treatment",
+              htmltools::em(
+                paste0(
+                  "(",
+                  treatment,
+                  ")"
+                )
+              ),
+              "to comparator",
+              htmltools::em(
+                paste0(
+                  "(",
+                  comparator,
+                  ")"
+                )
+              ),
+              "within strata of predicted risk",
+              htmltools::em(
+                paste0(
+                  "(",
+                  outcome,
+                  ")"
+                )
+              )
+            )
+          )
+        return(table)
+      }
+    )
+
+    currentAbsoluteResults <- shiny::reactive(
+      {
+        result <- mappedOverallAbsoluteResults %>%
+          dplyr::filter(
+            analysisId == currentAnalysis(),
+            runLabel == currentRunLabel(),
+            estOutcome %in% input$estOutcome
+          )
+        return(result)
+      }
+    )
+
+    output$mainTableAbsolute <- DT::renderDataTable(
+      {
+        res <- currentAbsoluteResults()
+
+        treatment <- res$treatment[1]
+        comparator <- res$comparator[1]
+        outcome <- res$stratOutcome[1]
+
+        table <-
+          res %>%
+          dplyr::mutate(
+            combined = paste(
+              round(100*estimate, 2),
+              paste0(
+                "(",
+                round(100*lower, 2),
+                ", ",
+                round(100*upper, 2),
+                ")"
+              )
+            )
+          ) %>%
+          dplyr::rename(
+            Outcome = estOutcome
+          ) %>%
+          dplyr::select(
+            Outcome,
+            riskStratum,
+            combined,
+          ) %>%
+          tidyr::spread(riskStratum, combined) %>%
+          DT::datatable(
+            caption = htmltools::tags$caption(
+              style = "caption-side: top; text-align: left;",
+              "Table 3: Absolute risk reduction (%) when comparing treatment",
+              htmltools::em(
+                paste0(
+                  "(",
+                  treatment,
+                  ")"
+                )
+              ),
+              "to comparator",
+              htmltools::em(
+                paste0(
+                  "(",
+                  comparator,
+                  ")"
+                )
+              ),
+              "within strata of predicted risk",
+              htmltools::em(
+                paste0(
+                  "(",
+                  outcome,
+                  ")"
+                )
+              )
+            )
+          )
+        return(table)
+      }
+    )
+
+    currentCases <- shiny::reactive(
+      {
+        result <- mappedOverallCasesResults %>%
+          dplyr::filter(
+            analysisId == currentAnalysis(),
+            runLabel == currentRunLabel(),
+            estOutcome  %in% input$estOutcome
+          )
+        return(result)
+      }
+    )
+
+    output$combinedPlot <- plotly::renderPlotly(
+      {
+        plot <-
+          combinedPlot(
+            cases = currentCases(),
+            relative = currentRelativeResults(),
+            absolute = currentAbsoluteResults(),
+            treatment = input$treatment,
+            comparator = input$comparator
+          )
+        return(plot)
+      }
+    )
     output$negativeControlsPlot <- shiny::renderPlot(
       {
-        dat <- resultSubset()
-        relative <- dat$relative %>%
+        relative <- currentRelativeResults() %>%
           dplyr::mutate(logRr = log(estimate))
-        ncs <- negativeControlsSubset()
+        ncs <- currentNegativeControls()
         plotRiskStratifiedNegativeControls(
           negativeControls = ncs,
           positiveControls = relative
@@ -1107,37 +834,74 @@ shiny::shinyServer(
       }
     )
 
-
-    observeEvent(
-      input$testInfo,
+    currentPsDensity <- shiny::reactive(
       {
-        targetHtmlFile <- file.path(
-          pathToHtml,
-          paste(
-            input$database,
-            "html",
-            sep = "."
-          )
+        fileLocation <- constructFileName(
+          prefix = "psDensity",
+          analysisPath = analysisPath,
+          analysisId = currentAnalysis(),
+          runLabel = currentRunLabel(),
+          estOutcome = input$estOutcomeEstimation,
+          mapOutcomes = mapOutcomes
         )
-        if (!file.exists(targetHtmlFile)) {
-          shinyalert::shinyalert(
-            title = "Database description",
-            text = "Not available",
-            size = "l",
-          closeOnClickOutside = TRUE,
-          confirmButtonCol = "#3B5866"
-          )
+
+        if (file.exists(fileLocation)) {
+          result <- readRDS(fileLocation)
         } else {
-          shinyalert::shinyalert(
-            title = "Database description",
-            shiny::includeHTML(targetHtmlFile),
-            type = "",
-            html = TRUE,
-            size = "l",
-            closeOnClickOutside = TRUE,
-            confirmButtonCol = "#3B5866"
-          )
+          result <- NULL
         }
+        return(result)
+      }
+    )
+
+    output$evaluationPlotPs <- shiny::renderPlot(
+      {
+        currentPsDensity() %>%
+          dplyr::mutate(
+            treatment = ifelse(
+              treatment == 1,
+              treatmentId,
+              comparatorId
+            )
+          ) %>%
+          dplyr::left_join(
+            mapExposures,
+            by = c("treatment" = "exposure_id")
+          ) %>%
+          plotPsDensity(riskStratified = TRUE)
+      }
+    )
+
+    currentCovariateBalance <- shiny::reactive(
+      {
+        fileLocation <- constructFileName(
+          prefix = "balance",
+          analysisPath = analysisPath,
+          analysisId = currentAnalysis(),
+          runLabel = currentRunLabel(),
+          estOutcome = input$estOutcomeEstimation,
+          mapOutcomes = mapOutcomes
+        )
+
+        if (file.exists(fileLocation)) {
+          result <- readRDS(fileLocation)
+        } else {
+          result <- NULL
+        }
+        return(result)
+      }
+    )
+
+    output$evaluationPlotBalance <- shiny::renderPlot(
+      {
+        currentCovariateBalance() %>%
+          CohortMethod::plotCovariateBalanceScatterPlot(
+            beforeLabel = "Before stratification",
+            afterLabel = "After stratification"
+          ) +
+          ggplot2::facet_grid(
+            ~riskStratum
+          )
       }
     )
   }

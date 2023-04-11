@@ -40,6 +40,15 @@ shiny::shinyUI(
           text = "Prediction",
           icon = icon("dice-six")
         ),
+        addInfo(
+          item = shiny::selectizeInput(
+            "database",
+            "Database",
+            unique(databaseOptions),
+            unique(databaseOptions)[1]
+          ),
+          infoId = "testInfo"
+        ),
         shiny::selectInput(
           "treatment",
           "Treatment",
@@ -61,25 +70,22 @@ shiny::shinyUI(
         shiny::selectInput(
           "estOutcome",
           "Estimation outcome (max: 5)",
-          unique(mapOutcomes$outcome_name),
-          selected = "",
+          choices = NA,
+          selected = NA,
           multiple = TRUE,
           selectize = TRUE
         ),
-        addInfo(
-          item = shiny::selectizeInput(
-            "database",
-            "Database",
-            unique(databaseOptions),
-            unique(databaseOptions)[1]
-          ),
-          infoId = "testInfo"
+        shiny::selectInput(
+          "riskStratificationMethod",
+          "Risk stratification method",
+          choices = NA,
+          selected = NA,
         ),
-        shiny::radioButtons(
-          "analysis",
-          "Analysis",
-          unique(analysisTypeOptions),
-          unique(analysisTypeOptions)[1]
+        shiny::selectInput(
+          "psAdjsutmentMethod",
+          "Propensity score adjustment",
+          choices = NA,
+          selected = NA,
         ),
         shiny::conditionalPanel(
           condition = "input.menu2 == 'estimation'",
