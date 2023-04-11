@@ -11,7 +11,6 @@ createAnalysisSettings(
   treatmentCohortId,
   comparatorCohortId,
   outcomeIds,
-  analysisMatrix = diag(length(outcomeIds)),
   mapTreatments,
   mapOutcomes,
   negativeControlOutcomes = c(),
@@ -36,14 +35,6 @@ in the cohortTable.}
 
 \item{outcomeIds}{The cohort definition ids of the outcome cohorts
 in the outcomeTable.}
-
-\item{analysisMatrix}{Boolean matrix defining the outcomes to be assessed
-(rows) within risk strata (columns). The order
-in columns should match the the order of
-\code{outcomeIds}. Default is the diagonal matrix,
-which leads to the risk stratified assessment
-of only the outcome for which the risk strata
-were defined.}
 
 \item{mapTreatments}{Dataframe containing 2 columns: "exposure_id"
 with the id numbers of the

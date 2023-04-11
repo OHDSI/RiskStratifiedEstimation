@@ -818,11 +818,16 @@ predictionPerformance <- function(
 #' @importFrom magrittr %>%
 predictionPerformanceAnalysis <- function(
   analysisSettings,
+  runSettings,
   save = TRUE
 ) {
 
-  predictOutcomes <-
-    analysisSettings$outcomeIds[which(colSums(analysisSettings$analysisMatrix) != 0)]
+ predictOutcomes <- unlist(
+    rlist::list.map(
+      runSettings$runCmSettings$analyses,
+      stratificationOutcome
+    )
+  )
 
   performance <- lapply(
     predictOutcomes,

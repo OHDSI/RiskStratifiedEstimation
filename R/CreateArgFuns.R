@@ -650,13 +650,6 @@ createCreateIPWArgs <- function(weightsType = "ATE",
 #'                                  in the cohortTable.
 #' @param outcomeIds                The cohort definition ids of the outcome cohorts
 #'                                  in the outcomeTable.
-#' @param analysisMatrix            Boolean matrix defining the outcomes to be assessed
-#'                                  (rows) within risk strata (columns). The order
-#'                                  in columns should match the the order of
-#'                                  \code{outcomeIds}. Default is the diagonal matrix,
-#'                                  which leads to the risk stratified assessment
-#'                                  of only the outcome for which the risk strata
-#'                                  were defined.
 #' @param mapTreatments             Dataframe containing 2 columns: "exposure_id"
 #'                                  with the id numbers of the
 #'                                  treatment and comparator cohorts and "exposure_name"
@@ -694,7 +687,6 @@ createAnalysisSettings <- function(
     treatmentCohortId,
     comparatorCohortId,
     outcomeIds,
-    analysisMatrix = diag(length(outcomeIds)),
     mapTreatments,
     mapOutcomes,
     negativeControlOutcomes = c(),
@@ -710,7 +702,6 @@ createAnalysisSettings <- function(
     treatmentCohortId       = treatmentCohortId,
     comparatorCohortId      = comparatorCohortId,
     outcomeIds              = outcomeIds,
-    analysisMatrix          = analysisMatrix,
     mapTreatments           = mapTreatments,
     mapOutcomes             = mapOutcomes,
     negativeControlOutcomes = negativeControlOutcomes,

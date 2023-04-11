@@ -494,6 +494,10 @@ createOverallResults <- function(analysisSettings, runSettings) {
   analyses <- data.frame(
     analysisId = rep(analysisSettings$analysisId, numberOfAnalyses),
     runLabel = rep(NA_character_, numberOfAnalyses),
+    database = analysisSettings$databaseName,
+    treatmentCohortId = analysisSettings$treatmentCohortId,
+    comparatorCohortId = analysisSettings$comparatorCohortId,
+    outcomeIds = paste(analysisSettings$outcomeIds, collapse = ";"),
     stratificationOutcome = rep(NA_integer_, numberOfAnalyses),
     riskStratificationMethodLabel = rep(NA_character_, numberOfAnalyses),
     psAdjustmentMethodLabel = rep(NA_character_, numberOfAnalyses),
@@ -503,10 +507,10 @@ createOverallResults <- function(analysisSettings, runSettings) {
   for (i in seq_along(runSettings$runCmSettings$analyses)) {
     currentAnalysis <- runSettings$runCmSettings$analyses[[i]]
     analyses$runLabel[i] <- currentAnalysis$label
-    analyses$stratificationOutcome <- currentAnalysis$stratificationOutcome
-    analyses$riskStratificationMethodLabel <- currentAnalysis$riskStratificationMethod$label
-    analyses$psAdjustmentMethodLabel <- currentAnalysis$psAdjustmentMethod$label
-    analyses$estimationOutcomes <- paste(currentAnalysis$estimationOutcomes, collapse = ",")
+    analyses$stratificationOutcome[i] <- currentAnalysis$stratificationOutcome
+    analyses$riskStratificationMethodLabel[i] <- currentAnalysis$riskStratificationMethod$label
+    analyses$psAdjustmentMethodLabel[i] <- currentAnalysis$psAdjustmentMethod$label
+    analyses$estimationOutcomes[i] <- paste(currentAnalysis$estimationOutcomes, collapse = ";")
 
   }
 

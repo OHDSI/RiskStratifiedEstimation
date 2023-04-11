@@ -547,6 +547,7 @@ runRiskStratifiedEstimation <- function(
 
   predictionPerformanceAnalysis(
     analysisSettings = analysisSettings,
+    runSettings = runSettings,
     save = TRUE
   )
 
