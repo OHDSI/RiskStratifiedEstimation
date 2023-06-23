@@ -63,7 +63,9 @@ analysesFile <- list.files(
   pattern = "analyses"
 )
 
-analyses <- readRDS(file.path(analysisPath, analysesFile))
+# analyses <- readRDS(file.path(analysisPath, analysesFile))
+analyses <- lapply(file.path(analysisPath, analysesFile), readRDS) %>%
+  dplyr::bind_rows()
 
 if (length(unique(analyses$analysisId)) == 1) {
   suffix <- analyses$analysisId[1]
@@ -71,7 +73,7 @@ if (length(unique(analyses$analysisId)) == 1) {
   suffix <- "combined"
 }
 
-stratOptions <- "Acute myocardial infarction"
+stratOptions <- data.frame(outcome_id = unique(analyses$stratificationOutcome))
 mapOutcomes <- readRDS(
 	file.path(
 		analysisPath,
@@ -82,6 +84,10 @@ mapOutcomes <- readRDS(
 	)
 ) %>%
   dplyr::select(analysisId, outcome_id, outcome_name)
+
+stratOptions <- stratOptions %>%
+  dplyr::left_join(mapOutcomes, by = "outcome_id") %>%
+  dplyr::pull(outcome_name)
 
 mapExposures <- readRDS(
 	file.path(
@@ -587,6 +593,10 @@ getRunLabel <- function(
     riskStratificationMethod,
     psAdjsutmentMethod
 ) {
+  pp <- c(stratificationOutcome, riskStratificationMethod, psAdjsutmentMethod)
+  if (any(pp == "")) {
+    return(analyses[1, ]$runLabel)
+  }
   analyses %>%
     dplyr::filter(
       analysisId == !!analysisId,

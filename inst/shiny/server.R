@@ -20,12 +20,17 @@ shiny::shinyServer(
 
     currentAnalysis <- shiny::reactive(
       {
+        print("PAOK")
+        print(input$database)
+        print(input$treatment)
+        print(input$comparator)
         result <- analyses %>%
           getAnalysis(
             database = input$database,
             treatmentCohort = input$treatment,
             comparatorCohort = input$comparator
           )
+        print(result)
         return(result)
       }
     )
@@ -33,6 +38,10 @@ shiny::shinyServer(
     currentRunLabel <- shiny::reactive(
       {
         analysis <- currentAnalysis()
+        # message(paste("analysis", analysis))
+        # message(paste("stratificationOutcome", input$stratOutcome))
+        # message(paste("riskStratMethod", input$riskStratificationMethod))
+        # message(paste("psAdjustmentMethod", input$psAdjsutmentMethod))
         result <- analyses %>%
           getRunLabel(
             analysisId = analysis,
@@ -359,7 +368,8 @@ shiny::shinyServer(
         result <- overallMappedOverallRelativeResults %>%
           dplyr::filter(
             analysisId == currentAnalysis(),
-            runLabel == currentRunLabel()
+            runLabel == currentRunLabel(),
+            stratOutcome == input$stratOutcome
           )
         return(result)
       }
@@ -372,6 +382,7 @@ shiny::shinyServer(
             dplyr::filter(
               analysisId == currentAnalysis(),
               runLabel == currentRunLabel()
+              # estOutcome %in% input$estOutcome
             )
           return(result)
         }

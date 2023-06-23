@@ -286,3 +286,47 @@ prepareMultipleRseeViewer <- function(
     )
   }
 }
+
+combineOutput <- function(
+    directory,
+    file
+) {
+  dirs <- list.files(path = directory, pattern = file, full.names = T)
+  combined <- lapply(dirs, readRDS) %>% dplyr::bind_rows()
+
+  fileName <- paste0(file, "_combined.rds")
+  saveRDS(combined, file.path(directory, fileName))
+  message(paste("Generated combined output and saved at:", file.path(directory, fileName)))
+
+}
+
+prepareMultipleRseeViewer2 <- function(
+    shinyDirList,
+    saveDirectory
+) {
+  copyFiles <- function(
+    shinyDir,
+    saveDirectory
+  ) {
+    files <- list.files(shinyDir, full.names = TRUE)
+    file.copy(files, saveDirectory)
+  }
+  lapply(shinyDirList, copyFiles, saveDirectory = saveDirectory)
+  message("Copied relevant files")
+
+  filesToCombine <- list(
+    "analyses",
+    "map_outcomes",
+    "map_exposures",
+    "incidenceOverall",
+    "mappedOverallResults",
+    "mappedOverallResultsNegativeControls",
+    "negativeControls",
+    "incidence",
+    "predictionPerformance",
+    "mappedOverallAbsoluteResults",
+    "mappedOverallRelativeResults",
+    "mappedOverallCasesResults"
+  )
+  lapply(filesToCombine, combineOutput, directory = saveDirectory)
+}
